@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Process Payment</title>
+</head>
+<body>
+    <h1>Process Payment</h1>
+    <form action="/bidding/api/payments" method="post">
+        <label for="itemId">Item ID:</label>
+        <input type="number" id="itemId" name="itemId" required><br />
+
+        <label for="userId">User ID:</label>
+        <input type="number" id="userId" name="userId" required><br />
+
+        <label for="amount">Amount:</label>
+        <input type="number" id="amount" name="amount" step="0.01" required><br />
+
+        <label for="paymentMethod">Payment Method:</label>
+        <select id="paymentMethod" name="paymentMethod" required>
+            <option value="Credit Card">Credit Card</option>
+            <option value="PayPal">PayPal</option>
+        </select><br />
+
+        <button type="submit">Submit Payment</button>
+    </form>
+</body>
+</html>

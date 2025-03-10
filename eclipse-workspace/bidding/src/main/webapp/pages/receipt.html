@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Receipt</title>
+</head>
+<body>
+    <h1>Receipt</h1>
+    <p>Thank you for your purchase!</p>
+
+    <h2>Order Details</h2>
+    <p><strong>Item ID:</strong> <span th:text="${itemId}"></span></p>
+    <p><strong>Amount Paid:</strong> $<span th:text="${amount}"></span></p>
+    <p><strong>Payment Method:</strong> <span th:text="${paymentMethod}"></span></p>
+    <p><strong>Payment Time:</strong> <span th:text="${paymentTime}"></span></p>
+
+    <h2>Shipment Details</h2>
+    <p>Your item will be shipped in <span th:text="${shippingDays}"></span> days.</p>
+</body>
+</html>

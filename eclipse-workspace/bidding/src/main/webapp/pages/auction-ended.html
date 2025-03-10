@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Auction Ended</title>
+</head>
+<body>
+    <h1>Auction Ended</h1>
+    <p th:if="${isWinner}">Congratulations! You won the auction.</p>
+    <p th:unless="${isWinner}">Sorry, you did not win this auction.</p>
+
+    <div th:if="${isWinner}">
+        <form action="/api/payments" method="post">
+            <input type="hidden" name="itemId" th:value="${itemId}">
+            <input type="hidden" name="userId" th:value="${userId}">
+            <input type="hidden" name="amount" th:value="${amount}">
+
+            <label for="paymentMethod">Payment Method:</label>
+            <select id="paymentMethod" name="paymentMethod" required>
+                <option value="Credit Card">Credit Card</option>
+                <option value="PayPal">PayPal</option>
+            </select><br>
+
+            <button type="submit">Pay Now</button>
+        </form>
+    </div>
+</body>
+</html>
