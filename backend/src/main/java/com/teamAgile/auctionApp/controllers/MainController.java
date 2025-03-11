@@ -1,8 +1,7 @@
-package com.teamAgile.auctionApp;
+package com.teamAgile.auctionApp.controllers;
 
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
-import java.util.List;
 
 
 @Path("/")
