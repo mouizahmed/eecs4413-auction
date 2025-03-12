@@ -1,4 +1,4 @@
-package com.teamAgile.auctionApp.utils;
+package com.teamAgile.backend.utils;
 
 import org.mindrot.jbcrypt.BCrypt;
 
@@ -11,4 +11,3 @@ public class BCryptHashing {
         return BCrypt.checkpw(password, hashed);
     }
 }
-
