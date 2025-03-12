@@ -3,6 +3,7 @@ package com.teamAgile.backend.config;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -26,8 +27,8 @@ public class SecurityConfig {
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		http.csrf(csrf -> csrf.disable())
-				.authorizeHttpRequests(auth -> auth.requestMatchers("/user/sign-up", "/user/sign-in").permitAll()
-						.anyRequest().authenticated())
+				.authorizeHttpRequests(auth -> auth.requestMatchers(HttpMethod.GET, "/**").permitAll()
+						.requestMatchers("/user/sign-up", "/user/sign-in").permitAll().anyRequest().authenticated())
 				.sessionManagement(session -> session
 						.sessionCreationPolicy(org.springframework.security.config.http.SessionCreationPolicy.ALWAYS)
 						.maximumSessions(1))
