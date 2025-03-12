@@ -6,7 +6,9 @@ import com.teamAgile.backend.utils.BCryptHashing;
 
 @Entity
 @Table(name = "users")
-public class User {
+public class User implements java.io.Serializable {
+	private static final long serialVersionUID = 1L;
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	@Column(name = "userid", nullable = false)
@@ -35,9 +37,9 @@ public class User {
 
 	@Column(name = "country", nullable = false)
 	private String country;
-	
+
 	public User() {
-		
+
 	}
 
 	public UUID getUserID() {

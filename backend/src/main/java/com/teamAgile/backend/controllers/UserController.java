@@ -3,8 +3,13 @@ package com.teamAgile.backend.controllers;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -14,14 +19,20 @@ import org.springframework.web.bind.annotation.RestController;
 import com.teamAgile.backend.models.User;
 import com.teamAgile.backend.services.UserService;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
+
 @RestController
 @RequestMapping("/user")
 public class UserController {
 
 	private final UserService userService;
+	private final AuthenticationManager authenticationManager;
 
-	public UserController(UserService userService) {
+	@Autowired
+	public UserController(UserService userService, AuthenticationManager authenticationManager) {
 		this.userService = userService;
+		this.authenticationManager = authenticationManager;
 	}
 
 	@GetMapping("/get-all")
@@ -40,22 +51,52 @@ public class UserController {
 	}
 
 	@PostMapping("/sign-in")
-	public ResponseEntity<?> signIn(@RequestBody Map<String, String> loginRequest) {
-		
-		if (loginRequest.get("username") == null) return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Please provide a username");
-		if (loginRequest.get("password") == null) return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Please provide a password");
-		
-		User user = userService.signIn(loginRequest.get("username"), loginRequest.get("password"));
+	public ResponseEntity<?> signIn(@RequestBody Map<String, String> loginRequest, HttpServletRequest request) {
+		if (loginRequest.get("username") == null)
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Please provide a username");
+		if (loginRequest.get("password") == null)
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Please provide a password");
 
-		if (user == null) {
+		try {
+			// Authenticate using Spring Security
+			Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
+					loginRequest.get("username"), loginRequest.get("password")));
+
+			// Set the authentication in the SecurityContext
+			SecurityContextHolder.getContext().setAuthentication(authentication);
+
+			// Get the authenticated user
+			User user = userService.signIn(loginRequest.get("username"), loginRequest.get("password"));
+
+			// Create new session
+			HttpSession session = request.getSession(true);
+			session.setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
+			session.setAttribute("user", Map.of("userId", user.getUserID(), "username", user.getUsername()));
+			session.setMaxInactiveInterval(30 * 60); // 30 minutes
+
+			// Return user info
+			Map<String, Object> responseUser = Map.of("userId", user.getUserID(), "username", user.getUsername(),
+					"firstName", user.getFirstName(), "lastName", user.getLastName());
+
+			return ResponseEntity.ok().body(responseUser);
+
+		} catch (Exception e) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username or password.");
 		}
+	}
 
-		return ResponseEntity.ok(user);
+	@PostMapping("/sign-out")
+	public ResponseEntity<?> signOut(HttpServletRequest request) {
+		HttpSession session = request.getSession(false);
+		if (session != null) {
+			session.invalidate();
+			SecurityContextHolder.clearContext();
+			return ResponseEntity.ok("Successfully signed out");
+		}
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("No active session found");
 	}
 
 	// sent password request request
-	
-	// confirm password request code
 
+	// confirm password request code
 }
