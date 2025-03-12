@@ -8,8 +8,10 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
 @Entity
+@Table(name = "auctionItems")
 public class AuctionItem {
 	public enum AuctionType {
 		FORWARD, DUTCH
@@ -42,13 +44,17 @@ public class AuctionItem {
 	@Column(name = "highestbidder")
 	private String highestBidder;
 
-	@Column(name = "end_time")
+	@Column(name = "endtime")
 	private LocalDateTime endTime;
 
-	@Column(name = "reserve_price")
+	@Column(name = "reserveprice")
 	private Double reservePrice;
 
 	private transient AuctionStrategy auctionStrategy;
+
+	public AuctionItem() {
+
+	}
 
 	public AuctionItem(AuctionType auctionType) {
 		this.auctionType = auctionType;
@@ -125,5 +131,10 @@ public class AuctionItem {
 		case FORWARD -> new ForwardAuctionStrategy();
 		case DUTCH -> new DutchAuctionStrategy();
 		};
+	}
+
+	public void setAuctionType(AuctionType auctionType) {
+		this.auctionType = auctionType;
+		
 	}
 }

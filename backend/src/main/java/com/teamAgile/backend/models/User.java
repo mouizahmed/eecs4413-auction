@@ -35,6 +35,10 @@ public class User {
 
 	@Column(name = "country", nullable = false)
 	private String country;
+	
+	public User() {
+		
+	}
 
 	public UUID getUserID() {
 		return userID;
