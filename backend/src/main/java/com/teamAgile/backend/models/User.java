@@ -2,18 +2,17 @@ package com.teamAgile.backend.models;
 
 import java.util.UUID;
 import jakarta.persistence.*;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.teamAgile.backend.utils.BCryptHashing;
 
 @Entity
-@Table(name = "users") // Ensure the table name is correct
+@Table(name = "users")
 public class User {
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
-	@Column(name = "userid", nullable = false) // Match DB column
+	@Column(name = "userid", nullable = false)
 	private UUID userID;
 
-	@Column(name = "firstname", nullable = false) // Ensure correct mapping
+	@Column(name = "firstname", nullable = false)
 	private String firstName;
 
 	@Column(name = "lastname", nullable = false)
@@ -37,11 +36,6 @@ public class User {
 	@Column(name = "country", nullable = false)
 	private String country;
 
-	// 🔹 Constructors
-	public User() {
-	}
-
-	// 🔹 Getters and Setters
 	public UUID getUserID() {
 		return userID;
 	}
@@ -91,11 +85,7 @@ public class User {
 	}
 
 	public void setPassword(String password) {
-		if (!password.startsWith("$2a$")) { // Only hash if it's not already hashed
-			this.password = BCryptHashing.hashPassword(password);
-		} else {
-			this.password = password;
-		}
+		this.password = BCryptHashing.hashPassword(password);
 	}
 
 	public void setStreetName(String streetName) {
