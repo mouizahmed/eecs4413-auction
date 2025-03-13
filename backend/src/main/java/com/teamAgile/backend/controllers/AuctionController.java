@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.teamAgile.backend.models.AuctionItem;
 import com.teamAgile.backend.models.DutchAuctionItem;
 import com.teamAgile.backend.models.Bid;
+import com.teamAgile.backend.models.CreditCardDTO;
 import com.teamAgile.backend.services.AuctionService;
 import com.teamAgile.backend.services.BidService;
 
@@ -137,6 +138,24 @@ public class AuctionController extends BaseController {
 			Double decreaseBy = decreasePriceRequest.get("decreaseBy");
 			AuctionItem item = auctionService.decreaseDutchPrice(itemID, userID, decreaseBy);
 			return ResponseEntity.ok(item);
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+		}
+
+	}
+
+	@PostMapping("/pay/{itemID}")
+	public ResponseEntity<?> processPayment(@PathVariable UUID itemID, @RequestBody CreditCardDTO creditCardDetails,
+			HttpServletRequest request) {
+
+		Map<String, Object> currentUser = getCurrentUser(request);
+		if (currentUser == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+		}
+
+		try {
+			System.out.println(creditCardDetails.getCardNumber());
+			return null;
 		} catch (Exception e) {
 			return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
 		}
