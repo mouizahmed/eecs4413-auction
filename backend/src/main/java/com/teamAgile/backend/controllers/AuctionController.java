@@ -20,7 +20,7 @@ import jakarta.servlet.http.HttpSession;
 
 @RestController
 @RequestMapping("/auction")
-public class AuctionController {
+public class AuctionController extends BaseController {
 
 	private final AuctionService auctionService;
 
@@ -35,6 +35,7 @@ public class AuctionController {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 		}
 
+		@SuppressWarnings("unchecked")
 		Map<String, Object> sessionUser = (Map<String, Object>) session.getAttribute("user");
 		if (sessionUser == null || !sessionUser.containsKey("userId") || !sessionUser.containsKey("username")) {
 			session.invalidate();
@@ -65,14 +66,16 @@ public class AuctionController {
 		return ResponseEntity.status(HttpStatus.CREATED).body(item);
 	}
 
-	@PostMapping("/upload-dutch-item")
-	public ResponseEntity<AuctionItem> uploadDutchAuctionItem(@RequestBody AuctionItem auctionItem) {
-		AuctionItem item = auctionService.createDutchItem(auctionItem);
-		// if (createdUser == null) {
-		// return ResponseEntity.status(HttpStatus.CONFLICT).body("Username already
-		// taken.");
-		// }
-		return ResponseEntity.status(HttpStatus.CREATED).body(item);
+	@PostMapping("/dutch/post")
+	public ResponseEntity<?> uploadDutchAuctionItem(@RequestBody AuctionItem auctionItem, HttpServletRequest request) {
+		Map<String, Object> currentUser = getCurrentUser(request);
+
+		if (currentUser == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+		}
+
+		AuctionItem item = auctionService.createDutchItem(auctionItem, (String) currentUser.get("userID"));
+		return ResponseEntity.status(HttpStatus.CREATED).body("FAsf");
 	}
 
 }

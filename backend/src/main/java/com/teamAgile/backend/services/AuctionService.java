@@ -44,7 +44,7 @@ public class AuctionService {
 		return auctionRepository.save(auctionItem);
 	}
 	
-	public AuctionItem createDutchItem(AuctionItem auctionItem) {
+	public AuctionItem createDutchItem(AuctionItem auctionItem, String userID) {
 		if (auctionRepository.findByItemName(auctionItem.getItemName()).isPresent()) {
 			return null;
 		}

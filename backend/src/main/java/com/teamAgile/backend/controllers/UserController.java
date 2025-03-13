@@ -71,14 +71,11 @@ public class UserController {
 			// Create new session
 			HttpSession session = request.getSession(true);
 			session.setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
-			session.setAttribute("user", Map.of("userId", user.getUserID(), "username", user.getUsername()));
+			Object userObject = Map.of("userID", user.getUserID(), "username", user.getUsername(), "streetNumber", user.getStreetNumber(), "streetName", user.getStreetName(), "postalCode", user.getPostalCode(), "country", user.getCountry());
+			session.setAttribute("user", userObject);
 			session.setMaxInactiveInterval(30 * 60); // 30 minutes
 
-			// Return user info
-			Map<String, Object> responseUser = Map.of("userId", user.getUserID(), "username", user.getUsername(),
-					"firstName", user.getFirstName(), "lastName", user.getLastName());
-
-			return ResponseEntity.ok().body(responseUser);
+			return ResponseEntity.ok().body(userObject);
 
 		} catch (Exception e) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username or password.");
