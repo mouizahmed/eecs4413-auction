@@ -123,6 +123,24 @@ public class AuctionController extends BaseController {
 		}
 	}
 
+	@PatchMapping("/dutch/{itemID}/decreasePrice")
+	public ResponseEntity<?> decreaseDutchPrice(@PathVariable UUID itemID,
+			@RequestBody Map<String, Double> decreasePriceRequest, HttpServletRequest request) {
 
+		Map<String, Object> currentUser = getCurrentUser(request);
+		if (currentUser == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+		}
+
+		try {
+			UUID userID = (UUID) currentUser.get("userID");
+			Double decreaseBy = decreasePriceRequest.get("decreaseBy");
+			AuctionItem item = auctionService.decreaseDutchPrice(itemID, userID, decreaseBy);
+			return ResponseEntity.ok(item);
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+		}
+
+	}
 
 }

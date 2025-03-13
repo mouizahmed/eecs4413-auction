@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.teamAgile.backend.models.AuctionItem;
+import com.teamAgile.backend.models.AuctionItem.AuctionStatus;
 import com.teamAgile.backend.models.DutchAuctionItem;
 import com.teamAgile.backend.repositories.AuctionRepository;
 
@@ -32,24 +33,6 @@ public class AuctionService {
 		return itemOptional.get();
 	}
 
-	// public AuctionItem createForwardItem(AuctionItem auctionItem) {
-	// if (auctionRepository.findByItemName(auctionItem.getItemName()).isPresent())
-	// {
-	// return null;
-	// }
-	// if (auctionItem.getAuctionType() == AuctionItem.AuctionType.DUTCH) throw new
-	// IllegalArgumentException("Auction item with the same name already exists.");
-	// if (auctionItem.getReservePrice() != null) throw new
-	// IllegalArgumentException("Forward auction items cannot have a reserve
-	// price.");
-	// if (auctionItem.getEndTime() == null) throw new
-	// IllegalArgumentException("Forward auction items must have an end time.");
-	// auctionItem.setAuctionType(AuctionItem.AuctionType.FORWARD);
-	// auctionItem.setAuctionStatus(AuctionItem.AuctionStatus.AVAILABLE);
-	//
-	// return auctionRepository.save(auctionItem);
-	// }
-
 	public AuctionItem createDutchItem(DutchAuctionItem auctionItem, UUID userID) {
 		Optional<?> existingItem = auctionRepository.findByItemName(auctionItem.getItemName());
 		if (existingItem.isPresent())
@@ -61,8 +44,30 @@ public class AuctionService {
 		if (auctionItem.getReservePrice() == null)
 			throw new IllegalArgumentException("Dutch auction items must have a reserve price.");
 		auctionItem.setSellerID(userID);
-		return auctionRepository.save(auctionItem);
 
+		return auctionRepository.save(auctionItem);
+	}
+
+	public AuctionItem decreaseDutchPrice(UUID itemID, UUID userID, Double decreaseBy) {
+		Optional<AuctionItem> itemOptional = auctionRepository.findByItemID(itemID);
+		if (itemOptional.isEmpty()) {
+			throw new IllegalArgumentException("Auction item not found");
+		}
+
+		AuctionItem item = itemOptional.get();
+
+		if (!item.getSellerID().equals(userID))
+			throw new IllegalArgumentException("You must be the seller to decrease the price.");
+		if (item.getAuctionStatus() != AuctionItem.AuctionStatus.AVAILABLE)
+			throw new IllegalArgumentException("Auction Item is no longer available to make changes.");
+
+		if (!(item instanceof DutchAuctionItem))
+			throw new IllegalArgumentException("This operation is only available for Dutch auctions");
+
+		DutchAuctionItem dutchItem = (DutchAuctionItem) item;
+		dutchItem.decreasePrice(decreaseBy);
+
+		return auctionRepository.save(dutchItem);
 	}
 
 }
