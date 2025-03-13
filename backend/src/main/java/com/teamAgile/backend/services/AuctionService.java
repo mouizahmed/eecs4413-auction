@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import com.teamAgile.backend.models.AuctionItem;
 import com.teamAgile.backend.models.AuctionItem.AuctionStatus;
 import com.teamAgile.backend.models.DutchAuctionItem;
+import com.teamAgile.backend.models.ForwardAuctionItem;
 import com.teamAgile.backend.repositories.AuctionRepository;
 
 @Service
@@ -32,6 +33,22 @@ public class AuctionService {
 			return null;
 		return itemOptional.get();
 	}
+	
+	public AuctionItem createForwardItem(ForwardAuctionItem auctionItem, UUID userID) {
+		Optional<?> existingItem = auctionRepository.findByItemName(auctionItem.getItemName());
+		if (existingItem.isPresent())
+			throw new IllegalArgumentException("Auction item already exists.");
+		
+		if (auctionItem.getAuctionType() == AuctionItem.AuctionType.DUTCH)
+			throw new IllegalArgumentException("Cannot create a Forward auction item with DUTCH auction type.");
+		
+		if (auctionItem.getEndTime() == null)
+			throw new IllegalArgumentException("Forward auction items must have an end time.");
+		
+		auctionItem.setSellerID(userID);
+		
+		return auctionRepository.save(auctionItem);
+	}
 
 	public AuctionItem createDutchItem(DutchAuctionItem auctionItem, UUID userID) {
 		Optional<?> existingItem = auctionRepository.findByItemName(auctionItem.getItemName());
@@ -43,6 +60,7 @@ public class AuctionService {
 
 		if (auctionItem.getReservePrice() == null)
 			throw new IllegalArgumentException("Dutch auction items must have a reserve price.");
+		
 		auctionItem.setSellerID(userID);
 
 		return auctionRepository.save(auctionItem);

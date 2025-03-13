@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.teamAgile.backend.models.AuctionItem;
 import com.teamAgile.backend.models.DutchAuctionItem;
+import com.teamAgile.backend.models.ForwardAuctionItem;
 import com.teamAgile.backend.models.Bid;
 import com.teamAgile.backend.models.CreditCardDTO;
 import com.teamAgile.backend.services.AuctionService;
@@ -65,20 +66,27 @@ public class AuctionController extends BaseController {
 		return ResponseEntity.ok(item);
 	}
 
-	// @PostMapping("/upload-forward-item")
-	// public ResponseEntity<AuctionItem> uploadForwardAuctionItem(@RequestBody
-	// AuctionItem auctionItem) {
-	// AuctionItem item = auctionService.createForwardItem(auctionItem);
-	// // if (createdUser == null) {
-	// // return ResponseEntity.status(HttpStatus.CONFLICT).body("Username already
-	// // taken.");
-	// // }
-	// return ResponseEntity.status(HttpStatus.CREATED).body(item);
-	// }
+	@PostMapping("/forward/post")
+	public ResponseEntity<?> uploadForwardAuctionItem(@RequestBody ForwardAuctionItem auctionItem, HttpServletRequest request) {
+		Map<String, Object> currentUser = getCurrentUser(request);
+
+		try {
+			UUID userID = (UUID) currentUser.get("userID");
+			if (userID == null)
+				throw new IllegalArgumentException("No UserID");
+
+			AuctionItem item = auctionService.createForwardItem(auctionItem, userID);
+
+			return ResponseEntity.status(HttpStatus.CREATED).body(item);
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+		}
+	}
 
 	@PostMapping("/dutch/post")
 	public ResponseEntity<?> uploadDutchAuctionItem(@RequestBody DutchAuctionItem auctionItem,
 			HttpServletRequest request) {
+
 		Map<String, Object> currentUser = getCurrentUser(request);
 
 		if (currentUser == null) {
@@ -98,6 +106,31 @@ public class AuctionController extends BaseController {
 		}
 
 	}
+	
+	@PostMapping("/forward/{itemID}/bid")
+	public ResponseEntity<?> placeForwardBid(@PathVariable UUID itemID, @RequestBody Map<String, Double> bidRequest,
+			HttpServletRequest request) {
+		Map<String, Object> currentUser = getCurrentUser(request);
+		if (currentUser == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+		}
+
+		try {
+			UUID userID = (UUID) currentUser.get("userID");
+			Double bidPrice = bidRequest.get("bidPrice");
+
+			if (bidPrice == null) {
+				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Bid price is required");
+			}
+
+			Bid bid = bidService.createForwardBid(itemID, userID, bidPrice);
+			return ResponseEntity.ok(bid);
+		} catch (IllegalArgumentException e) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+		}
+	}
 
 	@PostMapping("/dutch/{itemID}/bid")
 	public ResponseEntity<?> placeDutchBid(@PathVariable UUID itemID, @RequestBody Map<String, Double> bidRequest,
@@ -115,7 +148,7 @@ public class AuctionController extends BaseController {
 				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Bid price is required");
 			}
 
-			Bid bid = bidService.createBid(itemID, userID, bidPrice);
+			Bid bid = bidService.createDutchBid(itemID, userID, bidPrice);
 			return ResponseEntity.ok(bid);
 		} catch (IllegalArgumentException e) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
@@ -141,7 +174,6 @@ public class AuctionController extends BaseController {
 		} catch (Exception e) {
 			return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
 		}
-
 	}
 
 	@PostMapping("/pay/{itemID}")

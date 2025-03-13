@@ -25,7 +25,7 @@ public abstract class AuctionItem {
     }
 
     public enum AuctionStatus {
-        AVAILABLE, SOLD, EXPIRED, CANCELLED, PENDING_PAYMENT, PAID, SHIPPED, CLOSED
+        AVAILABLE, SOLD, EXPIRED, CANCELLED, PAID
     }
 
     @Id
@@ -37,7 +37,10 @@ public abstract class AuctionItem {
     private String itemName;
 
     @Column(name = "currentprice", nullable = false)
-    private double currentPrice;
+    private Double currentPrice;
+    
+    @Column(name = "shippingtime", nullable = false)
+    private Integer shippingTime;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "auctionType", nullable = false, insertable = false, updatable = false)
@@ -70,8 +73,12 @@ public abstract class AuctionItem {
         return itemName;
     }
 
-    public double getCurrentPrice() {
+    public Double getCurrentPrice() {
         return currentPrice;
+    }
+    
+    public Integer getShippingTime() {
+    	return shippingTime;
     }
 
     public AuctionType getAuctionType() {
@@ -94,8 +101,12 @@ public abstract class AuctionItem {
         this.itemName = itemName;
     }
 
-    public void setCurrentPrice(double currentPrice) {
+    public void setCurrentPrice(Double currentPrice) {
         this.currentPrice = currentPrice;
+    }
+    
+    public void setShippingTime(Integer shippingTime) {
+    	this.shippingTime = shippingTime;
     }
 
     public void setAuctionStatus(AuctionStatus auctionStatus) {

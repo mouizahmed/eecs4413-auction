@@ -1,5 +1,6 @@
 package com.teamAgile.backend.services;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Service;
 import com.teamAgile.backend.models.Bid;
 import com.teamAgile.backend.models.AuctionItem;
 import com.teamAgile.backend.models.DutchAuctionItem;
+import com.teamAgile.backend.models.ForwardAuctionItem;
 import com.teamAgile.backend.repositories.BidRepository;
 import com.teamAgile.backend.repositories.AuctionRepository;
 
@@ -25,7 +27,52 @@ public class BidService {
         this.auctionRepository = auctionRepository;
     }
 
-    public Bid createBid(UUID itemId, UUID userId, double bidPrice) {
+    public Bid createForwardBid(UUID itemId, UUID userId, double bidPrice) {
+        // Get the auction item
+        Optional<AuctionItem> itemOptional = auctionRepository.findById(itemId);
+        if (itemOptional.isEmpty()) {
+            throw new IllegalArgumentException("Auction item not found");
+        }
+
+        AuctionItem item = itemOptional.get();
+        LocalDateTime now = LocalDateTime.now();
+
+        // Check if item is a Auction auction
+        if (!(item instanceof ForwardAuctionItem)) {
+            throw new IllegalArgumentException("This endpoint is only for Forward auctions");
+        }
+
+        ForwardAuctionItem forwardItem = (ForwardAuctionItem) item;
+
+        // Validate bid price matches current price for Dutch auction
+        if (bidPrice <= forwardItem.getCurrentPrice()) {
+            throw new IllegalArgumentException("Bid price must be greater than the current price for Forward auctions");
+        }
+
+        // Check if auction is still available
+        if (forwardItem.getAuctionStatus() != AuctionItem.AuctionStatus.AVAILABLE) {
+            throw new IllegalArgumentException("Auction is not available for bidding");
+        }
+
+        if (now.isAfter(forwardItem.getEndTime())) {
+            throw new IllegalArgumentException("This forward auction has now closed.");
+        }
+
+        // Create new bid
+        Bid bid = new Bid();
+        bid.setItemID(itemId);
+        bid.setUserID(userId);
+        bid.setBidPrice(bidPrice);
+
+        // Place the bid on the auction item
+        forwardItem.placeBid(bidPrice, userId.toString());
+
+        // Save both the bid and the updated auction item
+        auctionRepository.save(forwardItem);
+        return bidRepository.save(bid);
+    }
+
+    public Bid createDutchBid(UUID itemId, UUID userId, double bidPrice) {
         // Get the auction item
         Optional<AuctionItem> itemOptional = auctionRepository.findById(itemId);
         if (itemOptional.isEmpty()) {

@@ -10,7 +10,10 @@ import java.util.UUID;
 @Repository
 public interface BidRepository extends JpaRepository<Bid, UUID> {
 	List<Bid> findAll();
+
 	List<Bid> findByUserID(UUID userID);
+
 	List<Bid> findByItemID(UUID itemID);
+
 	Optional<Bid> findByBidID(UUID bidID);
 }
