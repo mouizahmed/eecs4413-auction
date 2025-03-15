@@ -43,7 +43,7 @@ public class PaymentService {
 		LocalDateTime now = LocalDateTime.now();
 
 		CreditCard creditCard = new CreditCard(cardDetails.getCardNum(), cardDetails.getCardName(), cardDetails.getExpDate(), cardDetails.getSecurityCode());
-		Receipt receipt = new Receipt(itemID, user.getUserID(), item.getCurrentPrice(), creditCard, user.getAddress(), item.getShippingTime());
+		Receipt receipt = new Receipt(itemID, user, item.getCurrentPrice(), creditCard, user.getAddress(), item.getShippingTime());
 		item.makePayment(user.getUserID());
 		
 		auctionRepository.save(item);

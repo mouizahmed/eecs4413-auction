@@ -102,7 +102,7 @@ public class AuctionWebSocketHandler extends TextWebSocketHandler {
 			Map<String, Object> paymentUpdateMessage = new HashMap<>();
 			paymentUpdateMessage.put("type", "PAYMENT_MADE");
 			paymentUpdateMessage.put("itemId", receipt.getItemID().toString());
-			paymentUpdateMessage.put("userId", receipt.getUserID().toString());
+			paymentUpdateMessage.put("userId", receipt.getUser().getUserID().toString());
 
 			String messageJson = objectMapper.writeValueAsString(paymentUpdateMessage);
 			TextMessage textMessage = new TextMessage(messageJson);
@@ -146,7 +146,7 @@ public class AuctionWebSocketHandler extends TextWebSocketHandler {
 			bidUpdateMessage.put("type", "BID_PLACED");
 			bidUpdateMessage.put("itemId", bid.getItemID().toString());
 			bidUpdateMessage.put("bidId", bid.getBidID().toString());
-			bidUpdateMessage.put("userId", bid.getUserID().toString());
+			bidUpdateMessage.put("userId", bid.getUser().getUserID().toString());
 			bidUpdateMessage.put("bidAmount", bid.getBidAmount());
 			// bidUpdateMessage.put("timestamp", bid.getTimestamp().toString());
 			bidUpdateMessage.put("itemName", item.getItemName());
@@ -188,7 +188,7 @@ public class AuctionWebSocketHandler extends TextWebSocketHandler {
 			// Create the update message
 			AuctionUpdateMessage updateMessage = new AuctionUpdateMessage(AuctionUpdateType.AUCTION_UPDATE,
 					auctionItem.getItemID(), auctionItem.getItemName(), auctionItem.getCurrentPrice(),
-					auctionItem.getHighestBidderID(), auctionItem.getAuctionStatus().toString());
+					auctionItem.getHighestBidder().getUserID(), auctionItem.getAuctionStatus().toString());
 
 			String messageJson = objectMapper.writeValueAsString(updateMessage);
 			TextMessage textMessage = new TextMessage(messageJson);

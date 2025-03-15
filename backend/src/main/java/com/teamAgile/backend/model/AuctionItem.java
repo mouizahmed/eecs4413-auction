@@ -1,21 +1,7 @@
 package com.teamAgile.backend.model;
 
 import java.util.UUID;
-
-import com.teamAgile.backend.model.AuctionItem.AuctionStatus;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.DiscriminatorColumn;
-import jakarta.persistence.DiscriminatorType;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Inheritance;
-import jakarta.persistence.InheritanceType;
-import jakarta.persistence.Table;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.EnumType;
+import jakarta.persistence.*;
 
 @Entity
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
@@ -53,20 +39,24 @@ public abstract class AuctionItem {
     @Column(name = "auctionStatus", nullable = false)
     private AuctionStatus auctionStatus = AuctionStatus.AVAILABLE;
 
-    @Column(name = "sellerId", nullable = false)
-    private UUID sellerID;
+    // Updated: seller is now a User entity
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "sellerId", nullable = false)
+    private User seller;
 
-    @Column(name = "highestBidderId")
-    private UUID highestBidderID;
+    // Updated: highestBidder is now a foreign key to a User entity.
+    @ManyToOne(optional = true)
+    @JoinColumn(name = "highestBidderId")
+    private User highestBidder;
 
     protected AuctionItem() {
     }
 
-    public AuctionItem(String itemName, UUID sellerID, AuctionType auctionType, AuctionStatus auctionStatus, Double currentPrice, Integer shippingTime) {
+    public AuctionItem(String itemName, User seller, AuctionType auctionType, AuctionStatus auctionStatus, Double currentPrice, Integer shippingTime) {
         this.itemName = itemName;
         this.currentPrice = currentPrice;
         this.shippingTime = shippingTime;
-        this.sellerID = sellerID;
+        this.seller = seller;
         this.auctionStatus = auctionStatus;
         this.auctionType = auctionType;
     }
@@ -84,7 +74,7 @@ public abstract class AuctionItem {
     }
     
     public Integer getShippingTime() {
-    	return shippingTime;
+        return shippingTime;
     }
 
     public AuctionType getAuctionType() {
@@ -95,12 +85,12 @@ public abstract class AuctionItem {
         return auctionStatus;
     }
 
-    public UUID getSellerID() {
-        return sellerID;
+    public User getSeller() {
+        return seller;
     }
 
-    public UUID getHighestBidderID() {
-        return highestBidderID;
+    public User getHighestBidder() {
+        return highestBidder;
     }
 
     public void setItemName(String itemName) {
@@ -112,35 +102,41 @@ public abstract class AuctionItem {
     }
     
     public void setShippingTime(Integer shippingTime) {
-    	this.shippingTime = shippingTime;
+        this.shippingTime = shippingTime;
     }
 
     public void setAuctionStatus(AuctionStatus auctionStatus) {
         this.auctionStatus = auctionStatus;
     }
 
-    public void setHighestBidderID(UUID highestBidderID) {
-        this.highestBidderID = highestBidderID;
+    public void setSeller(User seller) {
+        this.seller = seller;
     }
 
-    public void setSellerID(UUID sellerID) {
-        this.sellerID = sellerID;
+    public void setHighestBidder(User highestBidder) {
+        this.highestBidder = highestBidder;
     }
 
+    /**
+     * Base behavior for placing a bid.
+     * Subclasses can override this method.
+     */
     public void placeBid(Double bidAmount, UUID userID) {
         // Base behavior can be overridden by subclasses.
     }
     
+    /**
+     * Processes payment for the auction item.
+     * Only the winning bidder can make the payment.
+     *
+     * @param userID the ID of the user attempting to make the payment
+     */
     public void makePayment(UUID userID) {
-    	if (!this.getHighestBidderID().equals(userID)) {
-    		throw new IllegalArgumentException("You must be the winning bidder to place a payment on this item.");
-    	} else if (!this.getAuctionStatus().equals(AuctionStatus.SOLD)) {
-			throw new IllegalArgumentException("The auction is either over or still ongoing.");
-		}
-    	
-    	this.setAuctionStatus(AuctionStatus.PAID);
+        if (this.getHighestBidder() == null || !this.getHighestBidder().getUserID().equals(userID)) {
+            throw new IllegalArgumentException("You must be the winning bidder to place a payment on this item.");
+        } else if (!this.getAuctionStatus().equals(AuctionStatus.SOLD)) {
+            throw new IllegalArgumentException("The auction is either over or still ongoing.");
+        }
+        this.setAuctionStatus(AuctionStatus.PAID);
     }
-    
-    
-    
 }
