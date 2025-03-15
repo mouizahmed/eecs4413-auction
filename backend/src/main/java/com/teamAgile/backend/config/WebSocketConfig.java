@@ -6,9 +6,7 @@ import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 import org.springframework.web.socket.server.standard.ServletServerContainerFactoryBean;
-
 import com.teamAgile.backend.websocket.AuctionWebSocketHandler;
-import com.teamAgile.backend.websocket.JoinNotificationWebSocketHandler;
 
 @Configuration
 @EnableWebSocket
@@ -16,8 +14,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
 	private final AuctionWebSocketHandler auctionWebSocketHandler;
 
-	public WebSocketConfig(JoinNotificationWebSocketHandler joinNotificationWebSocketHandler,
-			AuctionWebSocketHandler auctionWebSocketHandler) {
+	public WebSocketConfig(AuctionWebSocketHandler auctionWebSocketHandler) {
 
 		this.auctionWebSocketHandler = auctionWebSocketHandler;
 	}
