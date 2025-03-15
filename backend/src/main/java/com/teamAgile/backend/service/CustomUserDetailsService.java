@@ -1,4 +1,4 @@
-package com.teamAgile.backend.services;
+package com.teamAgile.backend.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -6,8 +6,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import com.teamAgile.backend.models.User;
-import com.teamAgile.backend.repositories.UserRepository;
+import com.teamAgile.backend.model.User;
+import com.teamAgile.backend.repository.UserRepository;
 
 import java.util.ArrayList;
 

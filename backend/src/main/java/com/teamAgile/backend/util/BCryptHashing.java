@@ -1,4 +1,4 @@
-package com.teamAgile.backend.utils;
+package com.teamAgile.backend.util;
 
 import org.mindrot.jbcrypt.BCrypt;
 

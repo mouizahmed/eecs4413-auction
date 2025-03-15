@@ -1,4 +1,4 @@
-package com.teamAgile.backend.controllers;
+package com.teamAgile.backend.controller;
 
 import java.util.List;
 import java.util.Map;
@@ -16,8 +16,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.teamAgile.backend.models.User;
-import com.teamAgile.backend.services.UserService;
+import com.teamAgile.backend.model.User;
+import com.teamAgile.backend.service.UserService;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;

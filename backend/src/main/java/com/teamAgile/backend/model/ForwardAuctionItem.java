@@ -1,8 +1,6 @@
-package com.teamAgile.backend.models;
+package com.teamAgile.backend.model;
 
 import java.time.LocalDateTime;
-
-import com.teamAgile.backend.models.AuctionItem.AuctionType;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
@@ -15,9 +13,9 @@ public class ForwardAuctionItem extends AuctionItem {
 	private LocalDateTime endTime;
 
 	public ForwardAuctionItem() {
-		 super(AuctionType.FORWARD);
+		super(AuctionType.FORWARD);
 	}
-	
+
 	public LocalDateTime getEndTime() {
 		return endTime;
 	}

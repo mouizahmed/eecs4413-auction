@@ -1,4 +1,4 @@
-package com.teamAgile.backend.controllers;
+package com.teamAgile.backend.controller;
 
 import java.util.List;
 import java.util.Map;
@@ -15,13 +15,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.teamAgile.backend.models.AuctionItem;
-import com.teamAgile.backend.models.DutchAuctionItem;
-import com.teamAgile.backend.models.ForwardAuctionItem;
-import com.teamAgile.backend.models.Bid;
-import com.teamAgile.backend.models.CreditCardDTO;
-import com.teamAgile.backend.services.AuctionService;
-import com.teamAgile.backend.services.BidService;
+import com.teamAgile.backend.model.AuctionItem;
+import com.teamAgile.backend.model.Bid;
+import com.teamAgile.backend.model.CreditCardDTO;
+import com.teamAgile.backend.model.DutchAuctionItem;
+import com.teamAgile.backend.model.ForwardAuctionItem;
+import com.teamAgile.backend.service.AuctionService;
+import com.teamAgile.backend.service.BidService;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;

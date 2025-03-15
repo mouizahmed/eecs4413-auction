@@ -1,4 +1,4 @@
-package com.teamAgile.backend.models;
+package com.teamAgile.backend.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;

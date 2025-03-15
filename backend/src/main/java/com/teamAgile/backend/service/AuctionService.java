@@ -1,4 +1,4 @@
-package com.teamAgile.backend.services;
+package com.teamAgile.backend.service;
 
 import java.util.List;
 import java.util.Optional;
@@ -7,11 +7,10 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.teamAgile.backend.models.AuctionItem;
-import com.teamAgile.backend.models.AuctionItem.AuctionStatus;
-import com.teamAgile.backend.models.DutchAuctionItem;
-import com.teamAgile.backend.models.ForwardAuctionItem;
-import com.teamAgile.backend.repositories.AuctionRepository;
+import com.teamAgile.backend.model.AuctionItem;
+import com.teamAgile.backend.model.DutchAuctionItem;
+import com.teamAgile.backend.model.ForwardAuctionItem;
+import com.teamAgile.backend.repository.AuctionRepository;
 
 @Service
 public class AuctionService {

@@ -1,10 +1,11 @@
-package com.teamAgile.backend.services;
+package com.teamAgile.backend.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import com.teamAgile.backend.models.User;
-import com.teamAgile.backend.repositories.UserRepository;
-import com.teamAgile.backend.utils.BCryptHashing;
+
+import com.teamAgile.backend.model.User;
+import com.teamAgile.backend.repository.UserRepository;
+import com.teamAgile.backend.util.BCryptHashing;
 
 import java.util.List;
 import java.util.Optional;

@@ -1,8 +1,10 @@
-package com.teamAgile.backend.models;
+package com.teamAgile.backend.model;
 
 import java.util.UUID;
+
+import com.teamAgile.backend.util.BCryptHashing;
+
 import jakarta.persistence.*;
-import com.teamAgile.backend.utils.BCryptHashing;
 
 @Entity
 @Table(name = "users")

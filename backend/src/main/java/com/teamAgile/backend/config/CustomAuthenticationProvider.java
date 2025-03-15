@@ -9,8 +9,8 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 
-import com.teamAgile.backend.models.User;
-import com.teamAgile.backend.services.UserService;
+import com.teamAgile.backend.model.User;
+import com.teamAgile.backend.service.UserService;
 
 import java.util.Collections;
 

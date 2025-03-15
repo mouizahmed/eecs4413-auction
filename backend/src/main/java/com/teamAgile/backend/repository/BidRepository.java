@@ -1,7 +1,9 @@
-package com.teamAgile.backend.repositories;
+package com.teamAgile.backend.repository;
 
 import org.springframework.stereotype.Repository;
-import com.teamAgile.backend.models.Bid;
+
+import com.teamAgile.backend.model.Bid;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 import java.util.Optional;

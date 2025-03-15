@@ -1,4 +1,4 @@
-package com.teamAgile.backend.services;
+package com.teamAgile.backend.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -7,11 +7,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import com.teamAgile.backend.models.AuctionItem;
-import com.teamAgile.backend.models.AuctionItem.AuctionStatus;
-import com.teamAgile.backend.models.ForwardAuctionItem;
-import com.teamAgile.backend.repositories.AuctionRepository;
-import com.teamAgile.backend.repositories.BidRepository;
+import com.teamAgile.backend.model.AuctionItem;
+import com.teamAgile.backend.model.ForwardAuctionItem;
+import com.teamAgile.backend.model.AuctionItem.AuctionStatus;
+import com.teamAgile.backend.repository.AuctionRepository;
+import com.teamAgile.backend.repository.BidRepository;
 
 @Service
 public class AuctionSchedulerService {

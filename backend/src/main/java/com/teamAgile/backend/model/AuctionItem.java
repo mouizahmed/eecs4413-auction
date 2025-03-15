@@ -1,4 +1,4 @@
-package com.teamAgile.backend.models;
+package com.teamAgile.backend.model;
 
 import java.util.UUID;
 import jakarta.persistence.Column;

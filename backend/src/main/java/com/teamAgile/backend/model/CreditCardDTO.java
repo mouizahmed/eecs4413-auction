@@ -1,7 +1,6 @@
-package com.teamAgile.backend.models;
+package com.teamAgile.backend.model;
 
 import java.time.YearMonth;
-import java.util.UUID;
 
 public class CreditCardDTO {
 	private String cardNumber;
