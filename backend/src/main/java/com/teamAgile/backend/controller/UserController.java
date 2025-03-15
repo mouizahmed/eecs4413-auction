@@ -14,13 +14,18 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.teamAgile.backend.DTO.ForgotPasswordDTO;
+import com.teamAgile.backend.DTO.SignInDTO;
+import com.teamAgile.backend.DTO.SignUpDTO;
 import com.teamAgile.backend.model.User;
 import com.teamAgile.backend.service.UserService;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/user")
@@ -42,8 +47,11 @@ public class UserController {
 	}
 
 	@PostMapping("/sign-up")
-	public ResponseEntity<?> signUp(@RequestBody User user) {
-		User createdUser = userService.signUp(user);
+	public ResponseEntity<?> signUp(@Valid @RequestBody SignUpDTO signUpDTO) {
+		
+		User userObj = new User(signUpDTO);
+		
+		User createdUser = userService.signUp(userObj);
 		if (createdUser == null) {
 			return ResponseEntity.status(HttpStatus.CONFLICT).body("Username already taken.");
 		}
@@ -51,34 +59,31 @@ public class UserController {
 	}
 
 	@PostMapping("/sign-in")
-	public ResponseEntity<?> signIn(@RequestBody Map<String, String> loginRequest, HttpServletRequest request) {
-		if (loginRequest.get("username") == null)
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Please provide a username");
-		if (loginRequest.get("password") == null)
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Please provide a password");
+	public ResponseEntity<?> signIn(@Valid @RequestBody SignInDTO signInDTO, HttpServletRequest request) {
 
+		
 		try {
 			// Authenticate using Spring Security
 			Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
-					loginRequest.get("username"), loginRequest.get("password")));
+					signInDTO.getUsername(), signInDTO.getPassword()));
 
 			// Set the authentication in the SecurityContext
 			SecurityContextHolder.getContext().setAuthentication(authentication);
 
 			// Get the authenticated user
-			User user = userService.signIn(loginRequest.get("username"), loginRequest.get("password"));
+			User user = userService.signIn(signInDTO.getUsername(), signInDTO.getPassword());
 
 			// Create new session
 			HttpSession session = request.getSession(true);
 			session.setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
-			Object userObject = Map.of("userID", user.getUserID(), "username", user.getUsername(), "firstName", user.getFirstName(), "lastName", user.getLastName(), "streetNumber", user.getStreetNumber(), "streetName", user.getStreetName(), "postalCode", user.getPostalCode(), "country", user.getCountry());
+			Object userObject = Map.of("userID", user.getUserID(), "username", user.getUsername(), "firstName", user.getFirstName(), "lastName", user.getLastName(), "streetNum", user.getStreetNum(), "streetName", user.getStreetName(), "postalCode", user.getPostalCode(), "city", user.getCity(), "country", user.getCountry());
 			session.setAttribute("user", userObject);
 			session.setMaxInactiveInterval(30 * 60); // 30 minutes
 
 			return ResponseEntity.ok().body(userObject);
 
 		} catch (Exception e) {
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username or password.");
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid username or password.");
 		}
 	}
 
@@ -88,12 +93,24 @@ public class UserController {
 		if (session != null) {
 			session.invalidate();
 			SecurityContextHolder.clearContext();
-			return ResponseEntity.ok("Successfully signed out");
+			return ResponseEntity.ok().body("Successfully signed out");
 		}
+		
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("No active session found");
 	}
 
-	// sent password request request
-
-	// confirm password request code
+	@GetMapping("/get-security-question")
+	public ResponseEntity<?> getSecurityQuestion(@RequestParam("username") String username) {
+	    String securityQuestion = userService.findSecurityQuestionByUsername(username);
+	    if (securityQuestion == null) {
+	        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+	    }
+	    return ResponseEntity.ok(securityQuestion);
+	}
+	
+	@PostMapping("/forgot-password")
+	public ResponseEntity<?> validateSecurityAnswer(@RequestParam("username") String username, @Valid @RequestBody ForgotPasswordDTO forgotPasswordDTO) {
+	    boolean securityQuestion = userService.validateSecurityAnswer(username, forgotPasswordDTO);
+	    return ResponseEntity.ok(securityQuestion);
+	}
 }

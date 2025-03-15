@@ -24,23 +24,16 @@ public class BaseController {
 		if (user == null) {
 			return null;
 		}
-		
-		User userObj = new User();
-		userObj.setUsername((String) user.get("username"));
-		userObj.setPostalCode((String) user.get("postalCode"));
-		userObj.setStreetName((String) user.get("streetName"));
-		userObj.setStreetNumber((int) user.get("streetNumber"));
-		userObj.setCountry((String) user.get("country"));
-		userObj.setFirstName((String) user.get("firstName"));
-		userObj.setLastName((String) user.get("lastName"));
-		userObj.setUserID((UUID) user.get("userID"));
-		
-		
 
-//		Object userID = user.get("userID");
-//		if (userID == null) {
-//			return null;
-//		}
+		Object userID = user.get("userID");
+		if (userID == null) {
+			return null;
+		}
+
+		User userObj = new User((UUID) user.get("userID"), (String) user.get("firstName"),
+				(String) user.get("lastName"), (String) user.get("username"), (String) user.get("streetName"),
+				(Integer) user.get("streetNum"), (String) user.get("postalCode"), (String) user.get("city"),
+				(String) user.get("country"));
 
 		return userObj;
 	}

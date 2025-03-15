@@ -28,7 +28,7 @@ public class SecurityConfig {
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		http.csrf(csrf -> csrf.disable())
 				.authorizeHttpRequests(auth -> auth.requestMatchers(HttpMethod.GET, "/**").permitAll()
-						.requestMatchers("/user/sign-up", "/user/sign-in").permitAll().anyRequest().authenticated())
+						.requestMatchers("/user/sign-up", "/user/sign-in", "user/forgot-password").permitAll().anyRequest().authenticated())
 				.sessionManagement(session -> session
 						.sessionCreationPolicy(org.springframework.security.config.http.SessionCreationPolicy.ALWAYS)
 						.maximumSessions(1))

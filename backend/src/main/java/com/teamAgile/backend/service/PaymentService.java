@@ -58,7 +58,7 @@ public class PaymentService {
         receipt.setExpDate(cardDetails.getExpDate());
         receipt.setSecurityCode(cardDetails.getSecurityCode());
         receipt.setStreetName(user.getStreetName());
-        receipt.setStreetNumber(user.getStreetNumber());
+        receipt.setStreetNumber(user.getStreetNum());
         receipt.setPostalCode(user.getPostalCode());
         receipt.setCountry(user.getCountry());
         receipt.setShippingTime(item.getShippingTime());

@@ -2,6 +2,7 @@ package com.teamAgile.backend.model;
 
 import java.util.UUID;
 
+import com.teamAgile.backend.DTO.SignUpDTO;
 import com.teamAgile.backend.util.BCryptHashing;
 
 import jakarta.persistence.*;
@@ -13,13 +14,13 @@ public class User implements java.io.Serializable {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
-	@Column(name = "userid", nullable = false)
+	@Column(name = "userId", nullable = false)
 	private UUID userID;
 
-	@Column(name = "firstname", nullable = false)
+	@Column(name = "firstName", nullable = false)
 	private String firstName;
 
-	@Column(name = "lastname", nullable = false)
+	@Column(name = "lastName", nullable = false)
 	private String lastName;
 
 	@Column(name = "username", unique = true, nullable = false)
@@ -28,22 +29,61 @@ public class User implements java.io.Serializable {
 	@Column(name = "password", nullable = false)
 	private String password;
 
-	@Column(name = "streetname", nullable = false)
+	@Column(name = "streetName", nullable = false)
 	private String streetName;
 
-	@Column(name = "streetnumber", nullable = false)
-	private int streetNumber;
+	@Column(name = "streetNum", nullable = false)
+	private Integer streetNum;
 
-	@Column(name = "postalcode", nullable = false)
+	@Column(name = "postalCode", nullable = false)
 	private String postalCode;
 
+	@Column(name = "city", nullable = false)
+	private String city;
+	
 	@Column(name = "country", nullable = false)
 	private String country;
+	
+	@Column(name = "securityQuestion", nullable = false)
+	private String securityQuestion;
+	
+	@Column(name = "securityAnswer", nullable = false)
+	private String securityAnswer;
 
 	public User() {
-
+	}
+	
+	public User(UUID userID, String firstName, String lastName, String username, String streetName, Integer streetNum, String postalCode, String city, String country) {
+		this.userID = userID;
+		this.firstName = firstName;
+		this.lastName = lastName;
+		this.username = username;
+		this.password = null;
+		this.streetName = streetName;
+		this.streetNum = streetNum;
+		this.postalCode = postalCode;
+		this.city = city;
+		this.country = country;
+		this.securityQuestion = null;
+		this.securityAnswer = null;
+	}
+	
+	public User(SignUpDTO signUpDTO) {
+		this.firstName = signUpDTO.getFirstName();
+		this.lastName = signUpDTO.getLastName();
+		this.username = signUpDTO.getUsername();
+		this.password = BCryptHashing.hashPassword(signUpDTO.getPassword());
+		this.streetName = signUpDTO.getStreetName();
+		this.streetNum = signUpDTO.getStreetNum();
+		this.postalCode = signUpDTO.getPostalCode();
+		this.city = signUpDTO.getCity();
+		this.country = signUpDTO.getCountry();
+		this.securityQuestion = signUpDTO.getSecurityQuestion();
+		this.securityAnswer = signUpDTO.getSecurityAnswer();
 	}
 
+	
+	// getters
 	public UUID getUserID() {
 		return userID;
 	}
@@ -68,18 +108,32 @@ public class User implements java.io.Serializable {
 		return streetName;
 	}
 
-	public int getStreetNumber() {
-		return streetNumber;
+	public Integer getStreetNum() {
+		return streetNum;
 	}
 
 	public String getPostalCode() {
 		return postalCode;
+	}
+	
+	public String getCity() {
+		return city;
 	}
 
 	public String getCountry() {
 		return country;
 	}
 	
+	public String getSecurityQuestion() {
+		return securityQuestion;
+	}
+	
+	public String getSecurityAnswer() {
+		return securityAnswer;
+	}
+	
+	
+	// setters
 	public void setUserID(UUID userID) {
 		this.userID = userID;
 	}
@@ -104,15 +158,27 @@ public class User implements java.io.Serializable {
 		this.streetName = streetName;
 	}
 
-	public void setStreetNumber(int streetNumber) {
-		this.streetNumber = streetNumber;
+	public void setStreetNum(Integer streetNum) {
+		this.streetNum = streetNum;
 	}
 
 	public void setPostalCode(String postalCode) {
 		this.postalCode = postalCode;
 	}
+	
+	public void setCity(String city) {
+		this.city = city;
+	}
 
 	public void setCountry(String country) {
 		this.country = country;
+	}
+	
+	public void setSecurityQuestion(String securityQuestion) {
+		this.securityQuestion = securityQuestion;
+	}
+	
+	public void setSecurityAnswer(String securityAnswer) {
+		this.securityAnswer = securityAnswer;
 	}
 }
