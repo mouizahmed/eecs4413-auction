@@ -60,12 +60,13 @@ public abstract class AuctionItem {
     protected AuctionItem() {
     }
 
-    public AuctionItem(String itemName, UUID sellerID, AuctionStatus auctionStatus, Double currentPrice, Integer shippingTime) {
+    public AuctionItem(String itemName, UUID sellerID, AuctionType auctionType, AuctionStatus auctionStatus, Double currentPrice, Integer shippingTime) {
         this.itemName = itemName;
         this.currentPrice = currentPrice;
         this.shippingTime = shippingTime;
         this.sellerID = sellerID;
         this.auctionStatus = auctionStatus;
+        this.auctionType = auctionType;
     }
 
     public UUID getItemID() {

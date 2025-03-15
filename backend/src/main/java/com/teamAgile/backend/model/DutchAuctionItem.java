@@ -18,7 +18,10 @@ public class DutchAuctionItem extends AuctionItem {
 
 	public DutchAuctionItem(String itemName, UUID sellerID, AuctionStatus auctionStatus, Double currentPrice,
 			Integer shippingTime, Double reservePrice) {
-		super(itemName, sellerID, auctionStatus, currentPrice, shippingTime);
+		super(itemName, sellerID, AuctionType.DUTCH, auctionStatus, currentPrice, shippingTime);
+		if (reservePrice >= currentPrice) {
+	        throw new IllegalArgumentException("Reserve price must be below the current price.");
+	    }
 		this.reservePrice = reservePrice;
 	}
 
@@ -27,6 +30,9 @@ public class DutchAuctionItem extends AuctionItem {
 	}
 
 	public void setReservePrice(Double reservePrice) {
+		if (reservePrice >= this.getCurrentPrice()) {
+	        throw new IllegalArgumentException("Reserve price must be below the current price.");
+	    }
 		this.reservePrice = reservePrice;
 	}
 

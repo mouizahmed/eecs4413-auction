@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.teamAgile.backend.DTO.CreditCardDTO;
+import com.teamAgile.backend.DTO.DutchItemDTO;
 import com.teamAgile.backend.DTO.ForwardItemDTO;
 import com.teamAgile.backend.model.AuctionItem;
 import com.teamAgile.backend.model.Bid;
@@ -86,7 +87,7 @@ public class AuctionController extends BaseController {
 	}
 
 	@PostMapping("/dutch/post")
-	public ResponseEntity<?> uploadDutchAuctionItem(@RequestBody DutchAuctionItem auctionItem,
+	public ResponseEntity<?> uploadDutchAuctionItem(@Valid @RequestBody DutchItemDTO dutchItemDTO,
 			HttpServletRequest request) {
 
 		User currentUser = getCurrentUser(request);
@@ -100,13 +101,11 @@ public class AuctionController extends BaseController {
 			if (userID == null)
 				throw new IllegalArgumentException("No UserID");
 
-			AuctionItem item = auctionService.createDutchItem(auctionItem, userID);
-
+			AuctionItem item = auctionService.createDutchItem(dutchItemDTO, userID);
 			return ResponseEntity.status(HttpStatus.CREATED).body(item);
 		} catch (Exception e) {
 			return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
 		}
-
 	}
 
 	@PostMapping("/forward/{itemID}/bid")

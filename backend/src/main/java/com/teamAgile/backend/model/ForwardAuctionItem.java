@@ -20,7 +20,10 @@ public class ForwardAuctionItem extends AuctionItem {
 	}
 	
 	public ForwardAuctionItem(String itemName, UUID sellerID, AuctionStatus auctionStatus, Double currentPrice, Integer shippingTime, LocalDateTime endTime) {
-        super(itemName, sellerID, auctionStatus, currentPrice, shippingTime);
+        super(itemName, sellerID, AuctionType.FORWARD, auctionStatus, currentPrice, shippingTime);
+        if (endTime.isBefore(LocalDateTime.now())) {
+        	throw new IllegalArgumentException("End time must be in the future.");
+        }
         this.endTime = endTime;
     }
 
@@ -29,6 +32,9 @@ public class ForwardAuctionItem extends AuctionItem {
 	}
 
 	public void setEndTime(LocalDateTime endTime) {
+		if (endTime.isBefore(LocalDateTime.now())) {
+        	throw new IllegalArgumentException("End time must be in the future.");
+        }
 		this.endTime = endTime;
 	}
 

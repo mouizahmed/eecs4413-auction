@@ -7,6 +7,7 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.teamAgile.backend.DTO.DutchItemDTO;
 import com.teamAgile.backend.DTO.ForwardItemDTO;
 import com.teamAgile.backend.model.AuctionItem;
 import com.teamAgile.backend.model.DutchAuctionItem;
@@ -37,7 +38,7 @@ public class AuctionService {
 		return items;
 	}
 
-	public AuctionItem createForwardItem(@Valid ForwardItemDTO forwardItemDTO, UUID userID) {
+	public AuctionItem createForwardItem(ForwardItemDTO forwardItemDTO, UUID userID) {
 		Optional<?> existingItem = auctionRepository.findByItemName(forwardItemDTO.getItemName());
 		if (existingItem.isPresent())
 			throw new IllegalArgumentException("Auction item already exists.");
@@ -57,20 +58,20 @@ public class AuctionService {
 		return savedItem;
 	}
 
-	public AuctionItem createDutchItem(DutchAuctionItem auctionItem, UUID userID) {
-		Optional<?> existingItem = auctionRepository.findByItemName(auctionItem.getItemName());
+	public AuctionItem createDutchItem(DutchItemDTO dutchItemDTO, UUID userID) {
+		Optional<?> existingItem = auctionRepository.findByItemName(dutchItemDTO.getItemName());
 		if (existingItem.isPresent())
 			throw new IllegalArgumentException("Auction item already exists.");
 
-		if (auctionItem.getAuctionType() == AuctionItem.AuctionType.FORWARD)
+		if (dutchItemDTO.getAuctionType() == AuctionItem.AuctionType.FORWARD)
 			throw new IllegalArgumentException("Cannot create a Dutch auction item with FORWARD auction type.");
 
-		if (auctionItem.getReservePrice() == null)
+		if (dutchItemDTO.getReservePrice() == null)
 			throw new IllegalArgumentException("Dutch auction items must have a reserve price.");
 
-		auctionItem.setSellerID(userID);
+		DutchAuctionItem dutchItem = new DutchAuctionItem(dutchItemDTO.getItemName(), userID, dutchItemDTO.getAuctionStatus(), dutchItemDTO.getCurrentPrice(), dutchItemDTO.getShippingTime(), dutchItemDTO.getReservePrice());
 
-		AuctionItem savedItem = auctionRepository.save(auctionItem);
+		AuctionItem savedItem = auctionRepository.save(dutchItem);
 
 		// Broadcast the new item creation
 		auctionWebSocketHandler.broadcastAuctionUpdate(savedItem);
