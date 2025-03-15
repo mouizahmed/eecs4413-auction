@@ -9,6 +9,7 @@ import com.teamAgile.backend.model.AuctionItem;
 import com.teamAgile.backend.model.Bid;
 import com.teamAgile.backend.model.DutchAuctionItem;
 import com.teamAgile.backend.model.ForwardAuctionItem;
+import com.teamAgile.backend.model.User;
 import com.teamAgile.backend.repository.AuctionRepository;
 import com.teamAgile.backend.repository.BidRepository;
 import com.teamAgile.backend.websocket.AuctionWebSocketHandler;
@@ -28,9 +29,9 @@ public class BidService {
 		this.auctionWebSocketHandler = auctionWebSocketHandler;
 	}
 
-	public Bid createForwardBid(UUID itemId, UUID userID, Double bidAmount) {
+	public Bid createForwardBid(UUID itemId, User user, Double bidAmount) {
 		// Get the auction item
-		Optional<AuctionItem> itemOptional = auctionRepository.findById(itemId);
+		Optional<AuctionItem> itemOptional = auctionRepository.findByItemID(itemId);
 		if (itemOptional.isEmpty()) {
 			throw new IllegalArgumentException("Auction item not found");
 		}
@@ -45,10 +46,10 @@ public class BidService {
 		ForwardAuctionItem forwardItem = (ForwardAuctionItem) item;
 
 		// Create new bid
-		Bid bid = new Bid(itemId, userID, bidAmount);
+		Bid bid = new Bid(itemId, user, bidAmount);
 
 		// Place the bid on the auction item
-		forwardItem.placeBid(bidAmount, userID);
+		forwardItem.placeBid(bidAmount, user);
 
 		// Save both the bid and the updated auction item
 		AuctionItem savedItem = auctionRepository.save(forwardItem);
@@ -61,9 +62,9 @@ public class BidService {
 		return savedBid;
 	}
 
-	public Bid createDutchBid(UUID itemId, UUID userID, Double bidAmount) {
+	public Bid createDutchBid(UUID itemId, User user, Double bidAmount) {
 		// Get the auction item
-		Optional<AuctionItem> itemOptional = auctionRepository.findById(itemId);
+		Optional<AuctionItem> itemOptional = auctionRepository.findByItemID(itemId);
 		if (itemOptional.isEmpty()) {
 			throw new IllegalArgumentException("Auction item not found");
 		}
@@ -78,10 +79,10 @@ public class BidService {
 		DutchAuctionItem dutchItem = (DutchAuctionItem) item;
 
 		// Create new bid
-		Bid bid = new Bid(itemId, userID, bidAmount);
+		Bid bid = new Bid(itemId, user, bidAmount);
 
 		// Place bid
-		dutchItem.placeBid(bidAmount, userID);
+		dutchItem.placeBid(bidAmount, user);
 
 		// Save both the bid and the updated auction item
 		AuctionItem savedItem = auctionRepository.save(dutchItem);
@@ -99,10 +100,10 @@ public class BidService {
 	}
 
 	public List<Bid> getBidsByUserId(UUID userId) {
-		return bidRepository.findByUserID(userId);
+		return bidRepository.findByUser_UserID(userId);
 	}
 
 	public Optional<Bid> getBidById(UUID bidId) {
-		return bidRepository.findById(bidId);
+		return bidRepository.findByBidID(bidId);
 	}
 }

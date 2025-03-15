@@ -34,7 +34,7 @@ public class PaymentService {
 
 	public Receipt createPayment(UUID itemID, User user, CreditCardDTO cardDetails) {
 
-		Optional<AuctionItem> itemOptional = auctionRepository.findById(itemID);
+		Optional<AuctionItem> itemOptional = auctionRepository.findByItemID(itemID);
 		if (itemOptional.isEmpty()) {
 			throw new IllegalArgumentException("Auction item not found");
 		}
@@ -44,7 +44,7 @@ public class PaymentService {
 
 		CreditCard creditCard = new CreditCard(cardDetails.getCardNum(), cardDetails.getCardName(), cardDetails.getExpDate(), cardDetails.getSecurityCode());
 		Receipt receipt = new Receipt(itemID, user, item.getCurrentPrice(), creditCard, user.getAddress(), item.getShippingTime());
-		item.makePayment(user.getUserID());
+		item.makePayment(user);
 		
 		auctionRepository.save(item);
 		receiptRepository.save(receipt);

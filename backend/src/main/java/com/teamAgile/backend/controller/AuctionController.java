@@ -88,12 +88,7 @@ public class AuctionController extends BaseController {
 		User currentUser = getCurrentUser(request);
 
 		try {
-			UUID userID = (UUID) currentUser.getUserID();
-			if (userID == null)
-				throw new IllegalArgumentException("No UserID");
-
-			AuctionItem item = auctionService.createForwardItem(forwardItemDTO, userID);
-
+			AuctionItem item = auctionService.createForwardItem(forwardItemDTO, currentUser);
 			return ResponseEntity.status(HttpStatus.CREATED).body(item);
 		} catch (Exception e) {
 			return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
@@ -111,11 +106,7 @@ public class AuctionController extends BaseController {
 		}
 
 		try {
-			UUID userID = (UUID) currentUser.getUserID();
-			if (userID == null)
-				throw new IllegalArgumentException("No UserID");
-
-			AuctionItem item = auctionService.createDutchItem(dutchItemDTO, userID);
+			AuctionItem item = auctionService.createDutchItem(dutchItemDTO, currentUser);
 			return ResponseEntity.status(HttpStatus.CREATED).body(item);
 		} catch (Exception e) {
 			return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
@@ -131,7 +122,7 @@ public class AuctionController extends BaseController {
 		}
 
 		try {
-			Bid bid = bidService.createForwardBid(UUID.fromString(itemID), currentUser.getUserID(),
+			Bid bid = bidService.createForwardBid(UUID.fromString(itemID), currentUser,
 					Double.valueOf(bidAmount));
 			return ResponseEntity.ok(bid);
 		} catch (IllegalArgumentException e) {
@@ -150,7 +141,7 @@ public class AuctionController extends BaseController {
 		}
 
 		try {
-			Bid bid = bidService.createDutchBid(UUID.fromString(itemID), currentUser.getUserID(),
+			Bid bid = bidService.createDutchBid(UUID.fromString(itemID), currentUser,
 					Double.valueOf(bidAmount));
 			return ResponseEntity.ok(bid);
 		} catch (IllegalArgumentException e) {

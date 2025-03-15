@@ -45,7 +45,6 @@ public class AuctionItemDTO {
     }
     
     public void setAuctionType(AuctionType auctionType) {
-		// TODO Auto-generated method stub
     	this.auctionType = auctionType;
 		
 	}

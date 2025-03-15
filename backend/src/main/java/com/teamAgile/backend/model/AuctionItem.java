@@ -8,7 +8,7 @@ import jakarta.persistence.*;
 @DiscriminatorColumn(name = "auctionType", discriminatorType = DiscriminatorType.STRING, columnDefinition = "varchar(10)")
 @Table(name = "auctionItems")
 public abstract class AuctionItem {
-    
+
     public enum AuctionType {
         FORWARD, DUTCH
     }
@@ -121,7 +121,7 @@ public abstract class AuctionItem {
      * Base behavior for placing a bid.
      * Subclasses can override this method.
      */
-    public void placeBid(Double bidAmount, UUID userID) {
+    public void placeBid(Double bidAmount, User user) {
         // Base behavior can be overridden by subclasses.
     }
     
@@ -131,8 +131,8 @@ public abstract class AuctionItem {
      *
      * @param userID the ID of the user attempting to make the payment
      */
-    public void makePayment(UUID userID) {
-        if (this.getHighestBidder() == null || !this.getHighestBidder().getUserID().equals(userID)) {
+    public void makePayment(User user) {
+        if (this.getHighestBidder() == null || !this.getHighestBidder().getUserID().equals(user.getUserID())) {
             throw new IllegalArgumentException("You must be the winning bidder to place a payment on this item.");
         } else if (!this.getAuctionStatus().equals(AuctionStatus.SOLD)) {
             throw new IllegalArgumentException("The auction is either over or still ongoing.");

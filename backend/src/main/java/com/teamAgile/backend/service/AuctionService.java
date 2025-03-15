@@ -12,6 +12,7 @@ import com.teamAgile.backend.DTO.ForwardItemDTO;
 import com.teamAgile.backend.model.AuctionItem;
 import com.teamAgile.backend.model.DutchAuctionItem;
 import com.teamAgile.backend.model.ForwardAuctionItem;
+import com.teamAgile.backend.model.User;
 import com.teamAgile.backend.repository.AuctionRepository;
 import com.teamAgile.backend.websocket.AuctionWebSocketHandler;
 
@@ -58,7 +59,7 @@ public class AuctionService {
 		return itemOptional.get();
 	}
 
-	public AuctionItem createForwardItem(ForwardItemDTO forwardItemDTO, UUID userID) {
+	public AuctionItem createForwardItem(ForwardItemDTO forwardItemDTO, User user) {
 		Optional<?> existingItem = auctionRepository.findByItemName(forwardItemDTO.getItemName());
 		if (existingItem.isPresent())
 			throw new IllegalArgumentException("Auction item already exists.");
@@ -69,7 +70,7 @@ public class AuctionService {
 		if (forwardItemDTO.getEndTime() == null)
 			throw new IllegalArgumentException("Forward auction items must have an end time.");
 
-		ForwardAuctionItem forwardItem = new ForwardAuctionItem(forwardItemDTO.getItemName(), userID,
+		ForwardAuctionItem forwardItem = new ForwardAuctionItem(forwardItemDTO.getItemName(), user,
 				forwardItemDTO.getAuctionStatus(), forwardItemDTO.getCurrentPrice(), forwardItemDTO.getShippingTime(),
 				forwardItemDTO.getEndTime());
 
@@ -78,7 +79,7 @@ public class AuctionService {
 		return savedItem;
 	}
 
-	public AuctionItem createDutchItem(DutchItemDTO dutchItemDTO, UUID userID) {
+	public AuctionItem createDutchItem(DutchItemDTO dutchItemDTO, User user) {
 		Optional<?> existingItem = auctionRepository.findByItemName(dutchItemDTO.getItemName());
 		if (existingItem.isPresent())
 			throw new IllegalArgumentException("Auction item already exists.");
@@ -89,7 +90,7 @@ public class AuctionService {
 		if (dutchItemDTO.getReservePrice() == null)
 			throw new IllegalArgumentException("Dutch auction items must have a reserve price.");
 
-		DutchAuctionItem dutchItem = new DutchAuctionItem(dutchItemDTO.getItemName(), userID,
+		DutchAuctionItem dutchItem = new DutchAuctionItem(dutchItemDTO.getItemName(), user,
 				dutchItemDTO.getAuctionStatus(), dutchItemDTO.getCurrentPrice(), dutchItemDTO.getShippingTime(),
 				dutchItemDTO.getReservePrice());
 
@@ -106,7 +107,7 @@ public class AuctionService {
 
 		AuctionItem item = itemOptional.get();
 
-		if (!item.getSellerID().equals(userID))
+		if (!item.getSeller().getUserID().equals(userID))
 			throw new IllegalArgumentException("You must be the seller to decrease the price.");
 		if (item.getAuctionStatus() != AuctionItem.AuctionStatus.AVAILABLE)
 			throw new IllegalArgumentException("Auction Item is no longer available to make changes.");

@@ -68,7 +68,7 @@ public class AuctionWebSocketHandler extends TextWebSocketHandler {
 					UUID itemId = UUID.fromString(itemIdStr);
 
 					// Validate that the item exists in the database
-					Optional<AuctionItem> itemOptional = auctionRepository.findById(itemId);
+					Optional<AuctionItem> itemOptional = auctionRepository.findByItemID(itemId);
 					if (itemOptional.isEmpty()) {
 						throw new IllegalArgumentException("Auction item with ID " + itemId + " does not exist");
 					}
@@ -91,7 +91,7 @@ public class AuctionWebSocketHandler extends TextWebSocketHandler {
 	public void broadcastNewPayment(Receipt receipt) {
 		try {
 			// Fetch the auction item to include its details
-			Optional<AuctionItem> itemOptional = auctionRepository.findById(receipt.getItemID());
+			Optional<AuctionItem> itemOptional = auctionRepository.findByItemID(receipt.getItemID());
 			if (itemOptional.isEmpty()) {
 				System.err.println("Cannot broadcast payment for non-existent item: " + receipt.getItemID());
 				return;
@@ -133,7 +133,7 @@ public class AuctionWebSocketHandler extends TextWebSocketHandler {
 	public void broadcastNewBid(Bid bid) {
 		try {
 			// Fetch the auction item to include its details
-			Optional<AuctionItem> itemOptional = auctionRepository.findById(bid.getItemID());
+			Optional<AuctionItem> itemOptional = auctionRepository.findByItemID(bid.getItemID());
 			if (itemOptional.isEmpty()) {
 				System.err.println("Cannot broadcast bid for non-existent item: " + bid.getItemID());
 				return;

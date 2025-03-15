@@ -16,9 +16,9 @@ public class DutchAuctionItem extends AuctionItem {
 
 	}
 
-	public DutchAuctionItem(String itemName, UUID sellerID, AuctionStatus auctionStatus, Double currentPrice,
+	public DutchAuctionItem(String itemName, User seller, AuctionStatus auctionStatus, Double currentPrice,
 			Integer shippingTime, Double reservePrice) {
-		super(itemName, sellerID, AuctionType.DUTCH, auctionStatus, currentPrice, shippingTime);
+		super(itemName, seller, AuctionType.DUTCH, auctionStatus, currentPrice, shippingTime);
 		if (reservePrice >= currentPrice) {
 	        throw new IllegalArgumentException("Reserve price must be below the current price.");
 	    }
@@ -37,12 +37,12 @@ public class DutchAuctionItem extends AuctionItem {
 	}
 
 	@Override
-	public void placeBid(Double bidAmount, UUID userID) {
+	public void placeBid(Double bidAmount, User user) {
 		if (this.getAuctionStatus() != AuctionStatus.AVAILABLE)
 			throw new IllegalArgumentException("Auction Item is currently not available.");
 		if (!this.getCurrentPrice().equals(bidAmount))
 			throw new IllegalArgumentException("Bid price does not equal to current price.");
-		this.setHighestBidderID(userID);
+		this.setHighestBidder(user);
 		this.setAuctionStatus(AuctionStatus.SOLD);
 	}
 

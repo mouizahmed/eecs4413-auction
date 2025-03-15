@@ -16,8 +16,8 @@ public class ForwardAuctionItem extends AuctionItem {
 		
 	}
 	
-	public ForwardAuctionItem(String itemName, UUID sellerID, AuctionStatus auctionStatus, Double currentPrice, Integer shippingTime, LocalDateTime endTime) {
-        super(itemName, sellerID, AuctionType.FORWARD, auctionStatus, currentPrice, shippingTime);
+	public ForwardAuctionItem(String itemName, User seller, AuctionStatus auctionStatus, Double currentPrice, Integer shippingTime, LocalDateTime endTime) {
+        super(itemName, seller, AuctionType.FORWARD, auctionStatus, currentPrice, shippingTime);
         if (endTime.isBefore(LocalDateTime.now())) {
         	throw new IllegalArgumentException("End time must be in the future.");
         }
@@ -36,7 +36,7 @@ public class ForwardAuctionItem extends AuctionItem {
 	}
 
 	@Override
-	public void placeBid(Double bidAmount, UUID userID) {
+	public void placeBid(Double bidAmount, User user) {
 		if (this.getAuctionStatus() != AuctionStatus.AVAILABLE)
 			throw new IllegalArgumentException("Auction Item is currently not available.");
 		else if (this.getCurrentPrice() > bidAmount)
@@ -44,7 +44,7 @@ public class ForwardAuctionItem extends AuctionItem {
 		else if (LocalDateTime.now().isAfter(this.getEndTime()))
 			throw new IllegalArgumentException("This forward auction has now closed.");
 		
-		this.setHighestBidderID(userID);
+		this.setHighestBidder(user);
 		this.setCurrentPrice(bidAmount);
 	}
 }
