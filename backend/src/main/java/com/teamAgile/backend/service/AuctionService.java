@@ -37,24 +37,24 @@ public class AuctionService {
 		List<AuctionItem> items = auctionRepository.findByItemNameContainingIgnoreCase(keyword);
 		return items;
 	}
-	
+
 	public AuctionItem getAuctionItemByID(UUID itemID) {
 		Optional<AuctionItem> itemOptional = auctionRepository.findByItemID(itemID);
 		if (itemOptional.isEmpty()) {
 			return null;
 		}
-		
+
 		return itemOptional.get();
-		
+
 	}
-	
+
 	public AuctionItem getAuctionItemByName(String itemName) {
 		Optional<AuctionItem> itemOptional = auctionRepository.findByItemName(itemName);
-		
+
 		if (itemOptional.isEmpty()) {
 			return null;
 		}
-		
+
 		return itemOptional.get();
 	}
 
@@ -69,9 +69,9 @@ public class AuctionService {
 		if (forwardItemDTO.getEndTime() == null)
 			throw new IllegalArgumentException("Forward auction items must have an end time.");
 
-		
-		
-		ForwardAuctionItem forwardItem = new ForwardAuctionItem(forwardItemDTO.getItemName(), userID, forwardItemDTO.getAuctionStatus(), forwardItemDTO.getCurrentPrice(), forwardItemDTO.getShippingTime(), forwardItemDTO.getEndTime());
+		ForwardAuctionItem forwardItem = new ForwardAuctionItem(forwardItemDTO.getItemName(), userID,
+				forwardItemDTO.getAuctionStatus(), forwardItemDTO.getCurrentPrice(), forwardItemDTO.getShippingTime(),
+				forwardItemDTO.getEndTime());
 
 		AuctionItem savedItem = auctionRepository.save(forwardItem);
 
@@ -89,12 +89,11 @@ public class AuctionService {
 		if (dutchItemDTO.getReservePrice() == null)
 			throw new IllegalArgumentException("Dutch auction items must have a reserve price.");
 
-		DutchAuctionItem dutchItem = new DutchAuctionItem(dutchItemDTO.getItemName(), userID, dutchItemDTO.getAuctionStatus(), dutchItemDTO.getCurrentPrice(), dutchItemDTO.getShippingTime(), dutchItemDTO.getReservePrice());
+		DutchAuctionItem dutchItem = new DutchAuctionItem(dutchItemDTO.getItemName(), userID,
+				dutchItemDTO.getAuctionStatus(), dutchItemDTO.getCurrentPrice(), dutchItemDTO.getShippingTime(),
+				dutchItemDTO.getReservePrice());
 
 		AuctionItem savedItem = auctionRepository.save(dutchItem);
-
-		// Broadcast the new item creation
-		auctionWebSocketHandler.broadcastAuctionUpdate(savedItem);
 
 		return savedItem;
 	}

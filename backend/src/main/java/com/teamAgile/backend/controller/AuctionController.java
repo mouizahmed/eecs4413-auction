@@ -78,7 +78,7 @@ public class AuctionController extends BaseController {
 			return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
 		}
 	}
-	
+
 	@GetMapping("/get-by-name")
 	public ResponseEntity<?> getAuctionItemByName(@RequestParam("itemName") String itemName) {
 		try {
@@ -88,8 +88,6 @@ public class AuctionController extends BaseController {
 			return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
 		}
 	}
-	
-	
 
 	@PostMapping("/forward/post")
 	public ResponseEntity<?> uploadForwardAuctionItem(@Valid @RequestBody ForwardItemDTO forwardItemDTO,
@@ -181,24 +179,23 @@ public class AuctionController extends BaseController {
 		}
 	}
 
-//	@PatchMapping("/dutch/decreasePrice")
-//	public ResponseEntity<?> decreaseDutchPrice(@RequestParam("itemID") UUID itemID,
-//			@RequestBody Map<String, Double> decreasePriceRequest, HttpServletRequest request) {
-//
-//		User currentUser = getCurrentUser(request);
-//		if (currentUser == null) {
-//			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-//		}
-//
-//		try {
-//			UUID userID = (UUID) currentUser.getUserID();
-//			Double decreaseBy = decreasePriceRequest.get("decreaseBy");
-//			AuctionItem item = auctionService.decreaseDutchPrice(itemID, userID, decreaseBy);
-//			return ResponseEntity.ok(item);
-//		} catch (Exception e) {
-//			return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
-//		}
-//	}
+	@PatchMapping("/dutch/decreasePrice")
+	public ResponseEntity<?> decreaseDutchPrice(@RequestParam("itemID") String itemID,
+			@RequestParam("decreaseBy") String decreaseBy, HttpServletRequest request) {
+
+		User currentUser = getCurrentUser(request);
+		if (currentUser == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+		}
+
+		try {
+			AuctionItem item = auctionService.decreaseDutchPrice(UUID.fromString(itemID), currentUser.getUserID(),
+					Double.valueOf(decreaseBy));
+			return ResponseEntity.ok(item);
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+		}
+	}
 
 	@PostMapping("/pay/{itemID}")
 	public ResponseEntity<?> processPayment(@PathVariable UUID itemID, @RequestBody CreditCardDTO cardDetails,

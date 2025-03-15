@@ -51,7 +51,7 @@ public class DutchAuctionItem extends AuctionItem {
 		if (newPrice > this.getReservePrice()) {
 			this.setCurrentPrice(newPrice);
 		} else {
-			this.setCurrentPrice(newPrice);
+			this.setCurrentPrice(this.getReservePrice());
 			this.setAuctionStatus(AuctionStatus.EXPIRED);
 		}
 	}
