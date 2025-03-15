@@ -40,7 +40,7 @@ public class DutchAuctionItem extends AuctionItem {
 	public void placeBid(Double bidAmount, UUID userID) {
 		if (this.getAuctionStatus() != AuctionStatus.AVAILABLE)
 			throw new IllegalArgumentException("Auction Item is currently not available.");
-		if (this.getCurrentPrice() != bidAmount)
+		if (!this.getCurrentPrice().equals(bidAmount))
 			throw new IllegalArgumentException("Bid price does not equal to current price.");
 		this.setHighestBidderID(userID);
 		this.setAuctionStatus(AuctionStatus.SOLD);
