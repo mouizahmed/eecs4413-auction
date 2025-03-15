@@ -2,22 +2,23 @@ package com.teamAgile.backend.websocket;
 
 import java.util.UUID;
 
-/**
- * Message class for auction updates sent through WebSocket
- */
 public class AuctionUpdateMessage {
-    private String type;
+	
+	public enum AuctionUpdateType {
+		AUCTION_UPDATE
+	}
+	
+    private AuctionUpdateType type;
     private UUID itemId;
     private String itemName;
     private Double currentPrice;
-    private String highestBidder;
+    private UUID highestBidder;
     private String auctionStatus;
 
-    // Default constructor for Jackson
     public AuctionUpdateMessage() {
     }
 
-    public AuctionUpdateMessage(String type, UUID itemId, String itemName, Double currentPrice, String highestBidder,
+    public AuctionUpdateMessage(AuctionUpdateType type, UUID itemId, String itemName, Double currentPrice, UUID highestBidder,
             String auctionStatus) {
         this.type = type;
         this.itemId = itemId;
@@ -27,11 +28,11 @@ public class AuctionUpdateMessage {
         this.auctionStatus = auctionStatus;
     }
 
-    public String getType() {
+    public AuctionUpdateType getType() {
         return type;
     }
 
-    public void setType(String type) {
+    public void setType(AuctionUpdateType type) {
         this.type = type;
     }
 
@@ -59,11 +60,11 @@ public class AuctionUpdateMessage {
         this.currentPrice = currentPrice;
     }
 
-    public String getHighestBidder() {
+    public UUID getHighestBidder() {
         return highestBidder;
     }
 
-    public void setHighestBidder(String highestBidder) {
+    public void setHighestBidder(UUID highestBidder) {
         this.highestBidder = highestBidder;
     }
 

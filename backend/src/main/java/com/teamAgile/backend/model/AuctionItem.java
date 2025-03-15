@@ -54,7 +54,7 @@ public abstract class AuctionItem {
     private UUID sellerID;
 
     @Column(name = "highestbidder")
-    private String highestBidder;
+    private UUID highestBidder;
 
     // Default no-argument constructor required by JPA
     protected AuctionItem() {
@@ -93,7 +93,7 @@ public abstract class AuctionItem {
         return sellerID;
     }
 
-    public String getHighestBidder() {
+    public UUID getHighestBidder() {
         return highestBidder;
     }
 
@@ -113,7 +113,7 @@ public abstract class AuctionItem {
         this.auctionStatus = auctionStatus;
     }
 
-    public void setHighestBidder(String highestBidder) {
+    public void setHighestBidder(UUID highestBidder) {
         this.highestBidder = highestBidder;
     }
 
@@ -121,7 +121,15 @@ public abstract class AuctionItem {
         this.sellerID = sellerID;
     }
 
-    public void placeBid(double newBid, String username) {
+    public void placeBid(double newBid, UUID userID) {
         // Base behavior can be overridden by subclasses.
+    }
+    
+    public void makePayment(UUID userID) {
+    	if (!this.getHighestBidder().equals(userID)) {
+    		throw new IllegalArgumentException("You must be the winning bidder to place a payment on this item.");
+    	}
+    	
+    	this.setAuctionStatus(AuctionStatus.PAID);
     }
 }

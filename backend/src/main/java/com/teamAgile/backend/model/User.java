@@ -79,6 +79,10 @@ public class User implements java.io.Serializable {
 	public String getCountry() {
 		return country;
 	}
+	
+	public void setUserID(UUID userID) {
+		this.userID = userID;
+	}
 
 	public void setFirstName(String firstName) {
 		this.firstName = firstName;

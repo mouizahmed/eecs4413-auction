@@ -69,7 +69,7 @@ public class BidService {
         bid.setBidPrice(bidPrice);
 
         // Place the bid on the auction item
-        forwardItem.placeBid(bidPrice, userId.toString());
+        forwardItem.placeBid(bidPrice, userId);
 
         // Save both the bid and the updated auction item
         AuctionItem savedItem = auctionRepository.save(forwardItem);
@@ -77,6 +77,7 @@ public class BidService {
 
         // Broadcast the update via WebSocket
         auctionWebSocketHandler.broadcastAuctionUpdate(savedItem);
+        auctionWebSocketHandler.broadcastNewBid(savedBid);
 
         return savedBid;
     }
@@ -116,7 +117,7 @@ public class BidService {
 
         // Update the auction item status to SOLD
         dutchItem.setAuctionStatus(AuctionItem.AuctionStatus.SOLD);
-        dutchItem.setHighestBidder(userId.toString());
+        dutchItem.setHighestBidder(userId);
 
         // Save both the bid and the updated auction item
         AuctionItem savedItem = auctionRepository.save(dutchItem);
@@ -124,6 +125,7 @@ public class BidService {
 
         // Broadcast the update via WebSocket
         auctionWebSocketHandler.broadcastAuctionUpdate(savedItem);
+        auctionWebSocketHandler.broadcastNewBid(savedBid);
 
         return savedBid;
     }

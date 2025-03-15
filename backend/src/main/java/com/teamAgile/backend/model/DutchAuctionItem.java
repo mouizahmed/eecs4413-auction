@@ -1,5 +1,7 @@
 package com.teamAgile.backend.model;
 
+import java.util.UUID;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
@@ -23,10 +25,10 @@ public class DutchAuctionItem extends AuctionItem {
 	}
 	
 	@Override
-	public void placeBid(double newBid, String username) {
+	public void placeBid(double newBid, UUID userID) {
 		if (this.getAuctionStatus() != AuctionStatus.AVAILABLE) throw new IllegalArgumentException("Auction Item is currently not available.");
 		if (this.getCurrentPrice() != newBid) throw new IllegalArgumentException("Bid price does not equal to current price.");
-		this.setHighestBidder(username);
+		this.setHighestBidder(userID);
 		this.setAuctionStatus(AuctionStatus.SOLD);
 	}
 	
