@@ -3,6 +3,7 @@ package com.teamAgile.backend.controller;
 import java.time.YearMonth;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
@@ -59,7 +60,7 @@ public class AuctionController extends BaseController {
 	}
 
 	@GetMapping("/search")
-	public ResponseEntity<?> getAuctionItem(@RequestParam("keyword") String keyword) {
+	public ResponseEntity<?> searchAuctionItems(@RequestParam("keyword") String keyword) {
 		try {
 			List<AuctionItem> items = auctionService.searchByKeyword(keyword);
 			return ResponseEntity.ok(items);
@@ -67,6 +68,28 @@ public class AuctionController extends BaseController {
 			return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
 		}
 	}
+
+	@GetMapping("/get-by-id")
+	public ResponseEntity<?> getAuctionItemByID(@RequestParam("itemID") String itemID) {
+		try {
+			AuctionItem item = auctionService.getAuctionItemByID(UUID.fromString(itemID));
+			return ResponseEntity.ok(item);
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+		}
+	}
+	
+	@GetMapping("/get-by-name")
+	public ResponseEntity<?> getAuctionItemByName(@RequestParam("itemName") String itemName) {
+		try {
+			AuctionItem item = auctionService.getAuctionItemByName(itemName);
+			return ResponseEntity.ok(item);
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+		}
+	}
+	
+	
 
 	@PostMapping("/forward/post")
 	public ResponseEntity<?> uploadForwardAuctionItem(@Valid @RequestBody ForwardItemDTO forwardItemDTO,
@@ -158,24 +181,24 @@ public class AuctionController extends BaseController {
 		}
 	}
 
-	@PatchMapping("/dutch/{itemID}/decreasePrice")
-	public ResponseEntity<?> decreaseDutchPrice(@PathVariable UUID itemID,
-			@RequestBody Map<String, Double> decreasePriceRequest, HttpServletRequest request) {
-
-		User currentUser = getCurrentUser(request);
-		if (currentUser == null) {
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-		}
-
-		try {
-			UUID userID = (UUID) currentUser.getUserID();
-			Double decreaseBy = decreasePriceRequest.get("decreaseBy");
-			AuctionItem item = auctionService.decreaseDutchPrice(itemID, userID, decreaseBy);
-			return ResponseEntity.ok(item);
-		} catch (Exception e) {
-			return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
-		}
-	}
+//	@PatchMapping("/dutch/decreasePrice")
+//	public ResponseEntity<?> decreaseDutchPrice(@RequestParam("itemID") UUID itemID,
+//			@RequestBody Map<String, Double> decreasePriceRequest, HttpServletRequest request) {
+//
+//		User currentUser = getCurrentUser(request);
+//		if (currentUser == null) {
+//			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+//		}
+//
+//		try {
+//			UUID userID = (UUID) currentUser.getUserID();
+//			Double decreaseBy = decreasePriceRequest.get("decreaseBy");
+//			AuctionItem item = auctionService.decreaseDutchPrice(itemID, userID, decreaseBy);
+//			return ResponseEntity.ok(item);
+//		} catch (Exception e) {
+//			return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+//		}
+//	}
 
 	@PostMapping("/pay/{itemID}")
 	public ResponseEntity<?> processPayment(@PathVariable UUID itemID, @RequestBody CreditCardDTO cardDetails,

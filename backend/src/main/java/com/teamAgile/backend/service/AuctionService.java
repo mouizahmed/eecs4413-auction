@@ -37,6 +37,26 @@ public class AuctionService {
 		List<AuctionItem> items = auctionRepository.findByItemNameContainingIgnoreCase(keyword);
 		return items;
 	}
+	
+	public AuctionItem getAuctionItemByID(UUID itemID) {
+		Optional<AuctionItem> itemOptional = auctionRepository.findByItemID(itemID);
+		if (itemOptional.isEmpty()) {
+			return null;
+		}
+		
+		return itemOptional.get();
+		
+	}
+	
+	public AuctionItem getAuctionItemByName(String itemName) {
+		Optional<AuctionItem> itemOptional = auctionRepository.findByItemName(itemName);
+		
+		if (itemOptional.isEmpty()) {
+			return null;
+		}
+		
+		return itemOptional.get();
+	}
 
 	public AuctionItem createForwardItem(ForwardItemDTO forwardItemDTO, UUID userID) {
 		Optional<?> existingItem = auctionRepository.findByItemName(forwardItemDTO.getItemName());
