@@ -6,14 +6,12 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.Optional;
 import java.util.HashMap;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.teamAgile.backend.model.AuctionItem;
 import com.teamAgile.backend.model.Bid;
@@ -149,7 +147,7 @@ public class AuctionWebSocketHandler extends TextWebSocketHandler {
 			bidUpdateMessage.put("itemId", bid.getItemID().toString());
 			bidUpdateMessage.put("bidId", bid.getBidID().toString());
 			bidUpdateMessage.put("userId", bid.getUserID().toString());
-			bidUpdateMessage.put("bidPrice", bid.getBidPrice());
+			bidUpdateMessage.put("bidAmount", bid.getBidAmount());
 			// bidUpdateMessage.put("timestamp", bid.getTimestamp().toString());
 			bidUpdateMessage.put("itemName", item.getItemName());
 			bidUpdateMessage.put("currentPrice", item.getCurrentPrice());

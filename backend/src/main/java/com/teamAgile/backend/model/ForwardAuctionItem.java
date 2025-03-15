@@ -2,9 +2,6 @@ package com.teamAgile.backend.model;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
-
-import com.teamAgile.backend.model.AuctionItem.AuctionStatus;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
@@ -39,12 +36,15 @@ public class ForwardAuctionItem extends AuctionItem {
 	}
 
 	@Override
-	public void placeBid(double newBid, UUID userID) {
+	public void placeBid(Double bidAmount, UUID userID) {
 		if (this.getAuctionStatus() != AuctionStatus.AVAILABLE)
 			throw new IllegalArgumentException("Auction Item is currently not available.");
-		if (this.getCurrentPrice() > newBid)
+		else if (this.getCurrentPrice() > bidAmount)
 			throw new IllegalArgumentException("Bid price must be greater than the current price.");
+		else if (LocalDateTime.now().isAfter(this.getEndTime()))
+			throw new IllegalArgumentException("This forward auction has now closed.");
+		
 		this.setHighestBidder(userID);
-		this.setCurrentPrice(newBid);
+		this.setCurrentPrice(bidAmount);
 	}
 }

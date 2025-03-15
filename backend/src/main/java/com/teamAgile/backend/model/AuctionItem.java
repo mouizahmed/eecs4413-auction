@@ -56,7 +56,6 @@ public abstract class AuctionItem {
     @Column(name = "highestbidder")
     private UUID highestBidder;
 
-    // Default no-argument constructor required by JPA
     protected AuctionItem() {
     }
 
@@ -125,7 +124,7 @@ public abstract class AuctionItem {
         this.sellerID = sellerID;
     }
 
-    public void placeBid(double newBid, UUID userID) {
+    public void placeBid(Double bidAmount, UUID userID) {
         // Base behavior can be overridden by subclasses.
     }
     

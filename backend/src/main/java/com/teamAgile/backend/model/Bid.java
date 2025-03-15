@@ -1,5 +1,6 @@
 package com.teamAgile.backend.model;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 import jakarta.persistence.Column;
@@ -15,19 +16,28 @@ public class Bid {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
-	@Column(name = "bidid", nullable = false)
+	@Column(name = "bidId", nullable = false)
 	private UUID bidID;
 
-	@Column(name = "itemid", nullable = false)
+	@Column(name = "itemId", nullable = false)
 	private UUID itemID;
 
-	@Column(name = "userid", nullable = false)
+	@Column(name = "userId", nullable = false)
 	private UUID userID;
 
-	@Column(name = "bidprice", nullable = false)
-	private double bidPrice;
+	@Column(name = "bidAmount", nullable = false)
+	private Double bidAmount;
+	
+	@Column(name = "timestamp", nullable = false)
+	private LocalDateTime timestamp = LocalDateTime.now();
 
 	public Bid() {
+	}
+	
+	public Bid(UUID itemID, UUID userID, Double bidAmount) {
+		this.itemID = itemID;
+		this.userID = userID;
+		this.bidAmount = bidAmount;
 	}
 
 	public UUID getBidID() {
@@ -42,8 +52,12 @@ public class Bid {
 		return userID;
 	}
 
-	public double getBidPrice() {
-		return bidPrice;
+	public Double getBidAmount() {
+		return bidAmount;
+	}
+	
+	public LocalDateTime getTimestamp() {
+		return timestamp;
 	}
 
 	public void setItemID(UUID itemID) {
@@ -54,7 +68,11 @@ public class Bid {
 		this.userID = userID;
 	}
 
-	public void setBidPrice(double bidPrice) {
-		this.bidPrice = bidPrice;
+	public void setBidAmount(Double bidAmount) {
+		this.bidAmount = bidAmount;
+	}
+	
+	public void setTimestamp() {
+		this.timestamp = LocalDateTime.now();
 	}
 }

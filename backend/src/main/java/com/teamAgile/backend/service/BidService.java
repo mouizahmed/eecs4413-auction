@@ -1,13 +1,10 @@
 package com.teamAgile.backend.service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import com.teamAgile.backend.model.AuctionItem;
 import com.teamAgile.backend.model.Bid;
 import com.teamAgile.backend.model.DutchAuctionItem;
@@ -19,126 +16,93 @@ import com.teamAgile.backend.websocket.AuctionWebSocketHandler;
 @Service
 public class BidService {
 
-    private final BidRepository bidRepository;
-    private final AuctionRepository auctionRepository;
-    private final AuctionWebSocketHandler auctionWebSocketHandler;
+	private final BidRepository bidRepository;
+	private final AuctionRepository auctionRepository;
+	private final AuctionWebSocketHandler auctionWebSocketHandler;
 
-    @Autowired
-    public BidService(BidRepository bidRepository, AuctionRepository auctionRepository,
-            AuctionWebSocketHandler auctionWebSocketHandler) {
-        this.bidRepository = bidRepository;
-        this.auctionRepository = auctionRepository;
-        this.auctionWebSocketHandler = auctionWebSocketHandler;
-    }
+	@Autowired
+	public BidService(BidRepository bidRepository, AuctionRepository auctionRepository,
+			AuctionWebSocketHandler auctionWebSocketHandler) {
+		this.bidRepository = bidRepository;
+		this.auctionRepository = auctionRepository;
+		this.auctionWebSocketHandler = auctionWebSocketHandler;
+	}
 
-    public Bid createForwardBid(UUID itemId, UUID userId, double bidPrice) {
-        // Get the auction item
-        Optional<AuctionItem> itemOptional = auctionRepository.findById(itemId);
-        if (itemOptional.isEmpty()) {
-            throw new IllegalArgumentException("Auction item not found");
-        }
+	public Bid createForwardBid(UUID itemId, UUID userID, Double bidAmount) {
+		// Get the auction item
+		Optional<AuctionItem> itemOptional = auctionRepository.findById(itemId);
+		if (itemOptional.isEmpty()) {
+			throw new IllegalArgumentException("Auction item not found");
+		}
 
-        AuctionItem item = itemOptional.get();
-        LocalDateTime now = LocalDateTime.now();
+		AuctionItem item = itemOptional.get();
 
-        // Check if item is a Auction auction
-        if (!(item instanceof ForwardAuctionItem)) {
-            throw new IllegalArgumentException("This endpoint is only for Forward auctions");
-        }
+		// Check if item is a Auction auction
+		if (!(item instanceof ForwardAuctionItem)) {
+			throw new IllegalArgumentException("This endpoint is only for Forward auctions");
+		}
 
-        ForwardAuctionItem forwardItem = (ForwardAuctionItem) item;
+		ForwardAuctionItem forwardItem = (ForwardAuctionItem) item;
 
-        // Validate bid price matches current price for Dutch auction
-        if (bidPrice <= forwardItem.getCurrentPrice()) {
-            throw new IllegalArgumentException("Bid price must be greater than the current price for Forward auctions");
-        }
+		// Create new bid
+		Bid bid = new Bid(itemId, userID, bidAmount);
 
-        // Check if auction is still available
-        if (forwardItem.getAuctionStatus() != AuctionItem.AuctionStatus.AVAILABLE) {
-            throw new IllegalArgumentException("Auction is not available for bidding");
-        }
+		// Place the bid on the auction item
+		forwardItem.placeBid(bidAmount, userID);
 
-        if (now.isAfter(forwardItem.getEndTime())) {
-            throw new IllegalArgumentException("This forward auction has now closed.");
-        }
+		// Save both the bid and the updated auction item
+		AuctionItem savedItem = auctionRepository.save(forwardItem);
+		Bid savedBid = bidRepository.save(bid);
 
-        // Create new bid
-        Bid bid = new Bid();
-        bid.setItemID(itemId);
-        bid.setUserID(userId);
-        bid.setBidPrice(bidPrice);
+		// Broadcast the update via WebSocket
+		auctionWebSocketHandler.broadcastAuctionUpdate(savedItem);
+		auctionWebSocketHandler.broadcastNewBid(savedBid);
 
-        // Place the bid on the auction item
-        forwardItem.placeBid(bidPrice, userId);
+		return savedBid;
+	}
 
-        // Save both the bid and the updated auction item
-        AuctionItem savedItem = auctionRepository.save(forwardItem);
-        Bid savedBid = bidRepository.save(bid);
+	public Bid createDutchBid(UUID itemId, UUID userID, Double bidAmount) {
+		// Get the auction item
+		Optional<AuctionItem> itemOptional = auctionRepository.findById(itemId);
+		if (itemOptional.isEmpty()) {
+			throw new IllegalArgumentException("Auction item not found");
+		}
 
-        // Broadcast the update via WebSocket
-        auctionWebSocketHandler.broadcastAuctionUpdate(savedItem);
-        auctionWebSocketHandler.broadcastNewBid(savedBid);
+		AuctionItem item = itemOptional.get();
 
-        return savedBid;
-    }
+		// Check if item is a Dutch auction
+		if (!(item instanceof DutchAuctionItem)) {
+			throw new IllegalArgumentException("This endpoint is only for Dutch auctions");
+		}
 
-    public Bid createDutchBid(UUID itemId, UUID userId, double bidPrice) {
-        // Get the auction item
-        Optional<AuctionItem> itemOptional = auctionRepository.findById(itemId);
-        if (itemOptional.isEmpty()) {
-            throw new IllegalArgumentException("Auction item not found");
-        }
+		DutchAuctionItem dutchItem = (DutchAuctionItem) item;
 
-        AuctionItem item = itemOptional.get();
-        LocalDateTime now = LocalDateTime.now();
+		// Create new bid
+		Bid bid = new Bid(itemId, userID, bidAmount);
 
-        // Check if item is a Dutch auction
-        if (!(item instanceof DutchAuctionItem)) {
-            throw new IllegalArgumentException("This endpoint is only for Dutch auctions");
-        }
+		// Place bid
+		dutchItem.placeBid(bidAmount, userID);
 
-        DutchAuctionItem dutchItem = (DutchAuctionItem) item;
+		// Save both the bid and the updated auction item
+		AuctionItem savedItem = auctionRepository.save(dutchItem);
+		Bid savedBid = bidRepository.save(bid);
 
-        // Validate bid price matches current price for Dutch auction
-        if (bidPrice != dutchItem.getCurrentPrice()) {
-            throw new IllegalArgumentException("Bid price must match the current price for Dutch auctions");
-        }
+		// Broadcast the update via WebSocket
+		auctionWebSocketHandler.broadcastAuctionUpdate(savedItem);
+		auctionWebSocketHandler.broadcastNewBid(savedBid);
 
-        // Check if auction is still available
-        if (dutchItem.getAuctionStatus() != AuctionItem.AuctionStatus.AVAILABLE) {
-            throw new IllegalArgumentException("Auction is not available for bidding");
-        }
+		return savedBid;
+	}
 
-        // Create new bid
-        Bid bid = new Bid();
-        bid.setItemID(itemId);
-        bid.setUserID(userId);
-        bid.setBidPrice(bidPrice);
+	public List<Bid> getBidsByItemId(UUID itemId) {
+		return bidRepository.findByItemID(itemId);
+	}
 
-        // Update the auction item status to SOLD
-        dutchItem.setAuctionStatus(AuctionItem.AuctionStatus.SOLD);
-        dutchItem.setHighestBidder(userId);
+	public List<Bid> getBidsByUserId(UUID userId) {
+		return bidRepository.findByUserID(userId);
+	}
 
-        // Save both the bid and the updated auction item
-        AuctionItem savedItem = auctionRepository.save(dutchItem);
-        Bid savedBid = bidRepository.save(bid);
-
-        // Broadcast the update via WebSocket
-        auctionWebSocketHandler.broadcastAuctionUpdate(savedItem);
-        auctionWebSocketHandler.broadcastNewBid(savedBid);
-
-        return savedBid;
-    }
-
-    public List<Bid> getBidsByItemId(UUID itemId) {
-        return bidRepository.findByItemID(itemId);
-    }
-
-    public List<Bid> getBidsByUserId(UUID userId) {
-        return bidRepository.findByUserID(userId);
-    }
-
-    public Optional<Bid> getBidById(UUID bidId) {
-        return bidRepository.findById(bidId);
-    }
+	public Optional<Bid> getBidById(UUID bidId) {
+		return bidRepository.findById(bidId);
+	}
 }

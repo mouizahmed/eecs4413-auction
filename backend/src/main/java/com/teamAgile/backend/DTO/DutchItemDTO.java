@@ -1,8 +1,6 @@
 package com.teamAgile.backend.DTO;
 
 import com.teamAgile.backend.model.AuctionItem.AuctionType;
-
-import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotNull;
 
 public class DutchItemDTO extends AuctionItemDTO {
