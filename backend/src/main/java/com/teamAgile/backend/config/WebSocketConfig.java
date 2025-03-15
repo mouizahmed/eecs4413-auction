@@ -14,29 +14,24 @@ import com.teamAgile.backend.websocket.JoinNotificationWebSocketHandler;
 @EnableWebSocket
 public class WebSocketConfig implements WebSocketConfigurer {
 
-    private final JoinNotificationWebSocketHandler joinNotificationWebSocketHandler;
-    private final AuctionWebSocketHandler auctionWebSocketHandler;
+	private final AuctionWebSocketHandler auctionWebSocketHandler;
 
-    public WebSocketConfig(JoinNotificationWebSocketHandler joinNotificationWebSocketHandler,
-            AuctionWebSocketHandler auctionWebSocketHandler) {
-        this.joinNotificationWebSocketHandler = joinNotificationWebSocketHandler;
-        this.auctionWebSocketHandler = auctionWebSocketHandler;
-    }
+	public WebSocketConfig(JoinNotificationWebSocketHandler joinNotificationWebSocketHandler,
+			AuctionWebSocketHandler auctionWebSocketHandler) {
 
-    @Override
-    public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(joinNotificationWebSocketHandler, "/ws/join-notifications")
-                .setAllowedOrigins("*"); // In production, restrict to specific origins
+		this.auctionWebSocketHandler = auctionWebSocketHandler;
+	}
 
-        registry.addHandler(auctionWebSocketHandler, "/ws/auction-updates")
-                .setAllowedOrigins("*"); // In production, restrict to specific origins
-    }
+	@Override
+	public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
+		registry.addHandler(auctionWebSocketHandler, "/ws/auction-updates").setAllowedOrigins("*");
+	}
 
-    @Bean
-    public ServletServerContainerFactoryBean createWebSocketContainer() {
-        ServletServerContainerFactoryBean container = new ServletServerContainerFactoryBean();
-        container.setMaxTextMessageBufferSize(8192);
-        container.setMaxBinaryMessageBufferSize(8192);
-        return container;
-    }
+	@Bean
+	public ServletServerContainerFactoryBean createWebSocketContainer() {
+		ServletServerContainerFactoryBean container = new ServletServerContainerFactoryBean();
+		container.setMaxTextMessageBufferSize(8192);
+		container.setMaxBinaryMessageBufferSize(8192);
+		return container;
+	}
 }

@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.Optional;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
@@ -13,108 +15,124 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.teamAgile.backend.model.AuctionItem;
+import com.teamAgile.backend.repository.AuctionRepository;
 
 @Component
 public class AuctionWebSocketHandler extends TextWebSocketHandler {
+	// Store all active WebSocket sessions
+	private final Map<String, WebSocketSession> sessions = new ConcurrentHashMap<>();
 
-    // Store all active WebSocket sessions
-    private final Map<String, WebSocketSession> sessions = new ConcurrentHashMap<>();
+	// Map to track which auction items each session is subscribed to
+	private final Map<String, UUID> sessionSubscriptions = new ConcurrentHashMap<>();
 
-    // Map to track which auction items each session is subscribed to
-    private final Map<String, UUID> sessionSubscriptions = new ConcurrentHashMap<>();
+	private final ObjectMapper objectMapper = new ObjectMapper();
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+	// Add repository for item validation
+	private final AuctionRepository auctionRepository;
 
-    @Override
-    public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-        // Add the session to our sessions map
-        sessions.put(session.getId(), session);
+	@Autowired
+	public AuctionWebSocketHandler(AuctionRepository auctionRepository) {
+		this.auctionRepository = auctionRepository;
+	}
 
-        // Send a connection confirmation message
-        sendMessage(session, new TextMessage("{\"type\":\"CONNECTED\",\"message\":\"Connected to auction updates\"}"));
-    }
+	@Override
+	public void afterConnectionEstablished(WebSocketSession session) throws Exception {
+		// Add the session to our sessions map
+		sessions.put(session.getId(), session);
 
-    @Override
-    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
-        // Remove the session from our maps when the connection is closed
-        sessions.remove(session.getId());
-        sessionSubscriptions.remove(session.getId());
-    }
+		// Send a connection confirmation message
+		sendMessage(session, new TextMessage("{\"type\":\"CONNECTED\",\"message\":\"Connected to auction updates\"}"));
+	}
 
-    @Override
-    protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
-        try {
-            // Parse the incoming message
-            Map<String, Object> payload = objectMapper.readValue(message.getPayload(), Map.class);
-            String type = (String) payload.get("type");
+	@Override
+	public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
+		// Remove the session from our maps when the connection is closed
+		sessions.remove(session.getId());
+		sessionSubscriptions.remove(session.getId());
+	}
 
-            if ("SUBSCRIBE".equals(type)) {
-                // Handle subscription to an auction item
-                String itemIdStr = (String) payload.get("itemId");
-                if (itemIdStr != null) {
-                    UUID itemId = UUID.fromString(itemIdStr);
-                    sessionSubscriptions.put(session.getId(), itemId);
-                    sendMessage(session, new TextMessage("{\"type\":\"SUBSCRIBED\",\"itemId\":\"" + itemId + "\"}"));
-                }
-            }
-        } catch (Exception e) {
-            // Send error message back to client
-            sendMessage(session, new TextMessage("{\"type\":\"ERROR\",\"message\":\"" + e.getMessage() + "\"}"));
-        }
-    }
+	@Override
+	protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
+		try {
+			// Parse the incoming message
+			Map<String, Object> payload = objectMapper.readValue(message.getPayload(), Map.class);
+			String type = (String) payload.get("type");
 
-    /**
-     * Broadcasts an auction update to all connected clients who are subscribed to
-     * the specific item
-     * 
-     * @param auctionItem The auction item that was updated
-     */
-    public void broadcastAuctionUpdate(AuctionItem auctionItem) {
-        try {
-            // Create the update message
-            AuctionUpdateMessage updateMessage = new AuctionUpdateMessage(
-                    "AUCTION_UPDATE",
-                    auctionItem.getItemID(),
-                    auctionItem.getItemName(),
-                    auctionItem.getCurrentPrice(),
-                    auctionItem.getHighestBidder(),
-                    auctionItem.getAuctionStatus().toString());
+			if ("SUBSCRIBE".equals(type)) {
+				// Handle subscription to an auction item
+				String itemIdStr = (String) payload.get("itemId");
+				if (itemIdStr != null) {
+					UUID itemId = UUID.fromString(itemIdStr);
 
-            String messageJson = objectMapper.writeValueAsString(updateMessage);
-            TextMessage textMessage = new TextMessage(messageJson);
+					// Validate that the item exists in the database
+					Optional<AuctionItem> itemOptional = auctionRepository.findById(itemId);
+					if (itemOptional.isEmpty()) {
+						throw new IllegalArgumentException("Auction item with ID " + itemId + " does not exist");
+					}
 
-            // Send to all connected sessions that are subscribed to this item or have no
-            // specific subscription
-            sessions.forEach((sessionId, session) -> {
-                UUID subscribedItemId = sessionSubscriptions.get(sessionId);
+					// Item exists, proceed with subscription
+					sessionSubscriptions.put(session.getId(), itemId);
+					sendMessage(session, new TextMessage("{\"type\":\"SUBSCRIBED\",\"itemId\":\"" + itemId + "\"}"));
+				} else {
+					throw new IllegalArgumentException("You must provide an item id");
+				}
+			} else {
+				throw new IllegalArgumentException("Not a valid message type.");
+			}
+		} catch (Exception e) {
+			// Send error message back to client
+			sendMessage(session, new TextMessage("{\"type\":\"ERROR\",\"message\":\"" + e.getMessage() + "\"}"));
+		}
+	}
 
-                // Send if the session is subscribed to this specific item or has no
-                // subscription (gets all updates)
-                if (subscribedItemId == null || subscribedItemId.equals(auctionItem.getItemID())) {
-                    if (session.isOpen()) {
-                        try {
-                            session.sendMessage(textMessage);
-                        } catch (IOException e) {
-                            System.err.println("Error sending message to session " + sessionId + ": " + e.getMessage());
-                        }
-                    }
-                }
-            });
-        } catch (Exception e) {
-            System.err.println("Error broadcasting auction update: " + e.getMessage());
-        }
-    }
+	/**
+	 * Broadcasts an auction update to all connected clients who are subscribed to
+	 * the specific item
+	 * 
+	 * @param auctionItem The auction item that was updated
+	 */
+	public void broadcastAuctionUpdate(AuctionItem auctionItem) {
+		try {
+			// Create the update message
+			AuctionUpdateMessage updateMessage = new AuctionUpdateMessage("AUCTION_UPDATE", auctionItem.getItemID(),
+					auctionItem.getItemName(), auctionItem.getCurrentPrice(), auctionItem.getHighestBidder(),
+					auctionItem.getAuctionStatus().toString());
 
-    /**
-     * Sends a message to a specific WebSocket session
-     */
-    private void sendMessage(WebSocketSession session, TextMessage message) {
-        try {
-            if (session.isOpen()) {
-                session.sendMessage(message);
-            }
-        } catch (IOException e) {
-            System.err.println("Error sending message to session " + session.getId() + ": " + e.getMessage());
-        }
-    }
+			String messageJson = objectMapper.writeValueAsString(updateMessage);
+			TextMessage textMessage = new TextMessage(messageJson);
+
+			// Send to all connected sessions that are subscribed to this item or have no
+			// specific subscription
+			sessions.forEach((sessionId, session) -> {
+				UUID subscribedItemId = sessionSubscriptions.get(sessionId);
+
+				// Send if the session is subscribed to this specific item or has no
+				// subscription (gets all updates)
+				if (subscribedItemId == null || subscribedItemId.equals(auctionItem.getItemID())) {
+					if (session.isOpen()) {
+						try {
+							session.sendMessage(textMessage);
+						} catch (IOException e) {
+							System.err.println("Error sending message to session " + sessionId + ": " + e.getMessage());
+						}
+					}
+				}
+			});
+		} catch (Exception e) {
+			System.err.println("Error broadcasting auction update: " + e.getMessage());
+		}
+	}
+
+	/**
+	 * Sends a message to a specific WebSocket session
+	 */
+	private void sendMessage(WebSocketSession session, TextMessage message) {
+		try {
+			if (session.isOpen()) {
+				session.sendMessage(message);
+			}
+		} catch (IOException e) {
+			System.err.println("Error sending message to session " + session.getId() + ": " + e.getMessage());
+		}
+	}
 }
