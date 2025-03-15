@@ -12,17 +12,21 @@ import com.teamAgile.backend.model.ForwardAuctionItem;
 import com.teamAgile.backend.model.AuctionItem.AuctionStatus;
 import com.teamAgile.backend.repository.AuctionRepository;
 import com.teamAgile.backend.repository.BidRepository;
+import com.teamAgile.backend.websocket.AuctionWebSocketHandler;
 
 @Service
 public class AuctionSchedulerService {
 
     private final AuctionRepository auctionRepository;
     private final BidRepository bidRepository;
+    private final AuctionWebSocketHandler auctionWebSocketHandler;
 
     @Autowired
-    public AuctionSchedulerService(AuctionRepository auctionRepository, BidRepository bidRepository) {
+    public AuctionSchedulerService(AuctionRepository auctionRepository, BidRepository bidRepository,
+            AuctionWebSocketHandler auctionWebSocketHandler) {
         this.auctionRepository = auctionRepository;
         this.bidRepository = bidRepository;
+        this.auctionWebSocketHandler = auctionWebSocketHandler;
     }
 
     @Scheduled(fixedRate = 60000) // Run every minute
@@ -37,7 +41,7 @@ public class AuctionSchedulerService {
                 // Only process items that are still available
                 if (forwardItem.getAuctionStatus() == AuctionStatus.AVAILABLE) {
                     // Check if the auction has ended
-                    if (forwardItem.getEndTime() != null || now.isAfter(forwardItem.getEndTime())) {
+                    if (forwardItem.getEndTime() != null && now.isAfter(forwardItem.getEndTime())) {
                         // Check if there are any bids
                         boolean hasBids = !bidRepository.findByItemID(forwardItem.getItemID()).isEmpty();
 
@@ -48,7 +52,10 @@ public class AuctionSchedulerService {
                             forwardItem.setAuctionStatus(AuctionStatus.EXPIRED);
                         }
 
-                        auctionRepository.save(forwardItem);
+                        AuctionItem savedItem = auctionRepository.save(forwardItem);
+
+                        // Broadcast the status update
+                        auctionWebSocketHandler.broadcastAuctionUpdate(savedItem);
                     }
                 }
             }

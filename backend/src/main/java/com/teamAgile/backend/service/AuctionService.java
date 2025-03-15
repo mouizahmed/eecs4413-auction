@@ -11,15 +11,18 @@ import com.teamAgile.backend.model.AuctionItem;
 import com.teamAgile.backend.model.DutchAuctionItem;
 import com.teamAgile.backend.model.ForwardAuctionItem;
 import com.teamAgile.backend.repository.AuctionRepository;
+import com.teamAgile.backend.websocket.AuctionWebSocketHandler;
 
 @Service
 public class AuctionService {
 
 	private final AuctionRepository auctionRepository;
+	private final AuctionWebSocketHandler auctionWebSocketHandler;
 
 	@Autowired
-	public AuctionService(AuctionRepository auctionRepository) {
+	public AuctionService(AuctionRepository auctionRepository, AuctionWebSocketHandler auctionWebSocketHandler) {
 		this.auctionRepository = auctionRepository;
+		this.auctionWebSocketHandler = auctionWebSocketHandler;
 	}
 
 	public List<AuctionItem> getAllAuctionItems() {
@@ -32,21 +35,26 @@ public class AuctionService {
 			return null;
 		return itemOptional.get();
 	}
-	
+
 	public AuctionItem createForwardItem(ForwardAuctionItem auctionItem, UUID userID) {
 		Optional<?> existingItem = auctionRepository.findByItemName(auctionItem.getItemName());
 		if (existingItem.isPresent())
 			throw new IllegalArgumentException("Auction item already exists.");
-		
+
 		if (auctionItem.getAuctionType() == AuctionItem.AuctionType.DUTCH)
 			throw new IllegalArgumentException("Cannot create a Forward auction item with DUTCH auction type.");
-		
+
 		if (auctionItem.getEndTime() == null)
 			throw new IllegalArgumentException("Forward auction items must have an end time.");
-		
+
 		auctionItem.setSellerID(userID);
-		
-		return auctionRepository.save(auctionItem);
+
+		AuctionItem savedItem = auctionRepository.save(auctionItem);
+
+		// Broadcast the new item creation
+		auctionWebSocketHandler.broadcastAuctionUpdate(savedItem);
+
+		return savedItem;
 	}
 
 	public AuctionItem createDutchItem(DutchAuctionItem auctionItem, UUID userID) {
@@ -59,10 +67,15 @@ public class AuctionService {
 
 		if (auctionItem.getReservePrice() == null)
 			throw new IllegalArgumentException("Dutch auction items must have a reserve price.");
-		
+
 		auctionItem.setSellerID(userID);
 
-		return auctionRepository.save(auctionItem);
+		AuctionItem savedItem = auctionRepository.save(auctionItem);
+
+		// Broadcast the new item creation
+		auctionWebSocketHandler.broadcastAuctionUpdate(savedItem);
+
+		return savedItem;
 	}
 
 	public AuctionItem decreaseDutchPrice(UUID itemID, UUID userID, Double decreaseBy) {
@@ -84,7 +97,12 @@ public class AuctionService {
 		DutchAuctionItem dutchItem = (DutchAuctionItem) item;
 		dutchItem.decreasePrice(decreaseBy);
 
-		return auctionRepository.save(dutchItem);
+		AuctionItem savedItem = auctionRepository.save(dutchItem);
+
+		// Broadcast the price update
+		auctionWebSocketHandler.broadcastAuctionUpdate(savedItem);
+
+		return savedItem;
 	}
 
 }

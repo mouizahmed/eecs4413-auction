@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auction Detail</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+        .auction-details {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .auction-updates {
+            background-color: #f0f0f0;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            height: 400px;
+            overflow-y: auto;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-top: 0;
+        }
+        h2 {
+            color: #3498db;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+        }
+        .price-info {
+            font-size: 1.2em;
+            margin: 20px 0;
+        }
+        .current-price {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #e74c3c;
+        }
+        .bid-form {
+            margin: 20px 0;
+            padding: 20px;
+            background-color: #ecf0f1;
+            border-radius: 5px;
+        }
+        .bid-form input[type="number"] {
+            padding: 10px;
+            width: 150px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+        .bid-form button {
+            padding: 10px 20px;
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .bid-form button:hover {
+            background-color: #27ae60;
+        }
+        .bid-form button:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+        .status-available {
+            background-color: #2ecc71;
+            color: white;
+        }
+        .status-sold {
+            background-color: #e74c3c;
+            color: white;
+        }
+        .status-expired {
+            background-color: #95a5a6;
+            color: white;
+        }
+        .update-message {
+            padding: 8px;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #ddd;
+        }
+        .timestamp {
+            color: #7f8c8d;
+            font-size: 0.8em;
+            margin-right: 5px;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #3498db;
+            text-decoration: none;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="auction-details">
+            <a href="index.html" class="back-link">← Back to Auctions</a>
+            <h1 id="auction-item">Loading auction...</h1>
+            
+            <div class="price-info">
+                Current Price: <span id="current-price" class="current-price">$0.00</span>
+            </div>
+            
+            <p>
+                Highest Bidder: <strong id="highest-bidder">None</strong>
+            </p>
+            
+            <p>
+                Status: <span id="status" class="status">Loading...</span>
+            </p>
+            
+            <div class="bid-form" id="bid-form">
+                <h2>Place Your Bid</h2>
+                <form>
+                    <input type="number" id="bid-amount" step="0.01" min="0" placeholder="Enter bid amount" required>
+                    <button type="submit" id="bid-button">Place Bid</button>
+                </form>
+            </div>
+        </div>
+        
+        <div class="auction-updates">
+            <h2>Live Updates</h2>
+            <div id="auction-updates"></div>
+        </div>
+    </div>
+
+    <!-- Include the WebSocket client -->
+    <script src="js/auction-websocket.js"></script>
+    <!-- Include the auction detail page JavaScript -->
+    <script src="js/auction-detail.js"></script>
+</body>
+</html> 

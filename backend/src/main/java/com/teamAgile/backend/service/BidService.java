@@ -14,17 +14,21 @@ import com.teamAgile.backend.model.DutchAuctionItem;
 import com.teamAgile.backend.model.ForwardAuctionItem;
 import com.teamAgile.backend.repository.AuctionRepository;
 import com.teamAgile.backend.repository.BidRepository;
+import com.teamAgile.backend.websocket.AuctionWebSocketHandler;
 
 @Service
 public class BidService {
 
     private final BidRepository bidRepository;
     private final AuctionRepository auctionRepository;
+    private final AuctionWebSocketHandler auctionWebSocketHandler;
 
     @Autowired
-    public BidService(BidRepository bidRepository, AuctionRepository auctionRepository) {
+    public BidService(BidRepository bidRepository, AuctionRepository auctionRepository,
+            AuctionWebSocketHandler auctionWebSocketHandler) {
         this.bidRepository = bidRepository;
         this.auctionRepository = auctionRepository;
+        this.auctionWebSocketHandler = auctionWebSocketHandler;
     }
 
     public Bid createForwardBid(UUID itemId, UUID userId, double bidPrice) {
@@ -68,8 +72,13 @@ public class BidService {
         forwardItem.placeBid(bidPrice, userId.toString());
 
         // Save both the bid and the updated auction item
-        auctionRepository.save(forwardItem);
-        return bidRepository.save(bid);
+        AuctionItem savedItem = auctionRepository.save(forwardItem);
+        Bid savedBid = bidRepository.save(bid);
+
+        // Broadcast the update via WebSocket
+        auctionWebSocketHandler.broadcastAuctionUpdate(savedItem);
+
+        return savedBid;
     }
 
     public Bid createDutchBid(UUID itemId, UUID userId, double bidPrice) {
@@ -80,6 +89,7 @@ public class BidService {
         }
 
         AuctionItem item = itemOptional.get();
+        LocalDateTime now = LocalDateTime.now();
 
         // Check if item is a Dutch auction
         if (!(item instanceof DutchAuctionItem)) {
@@ -104,12 +114,18 @@ public class BidService {
         bid.setUserID(userId);
         bid.setBidPrice(bidPrice);
 
-        // Place the bid on the auction item
-        dutchItem.placeBid(bidPrice, userId.toString());
+        // Update the auction item status to SOLD
+        dutchItem.setAuctionStatus(AuctionItem.AuctionStatus.SOLD);
+        dutchItem.setHighestBidder(userId.toString());
 
         // Save both the bid and the updated auction item
-        auctionRepository.save(dutchItem);
-        return bidRepository.save(bid);
+        AuctionItem savedItem = auctionRepository.save(dutchItem);
+        Bid savedBid = bidRepository.save(bid);
+
+        // Broadcast the update via WebSocket
+        auctionWebSocketHandler.broadcastAuctionUpdate(savedItem);
+
+        return savedBid;
     }
 
     public List<Bid> getBidsByItemId(UUID itemId) {
@@ -121,6 +137,6 @@ public class BidService {
     }
 
     public Optional<Bid> getBidById(UUID bidId) {
-        return bidRepository.findByBidID(bidId);
+        return bidRepository.findById(bidId);
     }
 }
