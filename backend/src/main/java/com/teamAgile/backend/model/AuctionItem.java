@@ -1,6 +1,9 @@
 package com.teamAgile.backend.model;
 
 import java.util.UUID;
+
+import com.teamAgile.backend.model.AuctionItem.AuctionStatus;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorColumn;
 import jakarta.persistence.DiscriminatorType;
@@ -131,7 +134,9 @@ public abstract class AuctionItem {
     public void makePayment(UUID userID) {
     	if (!this.getHighestBidderID().equals(userID)) {
     		throw new IllegalArgumentException("You must be the winning bidder to place a payment on this item.");
-    	}
+    	} else if (!this.getAuctionStatus().equals(AuctionStatus.SOLD)) {
+			throw new IllegalArgumentException("The auction is either over or still ongoing.");
+		}
     	
     	this.setAuctionStatus(AuctionStatus.PAID);
     }

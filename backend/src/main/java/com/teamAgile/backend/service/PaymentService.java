@@ -42,21 +42,10 @@ public class PaymentService {
 		AuctionItem item = itemOptional.get();
 		LocalDateTime now = LocalDateTime.now();
 
-		// check if user is the winning bidder
-		if (!item.getHighestBidderID().equals(user.getUserID())) {
-			throw new IllegalArgumentException("You must be the winning bidder to place a payment on this item.");
-		}
-
-		if (!item.getAuctionStatus().equals(AuctionStatus.SOLD)) {
-			throw new IllegalArgumentException("The auction is not over yet!");
-		}
-
-		
 		CreditCard creditCard = new CreditCard(cardDetails.getCardNum(), cardDetails.getCardName(), cardDetails.getExpDate(), cardDetails.getSecurityCode());
-		
 		Receipt receipt = new Receipt(itemID, user.getUserID(), item.getCurrentPrice(), creditCard, user.getAddress(), item.getShippingTime());
-
 		item.makePayment(user.getUserID());
+		
 		auctionRepository.save(item);
 		receiptRepository.save(receipt);
 
