@@ -135,4 +135,7 @@ public abstract class AuctionItem {
     	
     	this.setAuctionStatus(AuctionStatus.PAID);
     }
+    
+    
+    
 }

@@ -76,7 +76,7 @@ public class UserController {
 			// Create new session
 			HttpSession session = request.getSession(true);
 			session.setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
-			Object userObject = Map.of("userID", user.getUserID(), "username", user.getUsername(), "firstName", user.getFirstName(), "lastName", user.getLastName(), "streetNum", user.getStreetNum(), "streetName", user.getStreetName(), "postalCode", user.getPostalCode(), "city", user.getCity(), "country", user.getCountry());
+			Object userObject = Map.of("userID", user.getUserID(), "username", user.getUsername(), "firstName", user.getFirstName(), "lastName", user.getLastName(), "streetNum", user.getAddress().getStreetNum(), "streetName", user.getAddress().getStreetName(), "postalCode", user.getAddress().getPostalCode(), "city", user.getAddress().getCity(), "country", user.getAddress().getCountry());
 			session.setAttribute("user", userObject);
 			session.setMaxInactiveInterval(30 * 60); // 30 minutes
 

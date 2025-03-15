@@ -29,20 +29,8 @@ public class User implements java.io.Serializable {
 	@Column(name = "password", nullable = false)
 	private String password;
 
-	@Column(name = "streetName", nullable = false)
-	private String streetName;
-
-	@Column(name = "streetNum", nullable = false)
-	private Integer streetNum;
-
-	@Column(name = "postalCode", nullable = false)
-	private String postalCode;
-
-	@Column(name = "city", nullable = false)
-	private String city;
-	
-	@Column(name = "country", nullable = false)
-	private String country;
+	@Embedded
+	private Address address;
 	
 	@Column(name = "securityQuestion", nullable = false)
 	private String securityQuestion;
@@ -59,13 +47,10 @@ public class User implements java.io.Serializable {
 		this.lastName = lastName;
 		this.username = username;
 		this.password = null;
-		this.streetName = streetName;
-		this.streetNum = streetNum;
-		this.postalCode = postalCode;
-		this.city = city;
-		this.country = country;
 		this.securityQuestion = null;
 		this.securityAnswer = null;
+		Address address = new Address(streetName, streetNum, postalCode, city, country);
+		this.address = address;
 	}
 	
 	public User(SignUpDTO signUpDTO) {
@@ -73,13 +58,10 @@ public class User implements java.io.Serializable {
 		this.lastName = signUpDTO.getLastName();
 		this.username = signUpDTO.getUsername();
 		this.password = BCryptHashing.hashPassword(signUpDTO.getPassword());
-		this.streetName = signUpDTO.getStreetName();
-		this.streetNum = signUpDTO.getStreetNum();
-		this.postalCode = signUpDTO.getPostalCode();
-		this.city = signUpDTO.getCity();
-		this.country = signUpDTO.getCountry();
 		this.securityQuestion = signUpDTO.getSecurityQuestion();
 		this.securityAnswer = signUpDTO.getSecurityAnswer();
+		Address address = new Address(signUpDTO.getStreetName(), signUpDTO.getStreetNum(), signUpDTO.getPostalCode(), signUpDTO.getCity(), signUpDTO.getCountry());
+		this.address = address;
 	}
 
 	
@@ -104,24 +86,8 @@ public class User implements java.io.Serializable {
 		return password;
 	}
 
-	public String getStreetName() {
-		return streetName;
-	}
-
-	public Integer getStreetNum() {
-		return streetNum;
-	}
-
-	public String getPostalCode() {
-		return postalCode;
-	}
-	
-	public String getCity() {
-		return city;
-	}
-
-	public String getCountry() {
-		return country;
+	public Address getAddress() {
+		return address;
 	}
 	
 	public String getSecurityQuestion() {
@@ -154,24 +120,8 @@ public class User implements java.io.Serializable {
 		this.password = BCryptHashing.hashPassword(password);
 	}
 
-	public void setStreetName(String streetName) {
-		this.streetName = streetName;
-	}
-
-	public void setStreetNum(Integer streetNum) {
-		this.streetNum = streetNum;
-	}
-
-	public void setPostalCode(String postalCode) {
-		this.postalCode = postalCode;
-	}
-	
-	public void setCity(String city) {
-		this.city = city;
-	}
-
-	public void setCountry(String country) {
-		this.country = country;
+	public void setAddress(Address address) {
+		this.address = address;
 	}
 	
 	public void setSecurityQuestion(String securityQuestion) {

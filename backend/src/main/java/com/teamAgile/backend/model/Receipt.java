@@ -7,6 +7,7 @@ import java.util.UUID;
 import org.hibernate.annotations.CreationTimestamp;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -16,165 +17,111 @@ import jakarta.persistence.Table;
 @Entity
 @Table(name = "receipts")
 public class Receipt {
-	
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
-	@Column(name = "receiptid", nullable = false)
+	@Column(name = "receiptId", nullable = false)
 	private UUID receiptID;
-	
-	@Column(name = "itemid", nullable = false)
+
+	@Column(name = "itemId", nullable = false)
 	private UUID itemID;
-	
-	@Column(name = "userid", nullable = false)
+
+	@Column(name = "userId", nullable = false)
 	private UUID userID;
-	
+
 	@Column(name = "totalCost", nullable = false)
 	private Double totalCost;
-	
-	@Column(name = "cardNum", nullable = false)
-	private String cardNum;
-	
-	@Column(name = "cardname", nullable = false)
-	private String cardName;
-	
-	@Column(name = "expdate", nullable = false)
-	private YearMonth expDate;
-	
-	@Column(name = "securitycode", nullable = false)
-	private String securityCode;
-	
-	@Column(name = "streetname", nullable = false)
-	private String streetName;
 
-	@Column(name = "streetnumber", nullable = false)
-	private int streetNumber;
-
-	@Column(name = "postalcode", nullable = false)
-	private String postalCode;
-
-	@Column(name = "country", nullable = false)
-	private String country;
+	@Embedded
+	private CreditCard creditCard;
 	
+	@Embedded
+	private Address address;
+
 	@Column(name = "shippingTime", nullable = false)
-	private int shippingTime;
-	
+	private Integer shippingTime;
+
 	@CreationTimestamp
 	@Column(name = "timestamp", nullable = false)
-	private LocalDateTime timestamp;
-	
+	private LocalDateTime timestamp = LocalDateTime.now();
+
 	public Receipt() {
 	}
 	
+	public Receipt(UUID itemID, UUID userID, Double totalCost, CreditCard creditCard, Address address, Integer shippingTime) {
+		this.itemID = itemID;
+		this.userID = itemID;
+		this.totalCost = totalCost;
+		this.creditCard = creditCard;
+		this.address = address;
+		this.shippingTime = shippingTime;
+	}
+
+	// getters
+
 	public UUID getReceiptID() {
 		return receiptID;
 	}
-	
+
 	public UUID getItemID() {
 		return itemID;
 	}
-	
+
 	public UUID getUserID() {
 		return userID;
 	}
-	
+
 	public Double getTotalCost() {
 		return totalCost;
 	}
 	
-	public String getCardNum() {
-		return cardNum;
-	}
-	
-	public String getCardName() {
-		return cardName;
-	}
-	
-	public YearMonth getExpDate() {
-		return expDate;
-	}
-	
-	public String getSecurityCode() {
-		return securityCode;
-	}
-	
-	public String getStreetName() {
-		return streetName;
+	public CreditCard getCreditCard() {
+		return creditCard;
 	}
 
-	public int getStreetNumber() {
-		return streetNumber;
+	public Address getAddress() {
+		return address;
 	}
 
-	public String getPostalCode() {
-		return postalCode;
-	}
-
-	public String getCountry() {
-		return country;
-	}
-	
-	public int getShippingTime() {
+	public Integer getShippingTime() {
 		return shippingTime;
 	}
-	
+
 	public LocalDateTime getTimestamp() {
 		return timestamp;
 	}
-	
+
+	// setters
 	public void setReceiptID(UUID receiptID) {
 		this.receiptID = receiptID;
 	}
-	
+
 	public void setItemID(UUID itemID) {
 		this.itemID = itemID;
 	}
-	
+
 	public void setUserID(UUID userID) {
 		this.userID = userID;
 	}
-	
+
 	public void setTotalCost(Double totalCost) {
 		this.totalCost = totalCost;
 	}
-	
-	public void setCardNum(String cardNum) {
-		this.cardNum = cardNum;
-	}
-	
-	public void setCardName(String cardName) {
-		this.cardName = cardName;
-	}
-	
-	public void setExpDate(YearMonth expDate) {
-		this.expDate = expDate;
-	}
-	
-	public void setSecurityCode(String securityCode) {
-		this.securityCode = securityCode;
-	}
-	
-	public void setStreetName(String streetName) {
-		this.streetName = streetName;
+
+	public void setCreditCard(CreditCard creditCard) {
+		this.creditCard = creditCard;
 	}
 
-	public void setStreetNumber(int streetNumber) {
-		this.streetNumber = streetNumber;
+	public void setAddress(Address address) {
+		this.address = address;
 	}
 
-	public void setPostalCode(String postalCode) {
-		this.postalCode = postalCode;
-	}
-
-	public void setCountry(String country) {
-		this.country = country;
-	}
-	
-	public void setShippingTime(int shippingTime) {
+	public void setShippingTime(Integer shippingTime) {
 		this.shippingTime = shippingTime;
 	}
-	
+
 	public void setTimestamp() {
 		this.timestamp = LocalDateTime.now();
 	}
-	
+
 }
