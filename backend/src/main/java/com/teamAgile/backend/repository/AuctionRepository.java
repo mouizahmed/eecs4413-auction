@@ -14,4 +14,5 @@ public interface AuctionRepository extends JpaRepository<AuctionItem, UUID> {
     Optional<AuctionItem> findByItemName(String itemName);
     Optional<AuctionItem> findByItemID(UUID itemID);
     List<AuctionItem> findAll();
+    List<AuctionItem> findByItemNameContainingIgnoreCase(String keyword);
 }

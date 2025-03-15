@@ -7,11 +7,14 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.teamAgile.backend.DTO.ForwardItemDTO;
 import com.teamAgile.backend.model.AuctionItem;
 import com.teamAgile.backend.model.DutchAuctionItem;
 import com.teamAgile.backend.model.ForwardAuctionItem;
 import com.teamAgile.backend.repository.AuctionRepository;
 import com.teamAgile.backend.websocket.AuctionWebSocketHandler;
+
+import jakarta.validation.Valid;
 
 @Service
 public class AuctionService {
@@ -29,30 +32,27 @@ public class AuctionService {
 		return auctionRepository.findAll();
 	}
 
-	public AuctionItem getAuctionItemByName(String name) {
-		Optional<AuctionItem> itemOptional = auctionRepository.findByItemName(name);
-		if (itemOptional.isEmpty())
-			return null;
-		return itemOptional.get();
+	public List<AuctionItem> searchByKeyword(String keyword) {
+		List<AuctionItem> items = auctionRepository.findByItemNameContainingIgnoreCase(keyword);
+		return items;
 	}
 
-	public AuctionItem createForwardItem(ForwardAuctionItem auctionItem, UUID userID) {
-		Optional<?> existingItem = auctionRepository.findByItemName(auctionItem.getItemName());
+	public AuctionItem createForwardItem(@Valid ForwardItemDTO forwardItemDTO, UUID userID) {
+		Optional<?> existingItem = auctionRepository.findByItemName(forwardItemDTO.getItemName());
 		if (existingItem.isPresent())
 			throw new IllegalArgumentException("Auction item already exists.");
 
-		if (auctionItem.getAuctionType() == AuctionItem.AuctionType.DUTCH)
+		if (forwardItemDTO.getAuctionType() == AuctionItem.AuctionType.DUTCH)
 			throw new IllegalArgumentException("Cannot create a Forward auction item with DUTCH auction type.");
 
-		if (auctionItem.getEndTime() == null)
+		if (forwardItemDTO.getEndTime() == null)
 			throw new IllegalArgumentException("Forward auction items must have an end time.");
 
-		auctionItem.setSellerID(userID);
+		
+		
+		ForwardAuctionItem forwardItem = new ForwardAuctionItem(forwardItemDTO.getItemName(), userID, forwardItemDTO.getAuctionStatus(), forwardItemDTO.getCurrentPrice(), forwardItemDTO.getShippingTime(), forwardItemDTO.getEndTime());
 
-		AuctionItem savedItem = auctionRepository.save(auctionItem);
-
-		// Broadcast the new item creation
-		auctionWebSocketHandler.broadcastAuctionUpdate(savedItem);
+		AuctionItem savedItem = auctionRepository.save(forwardItem);
 
 		return savedItem;
 	}

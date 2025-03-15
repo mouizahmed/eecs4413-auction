@@ -3,6 +3,8 @@ package com.teamAgile.backend.model;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import com.teamAgile.backend.model.AuctionItem.AuctionStatus;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
@@ -14,8 +16,13 @@ public class ForwardAuctionItem extends AuctionItem {
 	private LocalDateTime endTime;
 
 	public ForwardAuctionItem() {
-		super(AuctionType.FORWARD);
+		
 	}
+	
+	public ForwardAuctionItem(String itemName, UUID sellerID, AuctionStatus auctionStatus, Double currentPrice, Integer shippingTime, LocalDateTime endTime) {
+        super(itemName, sellerID, auctionStatus, currentPrice, shippingTime);
+        this.endTime = endTime;
+    }
 
 	public LocalDateTime getEndTime() {
 		return endTime;

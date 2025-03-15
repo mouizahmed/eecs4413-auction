@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.teamAgile.backend.DTO.CreditCardDTO;
+import com.teamAgile.backend.DTO.ForwardItemDTO;
 import com.teamAgile.backend.model.AuctionItem;
 import com.teamAgile.backend.model.Bid;
 import com.teamAgile.backend.model.DutchAuctionItem;
@@ -30,6 +31,7 @@ import com.teamAgile.backend.service.PaymentService;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/auction")
@@ -46,35 +48,27 @@ public class AuctionController extends BaseController {
 	}
 
 	@GetMapping("/get-all")
-	public ResponseEntity<List<AuctionItem>> getAllUsers(HttpServletRequest request) {
-		HttpSession session = request.getSession(false);
-		if (session == null) {
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+	public ResponseEntity<?> getAllUsers() {
+		try {
+			List<AuctionItem> auctionItems = auctionService.getAllAuctionItems();
+			return ResponseEntity.ok(auctionItems);
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
 		}
-
-		@SuppressWarnings("unchecked")
-		Map<String, Object> sessionUser = (Map<String, Object>) session.getAttribute("user");
-		if (sessionUser == null || !sessionUser.containsKey("userId") || !sessionUser.containsKey("username")) {
-			session.invalidate();
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-		}
-
-		List<AuctionItem> auctionItems = auctionService.getAllAuctionItems();
-		return ResponseEntity.ok(auctionItems);
 	}
 
-	@GetMapping("/item")
-	public ResponseEntity<AuctionItem> getAuctionItem(@RequestParam String name) {
-		System.out.println(name);
-		AuctionItem item = auctionService.getAuctionItemByName(name);
-		if (item == null) {
-			return ResponseEntity.ok(null);
+	@GetMapping("/search")
+	public ResponseEntity<?> getAuctionItem(@RequestParam("keyword") String keyword) {
+		try {
+			List<AuctionItem> items = auctionService.searchByKeyword(keyword);
+			return ResponseEntity.ok(items);
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
 		}
-		return ResponseEntity.ok(item);
 	}
 
 	@PostMapping("/forward/post")
-	public ResponseEntity<?> uploadForwardAuctionItem(@RequestBody ForwardAuctionItem auctionItem,
+	public ResponseEntity<?> uploadForwardAuctionItem(@Valid @RequestBody ForwardItemDTO forwardItemDTO,
 			HttpServletRequest request) {
 		User currentUser = getCurrentUser(request);
 
@@ -83,7 +77,7 @@ public class AuctionController extends BaseController {
 			if (userID == null)
 				throw new IllegalArgumentException("No UserID");
 
-			AuctionItem item = auctionService.createForwardItem(auctionItem, userID);
+			AuctionItem item = auctionService.createForwardItem(forwardItemDTO, userID);
 
 			return ResponseEntity.status(HttpStatus.CREATED).body(item);
 		} catch (Exception e) {

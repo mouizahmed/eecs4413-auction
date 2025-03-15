@@ -48,7 +48,7 @@ public abstract class AuctionItem {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "auctionstatus", nullable = false)
-    private AuctionStatus auctionStatus;
+    private AuctionStatus auctionStatus = AuctionStatus.AVAILABLE;
 
     @Column(name = "sellerid", nullable = false)
     private UUID sellerID;
@@ -60,9 +60,12 @@ public abstract class AuctionItem {
     protected AuctionItem() {
     }
 
-    public AuctionItem(AuctionType auctionType) {
-        this.auctionType = auctionType;
-        this.auctionStatus = AuctionStatus.AVAILABLE;
+    public AuctionItem(String itemName, UUID sellerID, AuctionStatus auctionStatus, Double currentPrice, Integer shippingTime) {
+        this.itemName = itemName;
+        this.currentPrice = currentPrice;
+        this.shippingTime = shippingTime;
+        this.sellerID = sellerID;
+        this.auctionStatus = auctionStatus;
     }
 
     public UUID getItemID() {

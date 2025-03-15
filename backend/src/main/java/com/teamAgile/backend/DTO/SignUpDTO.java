@@ -3,19 +3,13 @@ package com.teamAgile.backend.DTO;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
-public class SignUpDTO {
+public class SignUpDTO extends SignInDTO {
 
 	@NotBlank(message = "firstName is required.")
 	private String firstName;
 
 	@NotBlank(message = "lastName is required.")
 	private String lastName;
-
-	@NotBlank(message = "username is required")
-	private String username;
-
-	@NotBlank(message = "password is required")
-	private String password;
 
 	@NotBlank(message = "streetName is required")
 	private String streetName;
@@ -48,14 +42,6 @@ public class SignUpDTO {
 
 	public String getLastName() {
 		return lastName;
-	}
-
-	public String getUsername() {
-		return username;
-	}
-
-	public String getPassword() {
-		return password;
 	}
 
 	public String getStreetName() {

@@ -11,27 +11,35 @@ import jakarta.persistence.Entity;
 public class DutchAuctionItem extends AuctionItem {
 	@Column(name = "reserveprice")
 	private Double reservePrice;
-	
+
 	public DutchAuctionItem() {
-        super(AuctionType.DUTCH);
-    }
-	
+
+	}
+
+	public DutchAuctionItem(String itemName, UUID sellerID, AuctionStatus auctionStatus, Double currentPrice,
+			Integer shippingTime, Double reservePrice) {
+		super(itemName, sellerID, auctionStatus, currentPrice, shippingTime);
+		this.reservePrice = reservePrice;
+	}
+
 	public Double getReservePrice() {
 		return reservePrice;
 	}
-	
+
 	public void setReservePrice(Double reservePrice) {
 		this.reservePrice = reservePrice;
 	}
-	
+
 	@Override
 	public void placeBid(double newBid, UUID userID) {
-		if (this.getAuctionStatus() != AuctionStatus.AVAILABLE) throw new IllegalArgumentException("Auction Item is currently not available.");
-		if (this.getCurrentPrice() != newBid) throw new IllegalArgumentException("Bid price does not equal to current price.");
+		if (this.getAuctionStatus() != AuctionStatus.AVAILABLE)
+			throw new IllegalArgumentException("Auction Item is currently not available.");
+		if (this.getCurrentPrice() != newBid)
+			throw new IllegalArgumentException("Bid price does not equal to current price.");
 		this.setHighestBidder(userID);
 		this.setAuctionStatus(AuctionStatus.SOLD);
 	}
-	
+
 	public void decreasePrice(double lowerBy) {
 		double newPrice = this.getCurrentPrice() - lowerBy;
 		if (newPrice > this.getReservePrice()) {
