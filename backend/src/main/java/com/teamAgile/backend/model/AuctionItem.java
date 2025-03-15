@@ -30,16 +30,16 @@ public abstract class AuctionItem {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name = "itemid", nullable = false)
+    @Column(name = "itemId", nullable = false)
     private UUID itemID;
 
-    @Column(name = "itemname", nullable = false, unique = true)
+    @Column(name = "itemName", nullable = false, unique = true)
     private String itemName;
 
-    @Column(name = "currentprice", nullable = false)
+    @Column(name = "currentPrice", nullable = false)
     private Double currentPrice;
     
-    @Column(name = "shippingtime", nullable = false)
+    @Column(name = "shippingTime", nullable = false)
     private Integer shippingTime;
 
     @Enumerated(EnumType.STRING)
@@ -47,14 +47,14 @@ public abstract class AuctionItem {
     private AuctionType auctionType;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "auctionstatus", nullable = false)
+    @Column(name = "auctionStatus", nullable = false)
     private AuctionStatus auctionStatus = AuctionStatus.AVAILABLE;
 
-    @Column(name = "sellerid", nullable = false)
+    @Column(name = "sellerId", nullable = false)
     private UUID sellerID;
 
-    @Column(name = "highestbidder")
-    private UUID highestBidder;
+    @Column(name = "highestBidderId")
+    private UUID highestBidderID;
 
     protected AuctionItem() {
     }
@@ -96,8 +96,8 @@ public abstract class AuctionItem {
         return sellerID;
     }
 
-    public UUID getHighestBidder() {
-        return highestBidder;
+    public UUID getHighestBidderID() {
+        return highestBidderID;
     }
 
     public void setItemName(String itemName) {
@@ -116,8 +116,8 @@ public abstract class AuctionItem {
         this.auctionStatus = auctionStatus;
     }
 
-    public void setHighestBidder(UUID highestBidder) {
-        this.highestBidder = highestBidder;
+    public void setHighestBidderID(UUID highestBidderID) {
+        this.highestBidderID = highestBidderID;
     }
 
     public void setSellerID(UUID sellerID) {
@@ -129,7 +129,7 @@ public abstract class AuctionItem {
     }
     
     public void makePayment(UUID userID) {
-    	if (!this.getHighestBidder().equals(userID)) {
+    	if (!this.getHighestBidderID().equals(userID)) {
     		throw new IllegalArgumentException("You must be the winning bidder to place a payment on this item.");
     	}
     	

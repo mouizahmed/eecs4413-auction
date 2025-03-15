@@ -9,7 +9,7 @@ import jakarta.persistence.Entity;
 @Entity
 @DiscriminatorValue("FORWARD")
 public class ForwardAuctionItem extends AuctionItem {
-	@Column(name = "endtime")
+	@Column(name = "endTime")
 	private LocalDateTime endTime;
 
 	public ForwardAuctionItem() {
@@ -44,7 +44,7 @@ public class ForwardAuctionItem extends AuctionItem {
 		else if (LocalDateTime.now().isAfter(this.getEndTime()))
 			throw new IllegalArgumentException("This forward auction has now closed.");
 		
-		this.setHighestBidder(userID);
+		this.setHighestBidderID(userID);
 		this.setCurrentPrice(bidAmount);
 	}
 }

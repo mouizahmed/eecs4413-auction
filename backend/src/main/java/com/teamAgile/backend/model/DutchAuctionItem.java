@@ -9,7 +9,7 @@ import jakarta.persistence.Entity;
 @Entity
 @DiscriminatorValue("DUTCH")
 public class DutchAuctionItem extends AuctionItem {
-	@Column(name = "reserveprice")
+	@Column(name = "reservePrice")
 	private Double reservePrice;
 
 	public DutchAuctionItem() {
@@ -42,7 +42,7 @@ public class DutchAuctionItem extends AuctionItem {
 			throw new IllegalArgumentException("Auction Item is currently not available.");
 		if (this.getCurrentPrice() != bidAmount)
 			throw new IllegalArgumentException("Bid price does not equal to current price.");
-		this.setHighestBidder(userID);
+		this.setHighestBidderID(userID);
 		this.setAuctionStatus(AuctionStatus.SOLD);
 	}
 

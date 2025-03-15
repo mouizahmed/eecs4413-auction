@@ -188,7 +188,7 @@ public class AuctionWebSocketHandler extends TextWebSocketHandler {
 			// Create the update message
 			AuctionUpdateMessage updateMessage = new AuctionUpdateMessage(AuctionUpdateType.AUCTION_UPDATE,
 					auctionItem.getItemID(), auctionItem.getItemName(), auctionItem.getCurrentPrice(),
-					auctionItem.getHighestBidder(), auctionItem.getAuctionStatus().toString());
+					auctionItem.getHighestBidderID(), auctionItem.getAuctionStatus().toString());
 
 			String messageJson = objectMapper.writeValueAsString(updateMessage);
 			TextMessage textMessage = new TextMessage(messageJson);

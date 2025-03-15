@@ -41,7 +41,7 @@ public class PaymentService {
         LocalDateTime now = LocalDateTime.now();
 
         // check if user is the winning bidder
-        if (!item.getHighestBidder().equals(user.getUserID())) {
+        if (!item.getHighestBidderID().equals(user.getUserID())) {
             throw new IllegalArgumentException("You must be the winning bidder to place a payment on this item.");
         }
 
