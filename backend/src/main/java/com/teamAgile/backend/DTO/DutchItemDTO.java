@@ -9,9 +9,7 @@ public class DutchItemDTO extends AuctionItemDTO {
 	private Double reservePrice;
 
 	public DutchItemDTO() {
-		// Call the parent constructor (optional if no-arg)
 		super();
-		// Set auctionType to FORWARD here
 		setAuctionType(AuctionType.DUTCH);
 	}
 

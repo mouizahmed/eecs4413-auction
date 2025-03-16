@@ -5,16 +5,19 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import com.teamAgile.backend.DTO.DutchItemDTO;
 import com.teamAgile.backend.DTO.ForwardItemDTO;
 import com.teamAgile.backend.model.AuctionItem;
+import com.teamAgile.backend.model.Bid;
 import com.teamAgile.backend.model.DutchAuctionItem;
 import com.teamAgile.backend.model.ForwardAuctionItem;
 import com.teamAgile.backend.model.User;
 import com.teamAgile.backend.repository.AuctionRepository;
 import com.teamAgile.backend.websocket.AuctionWebSocketHandler;
+import com.teamAgile.backend.model.builder.AuctionItemBuilder;
 
 import jakarta.validation.Valid;
 
@@ -23,11 +26,14 @@ public class AuctionService {
 
 	private final AuctionRepository auctionRepository;
 	private final AuctionWebSocketHandler auctionWebSocketHandler;
+	private final BidService bidService;
 
 	@Autowired
-	public AuctionService(AuctionRepository auctionRepository, AuctionWebSocketHandler auctionWebSocketHandler) {
+	public AuctionService(AuctionRepository auctionRepository, AuctionWebSocketHandler auctionWebSocketHandler,
+			@Lazy BidService bidService) {
 		this.auctionRepository = auctionRepository;
 		this.auctionWebSocketHandler = auctionWebSocketHandler;
+		this.bidService = bidService;
 	}
 
 	public List<AuctionItem> getAllAuctionItems() {
@@ -46,7 +52,19 @@ public class AuctionService {
 		}
 
 		return itemOptional.get();
+	}
 
+	public AuctionItem getAuctionItemWithBidsByID(UUID itemID) {
+		AuctionItem item = getAuctionItemByID(itemID);
+		if (item == null) {
+			return null;
+		}
+
+		List<Bid> bids = bidService.getBidsByItemId(itemID);
+
+		item.setBids(bids);
+
+		return item;
 	}
 
 	public AuctionItem getAuctionItemByName(String itemName) {
@@ -70,9 +88,10 @@ public class AuctionService {
 		if (forwardItemDTO.getEndTime() == null)
 			throw new IllegalArgumentException("Forward auction items must have an end time.");
 
-		ForwardAuctionItem forwardItem = new ForwardAuctionItem(forwardItemDTO.getItemName(), user,
-				forwardItemDTO.getAuctionStatus(), forwardItemDTO.getCurrentPrice(), forwardItemDTO.getShippingTime(),
-				forwardItemDTO.getEndTime());
+		AuctionItem forwardItem = AuctionItemBuilder
+				.forwardAuction(forwardItemDTO.getItemName(), user, forwardItemDTO.getCurrentPrice(),
+						forwardItemDTO.getShippingTime())
+				.withStatus(forwardItemDTO.getAuctionStatus()).withEndTime(forwardItemDTO.getEndTime()).build();
 
 		AuctionItem savedItem = auctionRepository.save(forwardItem);
 
@@ -90,9 +109,10 @@ public class AuctionService {
 		if (dutchItemDTO.getReservePrice() == null)
 			throw new IllegalArgumentException("Dutch auction items must have a reserve price.");
 
-		DutchAuctionItem dutchItem = new DutchAuctionItem(dutchItemDTO.getItemName(), user,
-				dutchItemDTO.getAuctionStatus(), dutchItemDTO.getCurrentPrice(), dutchItemDTO.getShippingTime(),
-				dutchItemDTO.getReservePrice());
+		AuctionItem dutchItem = AuctionItemBuilder
+				.dutchAuction(dutchItemDTO.getItemName(), user, dutchItemDTO.getCurrentPrice(),
+						dutchItemDTO.getShippingTime())
+				.withStatus(dutchItemDTO.getAuctionStatus()).withReservePrice(dutchItemDTO.getReservePrice()).build();
 
 		AuctionItem savedItem = auctionRepository.save(dutchItem);
 
@@ -120,9 +140,21 @@ public class AuctionService {
 
 		AuctionItem savedItem = auctionRepository.save(dutchItem);
 
-		// Broadcast the price update
 		auctionWebSocketHandler.broadcastAuctionUpdate(savedItem);
 
 		return savedItem;
+	}
+
+	public AuctionItem saveAuctionItem(AuctionItem item) {
+		Optional<?> existingItem = auctionRepository.findByItemName(item.getItemName());
+		if (existingItem.isPresent()) {
+			throw new IllegalArgumentException("Auction item already exists.");
+		}
+
+		return auctionRepository.save(item);
+	}
+
+	public AuctionItem getAuctionItemById(UUID itemId) {
+		return getAuctionItemByID(itemId);
 	}
 }

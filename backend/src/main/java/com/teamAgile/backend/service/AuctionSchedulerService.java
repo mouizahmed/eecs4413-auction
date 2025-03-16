@@ -38,7 +38,7 @@ public class AuctionSchedulerService {
             if (item instanceof ForwardAuctionItem) {
                 ForwardAuctionItem forwardItem = (ForwardAuctionItem) item;
 
-                // Only process items that are still available
+				// Only process items that are still available
                 if (forwardItem.getAuctionStatus() == AuctionStatus.AVAILABLE) {
                     // Check if the auction has ended
                     if (forwardItem.getEndTime() != null && now.isAfter(forwardItem.getEndTime())) {
@@ -54,7 +54,7 @@ public class AuctionSchedulerService {
 
                         AuctionItem savedItem = auctionRepository.save(forwardItem);
 
-                        // Broadcast the status update
+						// Broadcast the status update
                         auctionWebSocketHandler.broadcastAuctionUpdate(savedItem);
                     }
                 }

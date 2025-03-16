@@ -5,69 +5,70 @@ import java.util.UUID;
 import org.hibernate.annotations.CreationTimestamp;
 import jakarta.persistence.*;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 @Entity
 @Table(name = "bids")
 public class Bid {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name = "bidId", nullable = false)
-    private UUID bidID;
+	@Id
+	@GeneratedValue(strategy = GenerationType.AUTO)
+	@Column(name = "bidId", nullable = false)
+	private UUID bidID;
 
-    @Column(name = "itemId", nullable = false)
-    private UUID itemID;
+	@Column(name = "itemId", nullable = false)
+	private UUID itemID;
 
-    // Establish many-to-one relationship with User
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "userId", nullable = false)
-    private User user;
+	@ManyToOne(optional = false)
+	@JoinColumn(name = "userId", nullable = false)
+	@JsonManagedReference(value = "user-bids")
+	private User user;
 
-    @Column(name = "bidAmount", nullable = false)
-    private Double bidAmount;
+	@Column(name = "bidAmount", nullable = false)
+	private Double bidAmount;
 
-    // Let Hibernate handle timestamp creation
-    @CreationTimestamp
-    @Column(name = "timestamp", nullable = false)
-    private LocalDateTime timestamp;
+	@CreationTimestamp
+	@Column(name = "timestamp", nullable = false)
+	private LocalDateTime timestamp;
 
-    public Bid() {
-    }
-    
-    public Bid(UUID itemID, User user, Double bidAmount) {
-        this.itemID = itemID;
-        this.user = user;
-        this.bidAmount = bidAmount;
-    }
+	public Bid() {
+	}
 
-    public UUID getBidID() {
-        return bidID;
-    }
+	public Bid(UUID itemID, User user, Double bidAmount) {
+		this.itemID = itemID;
+		this.user = user;
+		this.bidAmount = bidAmount;
+	}
 
-    public UUID getItemID() {
-        return itemID;
-    }
+	public UUID getBidID() {
+		return bidID;
+	}
 
-    public User getUser() {
-        return user;
-    }
+	public UUID getItemID() {
+		return itemID;
+	}
 
-    public Double getBidAmount() {
-        return bidAmount;
-    }
-    
-    public LocalDateTime getTimestamp() {
-        return timestamp;
-    }
+	public User getUser() {
+		return user;
+	}
 
-    public void setItemID(UUID itemID) {
-        this.itemID = itemID;
-    }
+	public Double getBidAmount() {
+		return bidAmount;
+	}
 
-    public void setUser(User user) {
-        this.user = user;
-    }
+	public LocalDateTime getTimestamp() {
+		return timestamp;
+	}
 
-    public void setBidAmount(Double bidAmount) {
-        this.bidAmount = bidAmount;
-    }
+	public void setItemID(UUID itemID) {
+		this.itemID = itemID;
+	}
+
+	public void setUser(User user) {
+		this.user = user;
+	}
+
+	public void setBidAmount(Double bidAmount) {
+		this.bidAmount = bidAmount;
+	}
 }

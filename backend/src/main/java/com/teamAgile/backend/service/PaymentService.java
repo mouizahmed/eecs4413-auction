@@ -1,15 +1,11 @@
 package com.teamAgile.backend.service;
 
-import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import com.teamAgile.backend.DTO.CreditCardDTO;
 import com.teamAgile.backend.model.AuctionItem;
-import com.teamAgile.backend.model.AuctionItem.AuctionStatus;
 import com.teamAgile.backend.model.CreditCard;
 import com.teamAgile.backend.model.Receipt;
 import com.teamAgile.backend.model.User;
@@ -40,7 +36,6 @@ public class PaymentService {
 		}
 
 		AuctionItem item = itemOptional.get();
-		LocalDateTime now = LocalDateTime.now();
 
 		CreditCard creditCard = new CreditCard(cardDetails.getCardNum(), cardDetails.getCardName(), cardDetails.getExpDate(), cardDetails.getSecurityCode());
 		Receipt receipt = new Receipt(itemID, user, item.getCurrentPrice(), creditCard, user.getAddress(), item.getShippingTime());

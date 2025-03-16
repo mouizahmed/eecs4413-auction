@@ -1,31 +1,40 @@
 package com.teamAgile.backend.controller;
 
 import java.util.List;
-import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
+import org.springframework.hateoas.CollectionModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
+import com.teamAgile.backend.DTO.ApiResponse;
 import com.teamAgile.backend.DTO.ForgotPasswordDTO;
 import com.teamAgile.backend.DTO.SignInDTO;
 import com.teamAgile.backend.DTO.SignUpDTO;
+import com.teamAgile.backend.DTO.UserResponseDTO;
+import com.teamAgile.backend.DTO.hateoas.UserModel;
+import com.teamAgile.backend.DTO.hateoas.UserModelAssembler;
+import com.teamAgile.backend.exception.UserNotFoundException;
 import com.teamAgile.backend.model.User;
 import com.teamAgile.backend.service.UserService;
-
+import com.teamAgile.backend.util.ResponseUtil;
+import com.teamAgile.backend.util.ValidationUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 
 @RestController
 @RequestMapping("/user")
@@ -33,84 +42,175 @@ public class UserController {
 
 	private final UserService userService;
 	private final AuthenticationManager authenticationManager;
+	private final UserModelAssembler userModelAssembler;
 
 	@Autowired
-	public UserController(UserService userService, AuthenticationManager authenticationManager) {
+	public UserController(UserService userService, AuthenticationManager authenticationManager,
+			UserModelAssembler userModelAssembler) {
 		this.userService = userService;
 		this.authenticationManager = authenticationManager;
+		this.userModelAssembler = userModelAssembler;
 	}
 
 	@GetMapping("/get-all")
-	public ResponseEntity<List<User>> getAllUsers() {
-		List<User> users = userService.getAllUsers();
-		return ResponseEntity.ok(users);
+	public ResponseEntity<ApiResponse<CollectionModel<UserModel>>> getAllUsers() {
+		try {
+			List<User> users = userService.getAllUsers();
+			List<UserResponseDTO> userDTOs = users.stream().map(UserResponseDTO::new).collect(Collectors.toList());
+
+			List<UserModel> userModels = userDTOs.stream().map(userModelAssembler::toModel)
+					.collect(Collectors.toList());
+
+			CollectionModel<UserModel> collectionModel = CollectionModel.of(userModels,
+					linkTo(methodOn(UserController.class).getAllUsers()).withSelfRel());
+
+			return ResponseUtil.ok(collectionModel);
+		} catch (Exception e) {
+			return ResponseUtil.internalError("Error retrieving users: " + e.getMessage());
+		}
 	}
 
 	@PostMapping("/sign-up")
-	public ResponseEntity<?> signUp(@Valid @RequestBody SignUpDTO signUpDTO) {
-		
-		User userObj = new User(signUpDTO);
-		
-		User createdUser = userService.signUp(userObj);
-		if (createdUser == null) {
-			return ResponseEntity.status(HttpStatus.CONFLICT).body("Username already taken.");
+	public ResponseEntity<ApiResponse<UserResponseDTO>> signUp(@Valid @RequestBody SignUpDTO signUpDTO) {
+		try {
+			if (signUpDTO.getPassword() == null || signUpDTO.getPassword().length() < 8) {
+				return ResponseUtil.badRequest("Password must be at least 8 characters long");
+			}
+
+			String username = ValidationUtil.sanitizeString(signUpDTO.getUsername());
+			if (username == null || username.isEmpty()) {
+				return ResponseUtil.badRequest("Username cannot be empty");
+			}
+
+			User userObj = new User(signUpDTO);
+			User createdUser = userService.signUp(userObj);
+			UserResponseDTO userResponseDTO = new UserResponseDTO(createdUser);
+			return ResponseUtil.created("User registered successfully", userResponseDTO);
+		} catch (Exception e) {
+			// Handle specific exceptions
+			if (e.getMessage() != null && e.getMessage().contains("Username already taken")) {
+				return ResponseUtil.conflict(e.getMessage());
+			}
+			return ResponseUtil.internalError("Error during registration: " + e.getMessage());
 		}
-		return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
 	}
 
 	@PostMapping("/sign-in")
-	public ResponseEntity<?> signIn(@Valid @RequestBody SignInDTO signInDTO, HttpServletRequest request) {
-
-		
+	public ResponseEntity<ApiResponse<UserResponseDTO>> signIn(@Valid @RequestBody SignInDTO signInDTO,
+			HttpServletRequest request) {
 		try {
-			// Authenticate using Spring Security
-			Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
-					signInDTO.getUsername(), signInDTO.getPassword()));
+			String username = ValidationUtil.sanitizeString(signInDTO.getUsername());
+			String password = signInDTO.getPassword(); // Don't sanitize passwords
 
-			// Set the authentication in the SecurityContext
+			if (username == null || username.isEmpty()) {
+				return ResponseUtil.badRequest("Username cannot be empty");
+			}
+
+			if (password == null || password.isEmpty()) {
+				return ResponseUtil.badRequest("Password cannot be empty");
+			}
+
+			Authentication authentication = authenticationManager
+					.authenticate(new UsernamePasswordAuthenticationToken(username, password));
+
 			SecurityContextHolder.getContext().setAuthentication(authentication);
 
-			// Get the authenticated user
-			User user = userService.signIn(signInDTO.getUsername(), signInDTO.getPassword());
+			User user = userService.signIn(username, password);
+			if (user == null) {
+				return ResponseUtil.unauthorized("Invalid username or password");
+			}
 
-			// Create new session
+			UserResponseDTO userResponseDTO = new UserResponseDTO(user);
+
 			HttpSession session = request.getSession(true);
 			session.setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
-			Object userObject = Map.of("userID", user.getUserID(), "username", user.getUsername(), "firstName", user.getFirstName(), "lastName", user.getLastName(), "streetNum", user.getAddress().getStreetNum(), "streetName", user.getAddress().getStreetName(), "postalCode", user.getAddress().getPostalCode(), "city", user.getAddress().getCity(), "country", user.getAddress().getCountry());
-			session.setAttribute("user", userObject);
+			session.setAttribute("user", userResponseDTO);
 			session.setMaxInactiveInterval(30 * 60); // 30 minutes
 
-			return ResponseEntity.ok().body(userObject);
-
+			return ResponseUtil.ok("Login successful", userResponseDTO);
+		} catch (BadCredentialsException e) {
+			return ResponseUtil.unauthorized("Invalid username or password");
+		} catch (UserNotFoundException e) {
+			return ResponseUtil.notFound(e.getMessage());
 		} catch (Exception e) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid username or password.");
+			return ResponseUtil.internalError("An error occurred during login: " + e.getMessage());
 		}
 	}
 
 	@PostMapping("/sign-out")
-	public ResponseEntity<?> signOut(HttpServletRequest request) {
-		HttpSession session = request.getSession(false);
-		if (session != null) {
-			session.invalidate();
-			SecurityContextHolder.clearContext();
-			return ResponseEntity.ok().body("Successfully signed out");
+	public ResponseEntity<ApiResponse<Void>> signOut(HttpServletRequest request) {
+		try {
+			HttpSession session = request.getSession(false);
+			if (session != null) {
+				session.invalidate();
+				SecurityContextHolder.clearContext();
+				return ResponseUtil.ok("Successfully signed out", null);
+			}
+
+			return ResponseUtil.badRequest("No active session found");
+		} catch (Exception e) {
+			return ResponseUtil.internalError("Error during sign out: " + e.getMessage());
 		}
-		
-		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("No active session found");
 	}
 
 	@GetMapping("/get-security-question")
-	public ResponseEntity<?> getSecurityQuestion(@RequestParam("username") String username) {
-	    String securityQuestion = userService.findSecurityQuestionByUsername(username);
-	    if (securityQuestion == null) {
-	        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
-	    }
-	    return ResponseEntity.ok(securityQuestion);
+	public ResponseEntity<ApiResponse<String>> getSecurityQuestion(@RequestParam("username") String username) {
+		try {
+			// Sanitize input
+			String sanitizedUsername = ValidationUtil.sanitizeString(username);
+			if (sanitizedUsername == null || sanitizedUsername.isEmpty()) {
+				return ResponseUtil.badRequest("Username cannot be empty");
+			}
+
+			String securityQuestion = userService.findSecurityQuestionByUsername(sanitizedUsername);
+			return ResponseUtil.ok(securityQuestion);
+		} catch (UserNotFoundException e) {
+			return ResponseUtil.notFound(e.getMessage());
+		} catch (Exception e) {
+			return ResponseUtil.internalError("Error retrieving security question: " + e.getMessage());
+		}
 	}
-	
+
 	@PostMapping("/forgot-password")
-	public ResponseEntity<?> validateSecurityAnswer(@RequestParam("username") String username, @Valid @RequestBody ForgotPasswordDTO forgotPasswordDTO) {
-	    boolean securityQuestion = userService.validateSecurityAnswer(username, forgotPasswordDTO);
-	    return ResponseEntity.ok(securityQuestion);
+	public ResponseEntity<ApiResponse<Boolean>> validateSecurityAnswer(@RequestParam("username") String username,
+			@Valid @RequestBody ForgotPasswordDTO forgotPasswordDTO) {
+		try {
+			String sanitizedUsername = ValidationUtil.sanitizeString(username);
+			if (sanitizedUsername == null || sanitizedUsername.isEmpty()) {
+				return ResponseUtil.badRequest("Username cannot be empty");
+			}
+
+			if (forgotPasswordDTO.getNewPassword() == null || forgotPasswordDTO.getNewPassword().length() < 8) {
+				return ResponseUtil.badRequest("New password must be at least 8 characters long");
+			}
+
+			boolean result = userService.validateSecurityAnswer(sanitizedUsername, forgotPasswordDTO);
+			if (result) {
+				return ResponseUtil.ok("Password reset successful", true);
+			} else {
+				return ResponseUtil.badRequest("Invalid security answer");
+			}
+		} catch (UserNotFoundException e) {
+			return ResponseUtil.notFound(e.getMessage());
+		} catch (Exception e) {
+			return ResponseUtil.internalError("Error during password reset: " + e.getMessage());
+		}
+	}
+
+	@GetMapping("/{userId}")
+	public ResponseEntity<ApiResponse<UserModel>> getUserById(@PathVariable UUID userId) {
+		try {
+			User user = userService.getUserById(userId);
+			if (user == null) {
+				return ResponseUtil.notFound("User not found with ID: " + userId);
+			}
+
+			UserResponseDTO userResponseDTO = new UserResponseDTO(user);
+			UserModel userModel = userModelAssembler.toModel(userResponseDTO);
+
+			return ResponseUtil.ok(userModel);
+		} catch (Exception e) {
+			return ResponseUtil.internalError("Error retrieving user: " + e.getMessage());
+		}
 	}
 }

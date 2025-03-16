@@ -1,40 +1,34 @@
 package com.teamAgile.backend.controller;
 
-import java.util.Map;
-import java.util.UUID;
-
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
-
 import org.springframework.stereotype.Controller;
-
+import com.teamAgile.backend.DTO.UserResponseDTO;
 import com.teamAgile.backend.model.User;
 
 @Controller
 public class BaseController {
-	@SuppressWarnings("unchecked")
 	protected User getCurrentUser(HttpServletRequest request) {
 		HttpSession session = request.getSession(false);
 		if (session == null) {
 			return null;
 		}
 
-		Map<String, Object> user = (Map<String, Object>) session.getAttribute("user");
-
-		if (user == null) {
+		UserResponseDTO userDTO = (UserResponseDTO) session.getAttribute("user");
+		if (userDTO == null) {
 			return null;
 		}
 
-		Object userID = user.get("userID");
-		if (userID == null) {
-			return null;
-		}
+		User user = new User();
+		user.setUserID(userDTO.getUserID());
+		user.setFirstName(userDTO.getFirstName());
+		user.setLastName(userDTO.getLastName());
+		user.setUsername(userDTO.getUsername());
 
-		User userObj = new User((UUID) user.get("userID"), (String) user.get("firstName"),
-				(String) user.get("lastName"), (String) user.get("username"), (String) user.get("streetName"),
-				(Integer) user.get("streetNum"), (String) user.get("postalCode"), (String) user.get("city"),
-				(String) user.get("country"));
+		com.teamAgile.backend.model.Address address = new com.teamAgile.backend.model.Address(userDTO.getStreetName(),
+				userDTO.getStreetNum(), userDTO.getPostalCode(), userDTO.getCity(), userDTO.getCountry());
+		user.setAddress(address);
 
-		return userObj;
+		return user;
 	}
 }

@@ -14,9 +14,7 @@ public class ForwardItemDTO extends AuctionItemDTO {
 	private LocalDateTime endTime;
 
 	public ForwardItemDTO() {
-		// Call the parent constructor (optional if no-arg)
 		super();
-		// Set auctionType to FORWARD here
 		setAuctionType(AuctionType.FORWARD);
 	}
 

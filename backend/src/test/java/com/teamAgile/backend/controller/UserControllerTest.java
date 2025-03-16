@@ -18,21 +18,31 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.config.annotation.web.WebSecurityConfigurer;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.teamAgile.backend.DTO.ForgotPasswordDTO;
 import com.teamAgile.backend.DTO.SignInDTO;
 import com.teamAgile.backend.DTO.SignUpDTO;
+import com.teamAgile.backend.config.WebSocketConfig;
 import com.teamAgile.backend.model.Address;
 import com.teamAgile.backend.model.User;
 import com.teamAgile.backend.service.UserService;
 
-@WebMvcTest(UserController.class)
+@WebMvcTest(controllers = UserController.class, excludeFilters = {
+        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = { WebSecurityConfigurer.class,
+                WebSocketConfigurer.class, WebSocketConfig.class })
+})
 public class UserControllerTest {
 
     @Autowired
@@ -63,16 +73,34 @@ public class UserControllerTest {
         testUser.setFirstName("John");
         testUser.setLastName("Doe");
         testUser.setUsername("johndoe");
-        testUser.setPassword("password123");
+
+        // Use reflection to set the password field directly to avoid calling the real
+        // setPassword method
+        try {
+            java.lang.reflect.Field passwordField = User.class.getDeclaredField("password");
+            passwordField.setAccessible(true);
+            passwordField.set(testUser, "hashedPassword123");
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to set password field: " + e.getMessage());
+        }
 
         Address address = new Address("Main St", 123, "12345", "New York", "USA");
         testUser.setAddress(address);
 
         testUser.setSecurityQuestion("What is your pet's name?");
-        testUser.setSecurityAnswer("Fluffy");
+
+        // Use reflection to set the securityAnswer field directly
+        try {
+            java.lang.reflect.Field securityAnswerField = User.class.getDeclaredField("securityAnswer");
+            securityAnswerField.setAccessible(true);
+            securityAnswerField.set(testUser, "Fluffy");
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to set securityAnswer field: " + e.getMessage());
+        }
 
         // Create SignUpDTO
         signUpDTO = new SignUpDTO();
+        // Set SignInDTO fields (username and password)
         try {
             java.lang.reflect.Field usernameField = SignInDTO.class.getDeclaredField("username");
             usernameField.setAccessible(true);
@@ -81,7 +109,12 @@ public class UserControllerTest {
             java.lang.reflect.Field passwordField = SignInDTO.class.getDeclaredField("password");
             passwordField.setAccessible(true);
             passwordField.set(signUpDTO, "password123");
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to set up SignInDTO fields: " + e.getMessage());
+        }
 
+        // Set SignUpDTO specific fields
+        try {
             java.lang.reflect.Field firstNameField = SignUpDTO.class.getDeclaredField("firstName");
             firstNameField.setAccessible(true);
             firstNameField.set(signUpDTO, "John");
@@ -151,6 +184,7 @@ public class UserControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "testuser", roles = "USER")
     void testGetAllUsers() throws Exception {
         // Arrange
         User user1 = new User();
@@ -165,7 +199,8 @@ public class UserControllerTest {
         when(userService.getAllUsers()).thenReturn(userList);
 
         // Act & Assert
-        mockMvc.perform(get("/user/get-all"))
+        mockMvc.perform(get("/user/get-all")
+                .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2))
                 .andExpect(jsonPath("$[0].username").value("user1"))
@@ -173,12 +208,14 @@ public class UserControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "testuser", roles = "USER")
     void testSignUp_Success() throws Exception {
         // Arrange
         when(userService.signUp(any(User.class))).thenReturn(testUser);
 
         // Act & Assert
         mockMvc.perform(post("/user/sign-up")
+                .with(SecurityMockMvcRequestPostProcessors.csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(signUpDTO)))
                 .andExpect(status().isCreated())
@@ -188,12 +225,14 @@ public class UserControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "testuser", roles = "USER")
     void testSignUp_UsernameAlreadyTaken() throws Exception {
         // Arrange
         when(userService.signUp(any(User.class))).thenReturn(null);
 
         // Act & Assert
         mockMvc.perform(post("/user/sign-up")
+                .with(SecurityMockMvcRequestPostProcessors.csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(signUpDTO)))
                 .andExpect(status().isConflict())
@@ -201,6 +240,7 @@ public class UserControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "testuser", roles = "USER")
     void testSignIn_Success() throws Exception {
         // Arrange
         Authentication authentication = new UsernamePasswordAuthenticationToken("johndoe", "password123");
@@ -209,6 +249,7 @@ public class UserControllerTest {
 
         // Act & Assert
         mockMvc.perform(post("/user/sign-in")
+                .with(SecurityMockMvcRequestPostProcessors.csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(signInDTO)))
                 .andExpect(status().isOk())
@@ -218,14 +259,15 @@ public class UserControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "testuser", roles = "USER")
     void testSignIn_InvalidCredentials() throws Exception {
         // Arrange
-        when(authenticationManager.authenticate(any(Authentication.class)))
-                .thenThrow(
-                        new org.springframework.security.authentication.BadCredentialsException("Invalid credentials"));
+        when(authenticationManager.authenticate(any(Authentication.class))).thenThrow(
+                new org.springframework.security.authentication.BadCredentialsException("Invalid credentials"));
 
         // Act & Assert
         mockMvc.perform(post("/user/sign-in")
+                .with(SecurityMockMvcRequestPostProcessors.csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(signInDTO)))
                 .andExpect(status().isBadRequest())
@@ -233,44 +275,52 @@ public class UserControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "testuser", roles = "USER")
     void testSignOut_Success() throws Exception {
         // Act & Assert
-        mockMvc.perform(post("/user/sign-out"))
+        mockMvc.perform(post("/user/sign-out")
+                .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isOk())
                 .andExpect(content().string("Successfully signed out"));
     }
 
     @Test
+    @WithMockUser(username = "testuser", roles = "USER")
     void testGetSecurityQuestion_Success() throws Exception {
         // Arrange
         when(userService.findSecurityQuestionByUsername("johndoe")).thenReturn("What is your pet's name?");
 
         // Act & Assert
         mockMvc.perform(get("/user/get-security-question")
+                .with(SecurityMockMvcRequestPostProcessors.csrf())
                 .param("username", "johndoe"))
                 .andExpect(status().isOk())
                 .andExpect(content().string("What is your pet's name?"));
     }
 
     @Test
+    @WithMockUser(username = "testuser", roles = "USER")
     void testGetSecurityQuestion_UserNotFound() throws Exception {
         // Arrange
         when(userService.findSecurityQuestionByUsername("nonexistent")).thenReturn(null);
 
         // Act & Assert
         mockMvc.perform(get("/user/get-security-question")
+                .with(SecurityMockMvcRequestPostProcessors.csrf())
                 .param("username", "nonexistent"))
                 .andExpect(status().isNotFound())
                 .andExpect(content().string("User not found"));
     }
 
     @Test
+    @WithMockUser(username = "testuser", roles = "USER")
     void testValidateSecurityAnswer_Success() throws Exception {
         // Arrange
         when(userService.validateSecurityAnswer(anyString(), any(ForgotPasswordDTO.class))).thenReturn(true);
 
         // Act & Assert
         mockMvc.perform(post("/user/forgot-password")
+                .with(SecurityMockMvcRequestPostProcessors.csrf())
                 .param("username", "johndoe")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(forgotPasswordDTO)))
@@ -279,12 +329,14 @@ public class UserControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "testuser", roles = "USER")
     void testValidateSecurityAnswer_Failure() throws Exception {
         // Arrange
         when(userService.validateSecurityAnswer(anyString(), any(ForgotPasswordDTO.class))).thenReturn(false);
 
         // Act & Assert
         mockMvc.perform(post("/user/forgot-password")
+                .with(SecurityMockMvcRequestPostProcessors.csrf())
                 .param("username", "johndoe")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(forgotPasswordDTO)))

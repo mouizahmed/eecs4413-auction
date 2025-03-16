@@ -13,6 +13,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 @Entity
 @Table(name = "receipts")
 public class Receipt {
@@ -27,6 +29,7 @@ public class Receipt {
 
     @ManyToOne
     @JoinColumn(name = "userId", nullable = false)
+    @JsonManagedReference(value = "user-receipts")
     private User user;
 
     @Column(name = "totalCost", nullable = false)
@@ -34,7 +37,7 @@ public class Receipt {
 
     @Embedded
     private CreditCard creditCard;
-    
+
     @Embedded
     private Address address;
 
@@ -47,8 +50,9 @@ public class Receipt {
 
     public Receipt() {
     }
-    
-    public Receipt(UUID itemID, User user, Double totalCost, CreditCard creditCard, Address address, Integer shippingTime) {
+
+    public Receipt(UUID itemID, User user, Double totalCost, CreditCard creditCard, Address address,
+            Integer shippingTime) {
         this.itemID = itemID;
         this.user = user;
         this.totalCost = totalCost;
@@ -73,7 +77,7 @@ public class Receipt {
     public Double getTotalCost() {
         return totalCost;
     }
-    
+
     public CreditCard getCreditCard() {
         return creditCard;
     }
