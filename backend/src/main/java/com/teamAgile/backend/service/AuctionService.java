@@ -157,4 +157,17 @@ public class AuctionService {
 	public AuctionItem getAuctionItemById(UUID itemId) {
 		return getAuctionItemByID(itemId);
 	}
+
+	public List<AuctionItem> getUnpaidItemsForUser(User user) {
+		return auctionRepository.findByHighestBidderAndAuctionStatus(user, AuctionItem.AuctionStatus.SOLD);
+	}
+
+	public List<AuctionItem> getAvailableAuctionItems() {
+		return auctionRepository.findByAuctionStatus(AuctionItem.AuctionStatus.AVAILABLE);
+	}
+
+	public List<AuctionItem> searchAvailableByKeyword(String keyword) {
+		return auctionRepository.findByItemNameContainingIgnoreCaseAndAuctionStatus(keyword,
+				AuctionItem.AuctionStatus.AVAILABLE);
+	}
 }

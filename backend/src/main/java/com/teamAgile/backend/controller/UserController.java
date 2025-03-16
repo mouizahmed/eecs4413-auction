@@ -3,6 +3,7 @@ package com.teamAgile.backend.controller;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.time.YearMonth;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.CollectionModel;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import com.teamAgile.backend.DTO.ApiResponse;
+import com.teamAgile.backend.DTO.AuctionItemResponseDTO;
 import com.teamAgile.backend.DTO.ForgotPasswordDTO;
 import com.teamAgile.backend.DTO.SignInDTO;
 import com.teamAgile.backend.DTO.SignUpDTO;
@@ -27,7 +29,9 @@ import com.teamAgile.backend.DTO.UserResponseDTO;
 import com.teamAgile.backend.DTO.hateoas.UserModel;
 import com.teamAgile.backend.DTO.hateoas.UserModelAssembler;
 import com.teamAgile.backend.exception.UserNotFoundException;
+import com.teamAgile.backend.model.AuctionItem;
 import com.teamAgile.backend.model.User;
+import com.teamAgile.backend.service.AuctionService;
 import com.teamAgile.backend.service.UserService;
 import com.teamAgile.backend.util.ResponseUtil;
 import com.teamAgile.backend.util.ValidationUtil;
@@ -38,18 +42,20 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 
 @RestController
 @RequestMapping("/user")
-public class UserController {
+public class UserController extends BaseController {
 
 	private final UserService userService;
 	private final AuthenticationManager authenticationManager;
 	private final UserModelAssembler userModelAssembler;
+	private final AuctionService auctionService;
 
 	@Autowired
 	public UserController(UserService userService, AuthenticationManager authenticationManager,
-			UserModelAssembler userModelAssembler) {
+			UserModelAssembler userModelAssembler, AuctionService auctionService) {
 		this.userService = userService;
 		this.authenticationManager = authenticationManager;
 		this.userModelAssembler = userModelAssembler;
+		this.auctionService = auctionService;
 	}
 
 	@GetMapping("/get-all")
@@ -100,7 +106,7 @@ public class UserController {
 			HttpServletRequest request) {
 		try {
 			String username = ValidationUtil.sanitizeString(signInDTO.getUsername());
-			String password = signInDTO.getPassword(); // Don't sanitize passwords
+			String password = signInDTO.getPassword();
 
 			if (username == null || username.isEmpty()) {
 				return ResponseUtil.badRequest("Username cannot be empty");
@@ -211,6 +217,25 @@ public class UserController {
 			return ResponseUtil.ok(userModel);
 		} catch (Exception e) {
 			return ResponseUtil.internalError("Error retrieving user: " + e.getMessage());
+		}
+	}
+
+	@GetMapping("/unpaid-items")
+	public ResponseEntity<ApiResponse<List<AuctionItemResponseDTO>>> getUnpaidItems(HttpServletRequest request) {
+		try {
+			User currentUser = getCurrentUser(request);
+			if (currentUser == null) {
+				return ResponseUtil.unauthorized("User not authenticated");
+			}
+
+			List<AuctionItem> unpaidItems = auctionService.getUnpaidItemsForUser(currentUser);
+			List<AuctionItemResponseDTO> unpaidItemDTOs = unpaidItems.stream()
+					.map(AuctionItemResponseDTO::fromAuctionItem)
+					.collect(Collectors.toList());
+
+			return ResponseUtil.ok("Retrieved unpaid items successfully", unpaidItemDTOs);
+		} catch (Exception e) {
+			return ResponseUtil.internalError("Error retrieving unpaid items: " + e.getMessage());
 		}
 	}
 }

@@ -63,7 +63,7 @@ public class AuctionController extends BaseController {
 	@GetMapping("/get-all")
 	public ResponseEntity<ApiResponse<CollectionModel<AuctionItemModel>>> getAllAuctionItems() {
 		try {
-			List<AuctionItem> auctionItems = auctionService.getAllAuctionItems();
+			List<AuctionItem> auctionItems = auctionService.getAvailableAuctionItems();
 
 			List<AuctionItemResponseDTO> responseItems = auctionItems.stream()
 					.map(AuctionItemResponseDTO::fromAuctionItem).collect(Collectors.toList());
@@ -80,8 +80,48 @@ public class AuctionController extends BaseController {
 		}
 	}
 
+	@GetMapping("/admin/get-all-items")
+	public ResponseEntity<ApiResponse<CollectionModel<AuctionItemModel>>> getAllAuctionItemsAdmin() {
+		try {
+			List<AuctionItem> auctionItems = auctionService.getAllAuctionItems();
+
+			List<AuctionItemResponseDTO> responseItems = auctionItems.stream()
+					.map(AuctionItemResponseDTO::fromAuctionItem).collect(Collectors.toList());
+
+			List<AuctionItemModel> itemModels = responseItems.stream().map(auctionItemModelAssembler::toModel)
+					.collect(Collectors.toList());
+
+			CollectionModel<AuctionItemModel> collectionModel = CollectionModel.of(itemModels,
+					linkTo(methodOn(AuctionController.class).getAllAuctionItemsAdmin()).withSelfRel());
+
+			return ResponseUtil.ok(collectionModel);
+		} catch (Exception e) {
+			return ResponseUtil.internalError("Error retrieving all auction items: " + e.getMessage());
+		}
+	}
+
 	@GetMapping("/search")
 	public ResponseEntity<ApiResponse<List<AuctionItemResponseDTO>>> searchAuctionItems(
+			@RequestParam("keyword") String keyword) {
+		try {
+			String sanitizedKeyword = ValidationUtil.sanitizeString(keyword);
+			if (sanitizedKeyword == null || sanitizedKeyword.isEmpty()) {
+				return ResponseUtil.badRequest("Search keyword cannot be empty");
+			}
+
+			List<AuctionItem> items = auctionService.searchAvailableByKeyword(sanitizedKeyword);
+
+			List<AuctionItemResponseDTO> responseItems = items.stream().map(AuctionItemResponseDTO::fromAuctionItem)
+					.collect(Collectors.toList());
+
+			return ResponseUtil.ok(responseItems);
+		} catch (Exception e) {
+			return ResponseUtil.internalError("Error searching auction items: " + e.getMessage());
+		}
+	}
+
+	@GetMapping("/admin/search")
+	public ResponseEntity<ApiResponse<List<AuctionItemResponseDTO>>> searchAllAuctionItems(
 			@RequestParam("keyword") String keyword) {
 		try {
 			String sanitizedKeyword = ValidationUtil.sanitizeString(keyword);
@@ -96,7 +136,7 @@ public class AuctionController extends BaseController {
 
 			return ResponseUtil.ok(responseItems);
 		} catch (Exception e) {
-			return ResponseUtil.internalError("Error searching auction items: " + e.getMessage());
+			return ResponseUtil.internalError("Error searching all auction items: " + e.getMessage());
 		}
 	}
 
