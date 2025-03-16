@@ -5,7 +5,6 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -34,9 +33,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.teamAgile.backend.DTO.ForgotPasswordDTO;
 import com.teamAgile.backend.DTO.SignInDTO;
 import com.teamAgile.backend.DTO.SignUpDTO;
+import com.teamAgile.backend.DTO.hateoas.UserModel;
+import com.teamAgile.backend.DTO.hateoas.UserModelAssembler;
 import com.teamAgile.backend.config.WebSocketConfig;
 import com.teamAgile.backend.model.Address;
 import com.teamAgile.backend.model.User;
+import com.teamAgile.backend.service.AuctionService;
 import com.teamAgile.backend.service.UserService;
 
 @WebMvcTest(controllers = UserController.class, excludeFilters = {
@@ -55,6 +57,12 @@ public class UserControllerTest {
 
 	@MockBean
 	private AuthenticationManager authenticationManager;
+
+	@MockBean
+	private UserModelAssembler userModelAssembler;
+
+	@MockBean
+	private AuctionService auctionService;
 
 	private User testUser;
 	private UUID userId;
@@ -188,11 +196,11 @@ public class UserControllerTest {
 
 		List<User> userList = Arrays.asList(user1, user2);
 		when(userService.getAllUsers()).thenReturn(userList);
+		when(userModelAssembler.toModel(any())).thenReturn(new UserModel(null));
 
 		mockMvc.perform(get("/user/get-all").with(SecurityMockMvcRequestPostProcessors.csrf()))
-				.andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(2))
-				.andExpect(jsonPath("$[0].username").value("user1"))
-				.andExpect(jsonPath("$[1].username").value("user2"));
+				.andExpect(status().isOk()).andExpect(jsonPath("$.success").value(true))
+				.andExpect(jsonPath("$.data.content").isArray());
 	}
 
 	@Test
@@ -203,19 +211,24 @@ public class UserControllerTest {
 
 		mockMvc.perform(post("/user/sign-up").with(SecurityMockMvcRequestPostProcessors.csrf())
 				.contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(signUpDTO)))
-				.andExpect(status().isCreated()).andExpect(jsonPath("$.username").value("johndoe"))
-				.andExpect(jsonPath("$.firstName").value("John")).andExpect(jsonPath("$.lastName").value("Doe"));
+				.andExpect(status().isCreated()).andExpect(jsonPath("$.success").value(true))
+				.andExpect(jsonPath("$.message").value("User registered successfully"))
+				.andExpect(jsonPath("$.data.username").value("johndoe"))
+				.andExpect(jsonPath("$.data.firstName").value("John"))
+				.andExpect(jsonPath("$.data.lastName").value("Doe"));
 	}
 
 	@Test
 	@WithMockUser(username = "testuser", roles = "USER")
 	void testSignUp_UsernameAlreadyTaken() throws Exception {
 
-		when(userService.signUp(any(User.class))).thenReturn(null);
+		when(userService.signUp(any(User.class))).thenThrow(
+				new com.teamAgile.backend.exception.UsernameAlreadyExistsException("Username already taken"));
 
 		mockMvc.perform(post("/user/sign-up").with(SecurityMockMvcRequestPostProcessors.csrf())
 				.contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(signUpDTO)))
-				.andExpect(status().isConflict()).andExpect(content().string("Username already taken."));
+				.andExpect(status().isConflict()).andExpect(jsonPath("$.success").value(false))
+				.andExpect(jsonPath("$.message").value("Username already taken"));
 	}
 
 	@Test
@@ -229,8 +242,11 @@ public class UserControllerTest {
 		// Act & Assert
 		mockMvc.perform(post("/user/sign-in").with(SecurityMockMvcRequestPostProcessors.csrf())
 				.contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(signInDTO)))
-				.andExpect(status().isOk()).andExpect(jsonPath("$.username").value("johndoe"))
-				.andExpect(jsonPath("$.firstName").value("John")).andExpect(jsonPath("$.lastName").value("Doe"));
+				.andExpect(status().isOk()).andExpect(jsonPath("$.success").value(true))
+				.andExpect(jsonPath("$.message").value("Login successful"))
+				.andExpect(jsonPath("$.data.username").value("johndoe"))
+				.andExpect(jsonPath("$.data.firstName").value("John"))
+				.andExpect(jsonPath("$.data.lastName").value("Doe"));
 	}
 
 	@Test
@@ -243,7 +259,8 @@ public class UserControllerTest {
 		// Act & Assert
 		mockMvc.perform(post("/user/sign-in").with(SecurityMockMvcRequestPostProcessors.csrf())
 				.contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(signInDTO)))
-				.andExpect(status().isBadRequest()).andExpect(content().string("Invalid username or password."));
+				.andExpect(status().isUnauthorized()).andExpect(jsonPath("$.success").value(false))
+				.andExpect(jsonPath("$.message").value("Invalid username or password"));
 	}
 
 	@Test
@@ -251,7 +268,8 @@ public class UserControllerTest {
 	void testSignOut_Success() throws Exception {
 
 		mockMvc.perform(post("/user/sign-out").with(SecurityMockMvcRequestPostProcessors.csrf()))
-				.andExpect(status().isOk()).andExpect(content().string("Successfully signed out"));
+				.andExpect(status().isOk()).andExpect(jsonPath("$.success").value(true))
+				.andExpect(jsonPath("$.message").value("Successfully signed out"));
 	}
 
 	@Test
@@ -261,19 +279,20 @@ public class UserControllerTest {
 		when(userService.findSecurityQuestionByUsername("johndoe")).thenReturn("What is your pet's name?");
 
 		mockMvc.perform(get("/user/get-security-question").with(SecurityMockMvcRequestPostProcessors.csrf())
-				.param("username", "johndoe")).andExpect(status().isOk())
-				.andExpect(content().string("What is your pet's name?"));
+				.param("username", "johndoe")).andExpect(status().isOk()).andExpect(jsonPath("$.success").value(true))
+				.andExpect(jsonPath("$.data").value("What is your pet's name?"));
 	}
 
 	@Test
 	@WithMockUser(username = "testuser", roles = "USER")
 	void testGetSecurityQuestion_UserNotFound() throws Exception {
 
-		when(userService.findSecurityQuestionByUsername("nonexistent")).thenReturn(null);
+		when(userService.findSecurityQuestionByUsername("nonexistent"))
+				.thenThrow(new com.teamAgile.backend.exception.UserNotFoundException("User not found"));
 
 		mockMvc.perform(get("/user/get-security-question").with(SecurityMockMvcRequestPostProcessors.csrf())
 				.param("username", "nonexistent")).andExpect(status().isNotFound())
-				.andExpect(content().string("User not found"));
+				.andExpect(jsonPath("$.success").value(false)).andExpect(jsonPath("$.message").value("User not found"));
 	}
 
 	@Test
@@ -285,7 +304,9 @@ public class UserControllerTest {
 		mockMvc.perform(post("/user/forgot-password").with(SecurityMockMvcRequestPostProcessors.csrf())
 				.param("username", "johndoe").contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(forgotPasswordDTO))).andExpect(status().isOk())
-				.andExpect(content().string("true"));
+				.andExpect(jsonPath("$.success").value(true))
+				.andExpect(jsonPath("$.message").value("Password reset successful"))
+				.andExpect(jsonPath("$.data").value(true));
 	}
 
 	@Test
@@ -296,7 +317,8 @@ public class UserControllerTest {
 
 		mockMvc.perform(post("/user/forgot-password").with(SecurityMockMvcRequestPostProcessors.csrf())
 				.param("username", "johndoe").contentType(MediaType.APPLICATION_JSON)
-				.content(objectMapper.writeValueAsString(forgotPasswordDTO))).andExpect(status().isOk())
-				.andExpect(content().string("false"));
+				.content(objectMapper.writeValueAsString(forgotPasswordDTO))).andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.success").value(false))
+				.andExpect(jsonPath("$.message").value("Invalid security answer"));
 	}
 }

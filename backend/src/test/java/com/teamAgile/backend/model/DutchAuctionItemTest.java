@@ -126,7 +126,6 @@ class DutchAuctionItemTest {
 		assertEquals(expectedNewPrice, dutchAuctionItem.getCurrentPrice());
 		assertEquals(AuctionItem.AuctionStatus.AVAILABLE, dutchAuctionItem.getAuctionStatus());
 
-		// Test decreasing price below reserve price
 		double largeDecreaseAmount = 100.0;
 
 		dutchAuctionItem.decreasePrice(largeDecreaseAmount);
@@ -150,6 +149,39 @@ class DutchAuctionItemTest {
 	}
 
 	@Test
+	void testPlaceBidWithIncorrectAmount() {
+		User bidder = new User();
+		bidder.setUserID(UUID.randomUUID());
+		bidder.setUsername("testBidder");
+
+		Double bidAmount = currentPrice - 10.0;
+
+		Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+			dutchAuctionItem.placeBid(bidAmount, bidder);
+		});
+
+		assertEquals("For Dutch auctions, bid amount must equal the current price.", exception.getMessage());
+		assertNull(dutchAuctionItem.getHighestBidder());
+	}
+
+	@Test
+	void testPlaceBidWhenAuctionNotAvailable() {
+		dutchAuctionItem.setAuctionStatus(AuctionItem.AuctionStatus.SOLD);
+
+		User bidder = new User();
+		bidder.setUserID(UUID.randomUUID());
+		bidder.setUsername("testBidder");
+
+		Double bidAmount = currentPrice;
+
+		Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+			dutchAuctionItem.placeBid(bidAmount, bidder);
+		});
+
+		assertEquals("Auction Item is currently not available.", exception.getMessage());
+	}
+
+	@Test
 	void testMakePayment() {
 
 		User bidder = new User();
@@ -162,5 +194,61 @@ class DutchAuctionItemTest {
 		dutchAuctionItem.makePayment(bidder);
 
 		assertEquals(AuctionItem.AuctionStatus.PAID, dutchAuctionItem.getAuctionStatus());
+	}
+
+	@Test
+	void testMakePaymentWithWrongUser() {
+		User winningBidder = new User();
+		winningBidder.setUserID(UUID.randomUUID());
+		winningBidder.setUsername("winningBidder");
+
+		User wrongBidder = new User();
+		wrongBidder.setUserID(UUID.randomUUID());
+		wrongBidder.setUsername("wrongBidder");
+
+		dutchAuctionItem.setHighestBidder(winningBidder);
+		dutchAuctionItem.setAuctionStatus(AuctionItem.AuctionStatus.SOLD);
+
+		Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+			dutchAuctionItem.makePayment(wrongBidder);
+		});
+
+		assertEquals("You must be the winning bidder to place a payment on this item.", exception.getMessage());
+	}
+
+	@Test
+	void testMakePaymentWhenAuctionNotSold() {
+		User bidder = new User();
+		bidder.setUserID(UUID.randomUUID());
+		bidder.setUsername("testBidder");
+
+		dutchAuctionItem.setHighestBidder(bidder);
+		dutchAuctionItem.setAuctionStatus(AuctionItem.AuctionStatus.AVAILABLE);
+
+		Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+			dutchAuctionItem.makePayment(bidder);
+		});
+
+		assertEquals("The auction is either over or still ongoing.", exception.getMessage());
+	}
+
+	@Test
+	void testAuctionStatusTransitions() {
+
+		assertEquals(AuctionItem.AuctionStatus.AVAILABLE, dutchAuctionItem.getAuctionStatus());
+
+		dutchAuctionItem.setAuctionStatus(AuctionItem.AuctionStatus.SOLD);
+		assertEquals(AuctionItem.AuctionStatus.SOLD, dutchAuctionItem.getAuctionStatus());
+
+		dutchAuctionItem.setAuctionStatus(AuctionItem.AuctionStatus.PAID);
+		assertEquals(AuctionItem.AuctionStatus.PAID, dutchAuctionItem.getAuctionStatus());
+
+		dutchAuctionItem.setAuctionStatus(AuctionItem.AuctionStatus.AVAILABLE);
+
+		dutchAuctionItem.setAuctionStatus(AuctionItem.AuctionStatus.EXPIRED);
+		assertEquals(AuctionItem.AuctionStatus.EXPIRED, dutchAuctionItem.getAuctionStatus());
+
+		dutchAuctionItem.setAuctionStatus(AuctionItem.AuctionStatus.CANCELLED);
+		assertEquals(AuctionItem.AuctionStatus.CANCELLED, dutchAuctionItem.getAuctionStatus());
 	}
 }

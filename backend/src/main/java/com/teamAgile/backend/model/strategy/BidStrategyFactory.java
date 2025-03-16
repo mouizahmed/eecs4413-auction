@@ -6,13 +6,17 @@ import com.teamAgile.backend.model.AuctionItem.AuctionType;
 public class BidStrategyFactory {
 
 	public static BidStrategy getStrategy(AuctionType auctionType) {
+		if (auctionType == null) {
+			throw new IllegalArgumentException("Unknown auction type: null");
+		}
+
 		switch (auctionType) {
-		case FORWARD:
-			return new ForwardBidStrategy();
-		case DUTCH:
-			return new DutchBidStrategy();
-		default:
-			throw new IllegalArgumentException("Unsupported auction type: " + auctionType);
+			case FORWARD:
+				return new ForwardBidStrategy();
+			case DUTCH:
+				return new DutchBidStrategy();
+			default:
+				throw new IllegalArgumentException("Unsupported auction type: " + auctionType);
 		}
 	}
 
