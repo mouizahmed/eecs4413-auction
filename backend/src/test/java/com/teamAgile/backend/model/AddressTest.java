@@ -42,14 +42,14 @@ class AddressTest {
 
     @Test
     void testGettersAndSetters() {
-        // Test initial values
+
         assertEquals(streetName, address.getStreetName());
         assertEquals(streetNum, address.getStreetNum());
         assertEquals(postalCode, address.getPostalCode());
         assertEquals(city, address.getCity());
         assertEquals(country, address.getCountry());
 
-        // Test setters with new values
+   
         String newStreetName = "Broadway";
         Integer newStreetNum = 456;
         String newPostalCode = "67890";

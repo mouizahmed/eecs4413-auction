@@ -17,6 +17,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.teamAgile.backend.DTO.ForgotPasswordDTO;
+import com.teamAgile.backend.exception.UserNotFoundException;
+import com.teamAgile.backend.exception.UsernameAlreadyExistsException;
 import com.teamAgile.backend.model.Address;
 import com.teamAgile.backend.model.User;
 import com.teamAgile.backend.repository.UserRepository;
@@ -25,261 +27,236 @@ import com.teamAgile.backend.util.BCryptHashing;
 @ExtendWith(MockitoExtension.class)
 public class UserServiceTest {
 
-    @Mock
-    private UserRepository userRepository;
+	@Mock
+	private UserRepository userRepository;
 
-    @InjectMocks
-    private UserService userService;
+	@InjectMocks
+	private UserService userService;
 
-    private User testUser;
-    private UUID userId;
+	private User testUser;
+	private UUID userId;
 
-    @BeforeEach
-    void setUp() {
-        userId = UUID.randomUUID();
+	@BeforeEach
+	void setUp() {
+		userId = UUID.randomUUID();
 
-        // Create a test user
-        testUser = new User();
-        testUser.setUserID(userId);
-        testUser.setFirstName("John");
-        testUser.setLastName("Doe");
-        testUser.setUsername("johndoe");
-        testUser.setPassword("password123"); // This will be hashed by the setter
+		testUser = new User();
+		testUser.setUserID(userId);
+		testUser.setFirstName("John");
+		testUser.setLastName("Doe");
+		testUser.setUsername("johndoe");
+		testUser.setPassword("password123");
 
-        Address address = new Address("Main St", 123, "12345", "New York", "USA");
-        testUser.setAddress(address);
+		Address address = new Address("Main St", 123, "12345", "New York", "USA");
+		testUser.setAddress(address);
 
-        testUser.setSecurityQuestion("What is your pet's name?");
-        testUser.setSecurityAnswer("Fluffy");
-    }
+		testUser.setSecurityQuestion("What is your pet's name?");
+		testUser.setSecurityAnswer("Fluffy");
+	}
 
-    @Test
-    void testSignUp_Success() {
-        // Arrange
-        when(userRepository.findByUsername(anyString())).thenReturn(Optional.empty());
-        when(userRepository.save(any(User.class))).thenReturn(testUser);
+	@Test
+	void testSignUp_Success() {
 
-        // Act
-        User result = userService.signUp(testUser);
+		when(userRepository.findByUsername(anyString())).thenReturn(Optional.empty());
+		when(userRepository.save(any(User.class))).thenReturn(testUser);
 
-        // Assert
-        assertNotNull(result);
-        assertEquals(testUser.getUserID(), result.getUserID());
-        assertEquals(testUser.getUsername(), result.getUsername());
-        verify(userRepository, times(1)).findByUsername(testUser.getUsername());
-        verify(userRepository, times(1)).save(testUser);
-    }
+		User result = userService.signUp(testUser);
 
-    @Test
-    void testSignUp_UsernameAlreadyExists() {
-        // Arrange
-        when(userRepository.findByUsername(anyString())).thenReturn(Optional.of(testUser));
+		assertNotNull(result);
+		assertEquals(testUser.getUserID(), result.getUserID());
+		assertEquals(testUser.getUsername(), result.getUsername());
+		verify(userRepository, times(1)).findByUsername(testUser.getUsername());
+		verify(userRepository, times(1)).save(testUser);
+	}
 
-        // Act
-        User result = userService.signUp(testUser);
+	@Test
+	void testSignUp_UsernameAlreadyExists() {
 
-        // Assert
-        assertNull(result);
-        verify(userRepository, times(1)).findByUsername(testUser.getUsername());
-        verify(userRepository, never()).save(any(User.class));
-    }
+		when(userRepository.findByUsername(anyString())).thenReturn(Optional.of(testUser));
 
-    @Test
-    void testSignIn_Success() {
-        // Arrange
-        String rawPassword = "password123";
-        String hashedPassword = BCryptHashing.hashPassword(rawPassword);
+		assertThrows(UsernameAlreadyExistsException.class, () -> {
+			userService.signUp(testUser);
+		});
+		verify(userRepository, times(1)).findByUsername(testUser.getUsername());
+		verify(userRepository, never()).save(any(User.class));
+	}
 
-        User userWithHashedPassword = new User();
-        userWithHashedPassword.setUserID(userId);
-        userWithHashedPassword.setUsername("johndoe");
-        // Set the password directly to simulate the hashed password in the database
-        try {
-            java.lang.reflect.Field passwordField = User.class.getDeclaredField("password");
-            passwordField.setAccessible(true);
-            passwordField.set(userWithHashedPassword, hashedPassword);
-        } catch (Exception e) {
-            fail("Failed to set hashed password: " + e.getMessage());
-        }
+	@Test
+	void testSignIn_Success() {
 
-        when(userRepository.findByUsername("johndoe")).thenReturn(Optional.of(userWithHashedPassword));
+		String rawPassword = "password123";
+		String hashedPassword = BCryptHashing.hashPassword(rawPassword);
 
-        // Mock the BCryptHashing.checkPassword method
-        try (org.mockito.MockedStatic<BCryptHashing> mockedBCrypt = mockStatic(BCryptHashing.class)) {
-            mockedBCrypt.when(() -> BCryptHashing.checkPassword(rawPassword, hashedPassword)).thenReturn(true);
+		User userWithHashedPassword = new User();
+		userWithHashedPassword.setUserID(userId);
+		userWithHashedPassword.setUsername("johndoe");
+		// Set the password directly to simulate the hashed password in the database
+		try {
+			java.lang.reflect.Field passwordField = User.class.getDeclaredField("password");
+			passwordField.setAccessible(true);
+			passwordField.set(userWithHashedPassword, hashedPassword);
+		} catch (Exception e) {
+			fail("Failed to set hashed password: " + e.getMessage());
+		}
 
-            // Act
-            User result = userService.signIn("johndoe", rawPassword);
+		when(userRepository.findByUsername("johndoe")).thenReturn(Optional.of(userWithHashedPassword));
 
-            // Assert
-            assertNotNull(result);
-            assertEquals(userId, result.getUserID());
-            assertEquals("johndoe", result.getUsername());
-        }
-    }
+		try (org.mockito.MockedStatic<BCryptHashing> mockedBCrypt = mockStatic(BCryptHashing.class)) {
+			mockedBCrypt.when(() -> BCryptHashing.checkPassword(rawPassword, hashedPassword)).thenReturn(true);
 
-    @Test
-    void testSignIn_InvalidUsername() {
-        // Arrange
-        when(userRepository.findByUsername("nonexistent")).thenReturn(Optional.empty());
+			User result = userService.signIn("johndoe", rawPassword);
 
-        // Act
-        User result = userService.signIn("nonexistent", "password123");
+			assertNotNull(result);
+			assertEquals(userId, result.getUserID());
+			assertEquals("johndoe", result.getUsername());
+		}
+	}
 
-        // Assert
-        assertNull(result);
-        verify(userRepository, times(1)).findByUsername("nonexistent");
-    }
+	@Test
+	void testSignIn_InvalidUsername() {
 
-    @Test
-    void testSignIn_InvalidPassword() {
-        // Arrange
-        when(userRepository.findByUsername("johndoe")).thenReturn(Optional.of(testUser));
+		when(userRepository.findByUsername("nonexistent")).thenReturn(Optional.empty());
 
-        // Mock the BCryptHashing.checkPassword method to return false
-        try (org.mockito.MockedStatic<BCryptHashing> mockedBCrypt = mockStatic(BCryptHashing.class)) {
-            mockedBCrypt.when(() -> BCryptHashing.checkPassword(anyString(), anyString())).thenReturn(false);
+		assertThrows(UserNotFoundException.class, () -> {
+			userService.signIn("nonexistent", "password123");
+		});
+		verify(userRepository, times(1)).findByUsername("nonexistent");
+	}
 
-            // Act
-            User result = userService.signIn("johndoe", "wrongpassword");
+	@Test
+	void testSignIn_InvalidPassword() {
 
-            // Assert
-            assertNull(result);
-        }
-    }
+		when(userRepository.findByUsername("johndoe")).thenReturn(Optional.of(testUser));
 
-    @Test
-    void testGetAllUsers() {
-        // Arrange
-        User user1 = new User();
-        user1.setUserID(UUID.randomUUID());
-        user1.setUsername("user1");
+		try (org.mockito.MockedStatic<BCryptHashing> mockedBCrypt = mockStatic(BCryptHashing.class)) {
+			mockedBCrypt.when(() -> BCryptHashing.checkPassword(anyString(), anyString())).thenReturn(false);
 
-        User user2 = new User();
-        user2.setUserID(UUID.randomUUID());
-        user2.setUsername("user2");
+			User result = userService.signIn("johndoe", "wrongpassword");
 
-        List<User> userList = Arrays.asList(user1, user2);
-        when(userRepository.findAll()).thenReturn(userList);
+			assertNull(result);
+		}
+	}
 
-        // Act
-        List<User> result = userService.getAllUsers();
+	@Test
+	void testGetAllUsers() {
 
-        // Assert
-        assertNotNull(result);
-        assertEquals(2, result.size());
-        assertEquals("user1", result.get(0).getUsername());
-        assertEquals("user2", result.get(1).getUsername());
-        verify(userRepository, times(1)).findAll();
-    }
+		User user1 = new User();
+		user1.setUserID(UUID.randomUUID());
+		user1.setUsername("user1");
 
-    @Test
-    void testFindSecurityQuestionByUsername_Success() {
-        // Arrange
-        when(userRepository.findByUsername("johndoe")).thenReturn(Optional.of(testUser));
+		User user2 = new User();
+		user2.setUserID(UUID.randomUUID());
+		user2.setUsername("user2");
 
-        // Act
-        String result = userService.findSecurityQuestionByUsername("johndoe");
+		List<User> userList = Arrays.asList(user1, user2);
+		when(userRepository.findAll()).thenReturn(userList);
 
-        // Assert
-        assertNotNull(result);
-        assertEquals("What is your pet's name?", result);
-        verify(userRepository, times(1)).findByUsername("johndoe");
-    }
+		List<User> result = userService.getAllUsers();
 
-    @Test
-    void testFindSecurityQuestionByUsername_UserNotFound() {
-        // Arrange
-        when(userRepository.findByUsername("nonexistent")).thenReturn(Optional.empty());
+		assertNotNull(result);
+		assertEquals(2, result.size());
+		assertEquals("user1", result.get(0).getUsername());
+		assertEquals("user2", result.get(1).getUsername());
+		verify(userRepository, times(1)).findAll();
+	}
 
-        // Act
-        String result = userService.findSecurityQuestionByUsername("nonexistent");
+	@Test
+	void testFindSecurityQuestionByUsername_Success() {
 
-        // Assert
-        assertNull(result);
-        verify(userRepository, times(1)).findByUsername("nonexistent");
-    }
+		when(userRepository.findByUsername("johndoe")).thenReturn(Optional.of(testUser));
 
-    @Test
-    void testValidateSecurityAnswer_Success() {
-        // Arrange
-        when(userRepository.findByUsername("johndoe")).thenReturn(Optional.of(testUser));
+		String result = userService.findSecurityQuestionByUsername("johndoe");
 
-        ForgotPasswordDTO dto = new ForgotPasswordDTO();
-        try {
-            java.lang.reflect.Field securityAnswerField = ForgotPasswordDTO.class.getDeclaredField("securityAnswer");
-            securityAnswerField.setAccessible(true);
-            securityAnswerField.set(dto, "Fluffy");
+		assertNotNull(result);
+		assertEquals("What is your pet's name?", result);
+		verify(userRepository, times(1)).findByUsername("johndoe");
+	}
 
-            java.lang.reflect.Field newPasswordField = ForgotPasswordDTO.class.getDeclaredField("newPassword");
-            newPasswordField.setAccessible(true);
-            newPasswordField.set(dto, "newPassword123");
-        } catch (Exception e) {
-            fail("Failed to set fields: " + e.getMessage());
-        }
+	@Test
+	void testFindSecurityQuestionByUsername_UserNotFound() {
 
-        when(userRepository.save(any(User.class))).thenReturn(testUser);
+		when(userRepository.findByUsername("nonexistent")).thenReturn(Optional.empty());
 
-        // Act
-        boolean result = userService.validateSecurityAnswer("johndoe", dto);
+		assertThrows(UserNotFoundException.class, () -> {
+			userService.findSecurityQuestionByUsername("nonexistent");
+		});
+		verify(userRepository, times(1)).findByUsername("nonexistent");
+	}
 
-        // Assert
-        assertTrue(result);
-        verify(userRepository, times(1)).findByUsername("johndoe");
-        verify(userRepository, times(1)).save(any(User.class));
-    }
+	@Test
+	void testValidateSecurityAnswer_Success() {
 
-    @Test
-    void testValidateSecurityAnswer_UserNotFound() {
-        // Arrange
-        when(userRepository.findByUsername("nonexistent")).thenReturn(Optional.empty());
+		when(userRepository.findByUsername("johndoe")).thenReturn(Optional.of(testUser));
 
-        ForgotPasswordDTO dto = new ForgotPasswordDTO();
-        try {
-            java.lang.reflect.Field securityAnswerField = ForgotPasswordDTO.class.getDeclaredField("securityAnswer");
-            securityAnswerField.setAccessible(true);
-            securityAnswerField.set(dto, "Fluffy");
+		ForgotPasswordDTO dto = new ForgotPasswordDTO();
+		try {
+			java.lang.reflect.Field securityAnswerField = ForgotPasswordDTO.class.getDeclaredField("securityAnswer");
+			securityAnswerField.setAccessible(true);
+			securityAnswerField.set(dto, "Fluffy");
 
-            java.lang.reflect.Field newPasswordField = ForgotPasswordDTO.class.getDeclaredField("newPassword");
-            newPasswordField.setAccessible(true);
-            newPasswordField.set(dto, "newPassword123");
-        } catch (Exception e) {
-            fail("Failed to set fields: " + e.getMessage());
-        }
+			java.lang.reflect.Field newPasswordField = ForgotPasswordDTO.class.getDeclaredField("newPassword");
+			newPasswordField.setAccessible(true);
+			newPasswordField.set(dto, "newPassword123");
+		} catch (Exception e) {
+			fail("Failed to set fields: " + e.getMessage());
+		}
 
-        // Act
-        boolean result = userService.validateSecurityAnswer("nonexistent", dto);
+		when(userRepository.save(any(User.class))).thenReturn(testUser);
 
-        // Assert
-        assertFalse(result);
-        verify(userRepository, times(1)).findByUsername("nonexistent");
-        verify(userRepository, never()).save(any(User.class));
-    }
+		boolean result = userService.validateSecurityAnswer("johndoe", dto);
 
-    @Test
-    void testValidateSecurityAnswer_IncorrectAnswer() {
-        // Arrange
-        when(userRepository.findByUsername("johndoe")).thenReturn(Optional.of(testUser));
+		assertTrue(result);
+		verify(userRepository, times(1)).findByUsername("johndoe");
+		verify(userRepository, times(1)).save(any(User.class));
+	}
 
-        ForgotPasswordDTO dto = new ForgotPasswordDTO();
-        try {
-            java.lang.reflect.Field securityAnswerField = ForgotPasswordDTO.class.getDeclaredField("securityAnswer");
-            securityAnswerField.setAccessible(true);
-            securityAnswerField.set(dto, "WrongAnswer");
+	@Test
+	void testValidateSecurityAnswer_UserNotFound() {
 
-            java.lang.reflect.Field newPasswordField = ForgotPasswordDTO.class.getDeclaredField("newPassword");
-            newPasswordField.setAccessible(true);
-            newPasswordField.set(dto, "newPassword123");
-        } catch (Exception e) {
-            fail("Failed to set fields: " + e.getMessage());
-        }
+		when(userRepository.findByUsername("nonexistent")).thenReturn(Optional.empty());
 
-        // Act
-        boolean result = userService.validateSecurityAnswer("johndoe", dto);
+		ForgotPasswordDTO dto = new ForgotPasswordDTO();
+		try {
+			java.lang.reflect.Field securityAnswerField = ForgotPasswordDTO.class.getDeclaredField("securityAnswer");
+			securityAnswerField.setAccessible(true);
+			securityAnswerField.set(dto, "Fluffy");
 
-        // Assert
-        assertFalse(result);
-        verify(userRepository, times(1)).findByUsername("johndoe");
-        verify(userRepository, never()).save(any(User.class));
-    }
+			java.lang.reflect.Field newPasswordField = ForgotPasswordDTO.class.getDeclaredField("newPassword");
+			newPasswordField.setAccessible(true);
+			newPasswordField.set(dto, "newPassword123");
+		} catch (Exception e) {
+			fail("Failed to set fields: " + e.getMessage());
+		}
+
+		assertThrows(UserNotFoundException.class, () -> {
+			userService.validateSecurityAnswer("nonexistent", dto);
+		});
+		verify(userRepository, times(1)).findByUsername("nonexistent");
+		verify(userRepository, never()).save(any(User.class));
+	}
+
+	@Test
+	void testValidateSecurityAnswer_IncorrectAnswer() {
+
+		when(userRepository.findByUsername("johndoe")).thenReturn(Optional.of(testUser));
+
+		ForgotPasswordDTO dto = new ForgotPasswordDTO();
+		try {
+			java.lang.reflect.Field securityAnswerField = ForgotPasswordDTO.class.getDeclaredField("securityAnswer");
+			securityAnswerField.setAccessible(true);
+			securityAnswerField.set(dto, "WrongAnswer");
+
+			java.lang.reflect.Field newPasswordField = ForgotPasswordDTO.class.getDeclaredField("newPassword");
+			newPasswordField.setAccessible(true);
+			newPasswordField.set(dto, "newPassword123");
+		} catch (Exception e) {
+			fail("Failed to set fields: " + e.getMessage());
+		}
+
+		boolean result = userService.validateSecurityAnswer("johndoe", dto);
+
+		assertFalse(result);
+		verify(userRepository, times(1)).findByUsername("johndoe");
+		verify(userRepository, never()).save(any(User.class));
+	}
 }
