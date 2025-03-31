@@ -121,4 +121,13 @@ public class UserService {
 
 		return userOpt.get();
 	}
+
+	public User findByUsername(String username) {
+		if (username == null || username.trim().isEmpty()) {
+			throw new IllegalArgumentException("Username cannot be empty");
+		}
+
+		return userRepository.findByUsername(username)
+				.orElseThrow(() -> new UserNotFoundException("User not found with username: " + username));
+	}
 }

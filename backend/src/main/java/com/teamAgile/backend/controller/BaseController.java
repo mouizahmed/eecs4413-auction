@@ -1,34 +1,32 @@
 package com.teamAgile.backend.controller;
 
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
-import com.teamAgile.backend.DTO.UserResponseDTO;
+import org.springframework.util.StringUtils;
+
 import com.teamAgile.backend.model.User;
+import com.teamAgile.backend.service.UserService;
 
 @Controller
 public class BaseController {
+
+	@Autowired
+	private UserService userService;
+
 	protected User getCurrentUser(HttpServletRequest request) {
-		HttpSession session = request.getSession(false);
-		if (session == null) {
-			return null;
+		// Get the authenticated username from SecurityContext
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+		if (authentication != null && authentication.isAuthenticated() &&
+				!authentication.getPrincipal().toString().equals("anonymousUser")) {
+			String username = authentication.getName();
+			return userService.findByUsername(username);
 		}
 
-		UserResponseDTO userDTO = (UserResponseDTO) session.getAttribute("user");
-		if (userDTO == null) {
-			return null;
-		}
-
-		User user = new User();
-		user.setUserID(userDTO.getUserID());
-		user.setFirstName(userDTO.getFirstName());
-		user.setLastName(userDTO.getLastName());
-		user.setUsername(userDTO.getUsername());
-
-		com.teamAgile.backend.model.Address address = new com.teamAgile.backend.model.Address(userDTO.getStreetName(),
-				userDTO.getStreetNum(), userDTO.getPostalCode(), userDTO.getCity(), userDTO.getCountry());
-		user.setAddress(address);
-
-		return user;
+		return null;
 	}
 }

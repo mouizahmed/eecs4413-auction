@@ -1,6 +1,7 @@
 package com.teamAgile.backend.model;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import jakarta.persistence.*;
@@ -9,10 +10,13 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.teamAgile.backend.DTO.SignUpDTO;
 import com.teamAgile.backend.util.BCryptHashing;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 @Entity
 @Table(name = "users")
-public class User implements java.io.Serializable {
+public class User implements UserDetails, java.io.Serializable {
 	private static final long serialVersionUID = 1L;
 
 	@Id
@@ -109,6 +113,7 @@ public class User implements java.io.Serializable {
 		this.lastName = lastName;
 	}
 
+	@Override
 	public String getUsername() {
 		return username;
 	}
@@ -117,6 +122,7 @@ public class User implements java.io.Serializable {
 		this.username = username;
 	}
 
+	@Override
 	public String getPassword() {
 		return password;
 	}
@@ -147,6 +153,37 @@ public class User implements java.io.Serializable {
 
 	public void setSecurityAnswer(String securityAnswer) {
 		this.securityAnswer = securityAnswer;
+	}
+
+	// UserDetails implementation
+	@Override
+	@JsonIgnore
+	public Collection<? extends GrantedAuthority> getAuthorities() {
+		return List.of(new SimpleGrantedAuthority("ROLE_USER"));
+	}
+
+	@Override
+	@JsonIgnore
+	public boolean isAccountNonExpired() {
+		return true;
+	}
+
+	@Override
+	@JsonIgnore
+	public boolean isAccountNonLocked() {
+		return true;
+	}
+
+	@Override
+	@JsonIgnore
+	public boolean isCredentialsNonExpired() {
+		return true;
+	}
+
+	@Override
+	@JsonIgnore
+	public boolean isEnabled() {
+		return true;
 	}
 
 	// Getters and setters for receipts

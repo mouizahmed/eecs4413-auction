@@ -20,9 +20,6 @@ public class BidModelAssembler implements RepresentationModelAssembler<BidRespon
                 linkTo(methodOn(AuctionController.class).getAuctionItemById(bid.getItemID())).withRel("auctionItem"));
 
         bidModel.add(
-                linkTo(methodOn(UserController.class).getUserById(bid.getUserID())).withRel("bidder"));
-
-        bidModel.add(
                 linkTo(methodOn(AuctionController.class).getBidsForItem(bid.getItemID())).withRel("itemBids"));
 
         return bidModel;

@@ -28,6 +28,7 @@ import com.teamAgile.backend.DTO.SignUpDTO;
 import com.teamAgile.backend.DTO.UserResponseDTO;
 import com.teamAgile.backend.DTO.hateoas.UserModel;
 import com.teamAgile.backend.DTO.hateoas.UserModelAssembler;
+import com.teamAgile.backend.config.JwtUtils;
 import com.teamAgile.backend.exception.UserNotFoundException;
 import com.teamAgile.backend.model.AuctionItem;
 import com.teamAgile.backend.model.User;
@@ -35,7 +36,9 @@ import com.teamAgile.backend.service.AuctionService;
 import com.teamAgile.backend.service.UserService;
 import com.teamAgile.backend.util.ResponseUtil;
 import com.teamAgile.backend.util.ValidationUtil;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
@@ -48,14 +51,16 @@ public class UserController extends BaseController {
 	private final AuthenticationManager authenticationManager;
 	private final UserModelAssembler userModelAssembler;
 	private final AuctionService auctionService;
+	private final JwtUtils jwtUtils;
 
 	@Autowired
 	public UserController(UserService userService, AuthenticationManager authenticationManager,
-			UserModelAssembler userModelAssembler, AuctionService auctionService) {
+			UserModelAssembler userModelAssembler, AuctionService auctionService, JwtUtils jwtUtils) {
 		this.userService = userService;
 		this.authenticationManager = authenticationManager;
 		this.userModelAssembler = userModelAssembler;
 		this.auctionService = auctionService;
+		this.jwtUtils = jwtUtils;
 	}
 
 	@GetMapping("/get-all")
@@ -103,7 +108,7 @@ public class UserController extends BaseController {
 
 	@PostMapping("/sign-in")
 	public ResponseEntity<ApiResponse<UserResponseDTO>> signIn(@Valid @RequestBody SignInDTO signInDTO,
-			HttpServletRequest request) {
+			HttpServletRequest request, HttpServletResponse response) {
 		try {
 			String username = ValidationUtil.sanitizeString(signInDTO.getUsername());
 			String password = signInDTO.getPassword();
@@ -126,13 +131,20 @@ public class UserController extends BaseController {
 				return ResponseUtil.unauthorized("Invalid username or password");
 			}
 
+			// Generate JWT token
+			String jwt = jwtUtils.generateToken(user);
+
+			// Add the JWT to cookies with proper settings
+			Cookie jwtCookie = new Cookie("jwt", jwt);
+			jwtCookie.setHttpOnly(true);
+			jwtCookie.setPath("/");
+			jwtCookie.setMaxAge(24 * 60 * 60); // 24 hours
+			response.addCookie(jwtCookie);
+
+			// Also set the SameSite attribute (which can't be set via Cookie API)
+			response.addHeader("Set-Cookie", String.format("jwt=%s; Max-Age=%d; Path=/; HttpOnly", jwt, 24 * 60 * 60));
+
 			UserResponseDTO userResponseDTO = new UserResponseDTO(user);
-
-			HttpSession session = request.getSession(true);
-			session.setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
-			session.setAttribute("user", userResponseDTO);
-			session.setMaxInactiveInterval(30 * 60); // 30 minutes
-
 			return ResponseUtil.ok("Login successful", userResponseDTO);
 		} catch (BadCredentialsException e) {
 			return ResponseUtil.unauthorized("Invalid username or password");
@@ -144,16 +156,18 @@ public class UserController extends BaseController {
 	}
 
 	@PostMapping("/sign-out")
-	public ResponseEntity<ApiResponse<Void>> signOut(HttpServletRequest request) {
+	public ResponseEntity<ApiResponse<Void>> signOut(HttpServletRequest request, HttpServletResponse response) {
 		try {
-			HttpSession session = request.getSession(false);
-			if (session != null) {
-				session.invalidate();
-				SecurityContextHolder.clearContext();
-				return ResponseUtil.ok("Successfully signed out", null);
-			}
+			SecurityContextHolder.clearContext();
 
-			return ResponseUtil.badRequest("No active session found");
+			Cookie cookie = new Cookie("jwt", null);
+			cookie.setPath("/");
+			cookie.setHttpOnly(true);
+			cookie.setMaxAge(0);
+			cookie.setSecure(request.isSecure());
+			response.addCookie(cookie);
+
+			return ResponseUtil.ok("Successfully signed out", null);
 		} catch (Exception e) {
 			return ResponseUtil.internalError("Error during sign out: " + e.getMessage());
 		}
@@ -203,23 +217,6 @@ public class UserController extends BaseController {
 		}
 	}
 
-	@GetMapping("/{userId}")
-	public ResponseEntity<ApiResponse<UserModel>> getUserById(@PathVariable UUID userId) {
-		try {
-			User user = userService.getUserById(userId);
-			if (user == null) {
-				return ResponseUtil.notFound("User not found with ID: " + userId);
-			}
-
-			UserResponseDTO userResponseDTO = new UserResponseDTO(user);
-			UserModel userModel = userModelAssembler.toModel(userResponseDTO);
-
-			return ResponseUtil.ok(userModel);
-		} catch (Exception e) {
-			return ResponseUtil.internalError("Error retrieving user: " + e.getMessage());
-		}
-	}
-
 	@GetMapping("/unpaid-items")
 	public ResponseEntity<ApiResponse<List<AuctionItemResponseDTO>>> getUnpaidItems(HttpServletRequest request) {
 		try {
@@ -230,12 +227,26 @@ public class UserController extends BaseController {
 
 			List<AuctionItem> unpaidItems = auctionService.getUnpaidItemsForUser(currentUser);
 			List<AuctionItemResponseDTO> unpaidItemDTOs = unpaidItems.stream()
-					.map(AuctionItemResponseDTO::fromAuctionItem)
-					.collect(Collectors.toList());
+					.map(AuctionItemResponseDTO::fromAuctionItem).collect(Collectors.toList());
 
 			return ResponseUtil.ok("Retrieved unpaid items successfully", unpaidItemDTOs);
 		} catch (Exception e) {
 			return ResponseUtil.internalError("Error retrieving unpaid items: " + e.getMessage());
+		}
+	}
+
+	@GetMapping("/current")
+	public ResponseEntity<ApiResponse<UserResponseDTO>> getCurrentUserInfo(HttpServletRequest request) {
+		try {
+			User currentUser = getCurrentUser(request);
+			if (currentUser == null) {
+				return ResponseUtil.unauthorized("User not authenticated");
+			}
+
+			UserResponseDTO userResponseDTO = new UserResponseDTO(currentUser);
+			return ResponseUtil.ok(userResponseDTO);
+		} catch (Exception e) {
+			return ResponseUtil.internalError("Error retrieving current user: " + e.getMessage());
 		}
 	}
 }

@@ -16,9 +16,6 @@ public class UserModelAssembler implements RepresentationModelAssembler<UserResp
         UserModel userModel = new UserModel(user);
 
         userModel.add(
-                linkTo(methodOn(UserController.class).getUserById(user.getUserID())).withSelfRel());
-
-        userModel.add(
                 linkTo(methodOn(UserController.class).getAllUsers()).withRel("users"));
 
         return userModel;
