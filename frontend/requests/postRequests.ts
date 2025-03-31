@@ -1,3 +1,4 @@
+import { ForgotPasswordData, RegisterData } from '@/types';
 import axios from 'axios';
 
 const api = axios.create({
@@ -24,27 +25,6 @@ export const signOut = async (): Promise<void> => {
     console.log('Error during sign-out:', error);
   }
 };
-
-// Based on the backend SignUpDTO requirements
-export interface RegisterData {
-  username: string;
-  password: string;
-  firstName: string;
-  lastName: string;
-  streetName: string;
-  streetNum: number;
-  postalCode: string;
-  city: string;
-  country: string;
-  securityQuestion: string;
-  securityAnswer: string;
-}
-
-export interface ForgotPasswordData {
-  username: string;
-  newPassword: string;
-  securityAnswer: string;
-}
 
 export const register = async (userData: RegisterData): Promise<any> => {
   try {

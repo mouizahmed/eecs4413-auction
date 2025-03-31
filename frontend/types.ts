@@ -21,3 +21,23 @@ export interface User {
 export type ReactChildren = {
   children: ReactNode;
 };
+
+export interface RegisterData {
+  username: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  streetName: string;
+  streetNum: number;
+  postalCode: string;
+  city: string;
+  country: string;
+  securityQuestion: string;
+  securityAnswer: string;
+}
+
+export interface ForgotPasswordData {
+  username: string;
+  newPassword: string;
+  securityAnswer: string;
+}

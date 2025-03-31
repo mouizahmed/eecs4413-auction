@@ -13,11 +13,11 @@ import {
   SheetClose,
 } from '@/components/ui/sheet';
 import { useLogout } from '@/hooks/useLogout';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/authContext';
 
 export default function Navbar() {
   const { currentUser, userLoggedIn } = useAuth();
-  const { logout, isLoading } = useLogout();
+  const { logout } = useLogout();
   console.log(userLoggedIn);
 
   return (

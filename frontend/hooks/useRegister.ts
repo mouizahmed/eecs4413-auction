@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
-import { register, RegisterData } from '@/requests/postRequests';
+import { useAuth } from '@/contexts/authContext';
+import { register } from '@/requests/postRequests';
+import { RegisterData } from '@/types';
 
 export const useRegister = () => {
   const router = useRouter();

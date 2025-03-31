@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
 import { signOut } from '@/requests/postRequests';
+import { useAuth } from '@/contexts/authContext';
 
 export const useLogout = () => {
   const router = useRouter();
@@ -13,14 +13,10 @@ export const useLogout = () => {
 
     try {
       await signOut();
-
-      // Clear the user from context
       setCurrentUser(null);
-
-      // Redirect to login page or home page
       router.push('/login');
     } catch (error) {
-      console.log('Logout error:', error);
+      console.log(error);
     } finally {
       setIsLoading(false);
     }
