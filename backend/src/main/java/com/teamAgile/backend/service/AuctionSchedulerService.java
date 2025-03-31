@@ -42,8 +42,9 @@ public class AuctionSchedulerService {
                 if (forwardItem.getAuctionStatus() == AuctionStatus.AVAILABLE) {
                     // Check if the auction has ended
                     if (forwardItem.getEndTime() != null && now.isAfter(forwardItem.getEndTime())) {
-                        // Check if there are any bids
-                        boolean hasBids = !bidRepository.findByItemID(forwardItem.getItemID()).isEmpty();
+                        // Check if there are any bids using the BidRepository
+                        boolean hasBids = !bidRepository.findByItemIDOrderByBidAmountDesc(forwardItem.getItemID())
+                                .isEmpty();
 
                         // Update status based on whether there are bids
                         if (hasBids) {

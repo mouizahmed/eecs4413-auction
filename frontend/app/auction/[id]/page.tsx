@@ -9,14 +9,17 @@ import { AuctionItem, ConnectionStatus, WebSocketMessage } from '@/types';
 import axios from 'axios';
 import { placeBid } from '@/requests/postRequests';
 import { webSocketService } from '@/services/websocket';
+import { useAuth } from '@/contexts/authContext';
 
 export default function ForwardAuctionPage() {
   const params = useParams();
+  const { currentUser } = useAuth();
   const [auction, setAuction] = useState<AuctionItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [bidAmount, setBidAmount] = useState<string>('');
   const [wsStatus, setWsStatus] = useState<ConnectionStatus>('connecting');
+  const [isPaying, setIsPaying] = useState(false);
 
   useEffect(() => {
     const fetchAuction = async () => {
@@ -81,6 +84,24 @@ export default function ForwardAuctionPage() {
       console.error('Error placing bid:', err);
     }
   };
+
+  const handlePay = async () => {
+    if (!auction) return;
+    setIsPaying(true);
+    try {
+      // TODO: Implement payment API call
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulated API call
+      setAuction((prev) => (prev ? { ...prev, auctionStatus: 'PAID' } : null));
+    } catch (err) {
+      console.error('Error processing payment:', err);
+    } finally {
+      setIsPaying(false);
+    }
+  };
+
+  const isHighestBidder = currentUser && auction?.highestBidderUsername === currentUser.username;
+  const isAuctionEnded = auction?.auctionStatus === 'SOLD';
+  const canPay = isHighestBidder && isAuctionEnded && auction?.auctionStatus !== 'PAID';
 
   if (loading) return <div>Loading auction details...</div>;
   if (error) return <div className="text-red-500">{error}</div>;
@@ -178,30 +199,51 @@ export default function ForwardAuctionPage() {
             </div>
           )}
 
-          <div className="pt-4 border-t">
-            <div className="space-y-4">
-              <div>
-                <label htmlFor="bidAmount" className="block text-sm font-medium text-gray-700">
-                  Your Bid Amount
-                </label>
-                <Input
-                  id="bidAmount"
-                  type="number"
-                  min={String(auction.currentPrice + 1)}
-                  value={bidAmount}
-                  onChange={(e) => setBidAmount(e.target.value)}
-                  className="mt-1"
-                />
+          {auction.auctionStatus === 'AVAILABLE' && (
+            <div className="pt-4 border-t">
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="bidAmount" className="block text-sm font-medium text-gray-700">
+                    Your Bid Amount
+                  </label>
+                  <Input
+                    id="bidAmount"
+                    type="number"
+                    min={String(auction.currentPrice + 1)}
+                    value={bidAmount}
+                    onChange={(e) => setBidAmount(e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+                <Button
+                  className="w-full"
+                  onClick={handleBid}
+                  disabled={!bidAmount || Number(bidAmount) <= auction.currentPrice}
+                >
+                  Place Bid
+                </Button>
               </div>
-              <Button
-                className="w-full"
-                onClick={handleBid}
-                disabled={!bidAmount || Number(bidAmount) <= auction.currentPrice}
-              >
-                Place Bid
-              </Button>
             </div>
-          </div>
+          )}
+
+          {canPay && (
+            <div className="pt-4 border-t">
+              <div className="space-y-4">
+                <p className="text-sm text-gray-500">Congratulations! You won the auction!</p>
+                <Button className="w-full" onClick={handlePay} disabled={isPaying}>
+                  {isPaying ? 'Processing Payment...' : 'Pay Now'}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {auction.auctionStatus === 'PAID' && (
+            <div className="pt-4 border-t">
+              <div className="bg-green-50 p-4 rounded-lg">
+                <p className="text-green-700 font-medium">Payment completed successfully!</p>
+              </div>
+            </div>
+          )}
 
           <BidHistory />
         </CardContent>

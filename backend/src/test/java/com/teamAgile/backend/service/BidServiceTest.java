@@ -137,13 +137,13 @@ class BidServiceTest {
 		List<Bid> expectedBids = new ArrayList<>();
 		expectedBids.add(bid);
 
-		when(bidRepository.findByItemID(itemId)).thenReturn(expectedBids);
+		when(bidRepository.findByItemIDOrderByBidAmountDesc(itemId)).thenReturn(expectedBids);
 
 		List<Bid> actualBids = bidService.getBidsByItemId(itemId);
 
 		assertEquals(expectedBids.size(), actualBids.size());
 		assertEquals(expectedBids, actualBids);
-		verify(bidRepository, times(1)).findByItemID(itemId);
+		verify(bidRepository, times(1)).findByBidID(bidId);
 	}
 
 	@Test
