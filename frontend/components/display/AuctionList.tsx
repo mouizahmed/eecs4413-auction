@@ -51,6 +51,12 @@ export default function AuctionList() {
     router.push(`/auction/${selectedAuction.itemID}`);
   };
 
+  const handleStatusUpdate = (updatedAuction: AuctionItem) => {
+    setAuctions((prevAuctions) =>
+      prevAuctions.map((auction) => (auction.itemID === updatedAuction.itemID ? updatedAuction : auction))
+    );
+  };
+
   if (loading) return <div>Loading auctions...</div>;
   if (error) return <div className="text-red-500">{error}</div>;
 
@@ -85,7 +91,9 @@ export default function AuctionList() {
               <p>Current Price: ${auction.currentPrice}</p>
               <p>Auction Type: {auction.auctionType}</p>
               <p>Status: {auction.auctionStatus}</p>
-              {auction.auctionType === 'FORWARD' && <CountdownTimer endTime={auction.endTime} />}
+              {auction.auctionType === 'FORWARD' && (
+                <CountdownTimer endTime={auction.endTime} itemId={auction.itemID} onStatusUpdate={handleStatusUpdate} />
+              )}
               {auction.auctionType === 'DUTCH' && <p className="text-sm text-gray-600">Time remaining: NOW</p>}
             </CardContent>
           </Card>

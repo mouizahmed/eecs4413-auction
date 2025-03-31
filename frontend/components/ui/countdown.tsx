@@ -1,7 +1,26 @@
 import { useEffect, useState } from 'react';
+import axios from 'axios';
 
-function CountdownTimer({ endTime }: { endTime: string }) {
+interface CountdownTimerProps {
+  endTime: string;
+  itemId: string;
+  onStatusUpdate: (updatedAuction: any) => void;
+}
+
+function CountdownTimer({ endTime, itemId, onStatusUpdate }: CountdownTimerProps) {
   const [timeLeft, setTimeLeft] = useState<string>('');
+  const [hasCompleted, setHasCompleted] = useState(false);
+
+  const checkAuctionStatus = async () => {
+    try {
+      const response = await axios.post(`http://localhost:8080/auction/check-status/${itemId}`, null, {
+        withCredentials: true,
+      });
+      onStatusUpdate(response.data.data);
+    } catch (error) {
+      console.error('Error checking auction status:', error);
+    }
+  };
 
   useEffect(() => {
     const calculateTimeLeft = () => {
@@ -17,6 +36,10 @@ function CountdownTimer({ endTime }: { endTime: string }) {
 
         if (difference <= 0) {
           setTimeLeft('Auction ended');
+          if (!hasCompleted) {
+            setHasCompleted(true);
+            checkAuctionStatus();
+          }
           return;
         }
 
@@ -41,9 +64,9 @@ function CountdownTimer({ endTime }: { endTime: string }) {
     const timer = setInterval(calculateTimeLeft, 1000);
 
     return () => clearInterval(timer);
-  }, [endTime]);
+  }, [endTime, itemId, hasCompleted, onStatusUpdate]);
 
-  return <p className="text-sm text-gray-600">Time left: {timeLeft}</p>;
+  return <p className="text-sm text-gray-600">{timeLeft}</p>;
 }
 
 export { CountdownTimer };

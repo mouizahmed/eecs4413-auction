@@ -27,7 +27,9 @@ import com.teamAgile.backend.DTO.hateoas.AuctionItemModelAssembler;
 import com.teamAgile.backend.DTO.hateoas.BidModel;
 import com.teamAgile.backend.DTO.hateoas.BidModelAssembler;
 import com.teamAgile.backend.model.AuctionItem;
+import com.teamAgile.backend.model.AuctionItem.AuctionStatus;
 import com.teamAgile.backend.model.Bid;
+import com.teamAgile.backend.model.ForwardAuctionItem;
 import com.teamAgile.backend.model.Receipt;
 import com.teamAgile.backend.model.User;
 import com.teamAgile.backend.service.AuctionService;
@@ -407,6 +409,36 @@ public class AuctionController extends BaseController {
 			return ResponseUtil.ok(collectionModel);
 		} catch (Exception e) {
 			return ResponseUtil.internalError("Error retrieving bids: " + e.getMessage());
+		}
+	}
+
+	@PostMapping("/check-status/{itemId}")
+	public ResponseEntity<ApiResponse<AuctionItemResponseDTO>> checkAuctionStatus(@PathVariable UUID itemId) {
+		try {
+			LocalDateTime now = LocalDateTime.now();
+			AuctionItem item = auctionService.getAuctionItemById(itemId);
+
+			if (item == null) {
+				return ResponseUtil.notFound("Auction item not found");
+			}
+
+			if (item instanceof ForwardAuctionItem) {
+				ForwardAuctionItem forwardItem = (ForwardAuctionItem) item;
+
+				if (forwardItem.getAuctionStatus() == AuctionStatus.AVAILABLE
+						&& forwardItem.getEndTime() != null
+						&& now.isAfter(forwardItem.getEndTime())) {
+
+					boolean hasBids = !bidService.getBidsByItemId(itemId).isEmpty();
+					forwardItem.setAuctionStatus(hasBids ? AuctionStatus.SOLD : AuctionStatus.EXPIRED);
+					item = auctionService.saveAuctionItem(forwardItem);
+				}
+			}
+
+			AuctionItemResponseDTO responseItem = AuctionItemResponseDTO.fromAuctionItem(item);
+			return ResponseUtil.ok(responseItem);
+		} catch (Exception e) {
+			return ResponseUtil.internalError("Error checking auction status: " + e.getMessage());
 		}
 	}
 }

@@ -39,12 +39,12 @@ export default function ForwardAuctionPage() {
       setAuction((prevAuction) => {
         if (!prevAuction) return prevAuction;
 
-        if (message.type === 'BID_PLACED' && message.bidId && message.userId && message.bidAmount) {
+        if (message.type === 'BID_PLACED' && message.bidId && message.userId && message.bidAmount && message.username) {
           const newBid = {
             bidID: message.bidId,
             itemID: message.itemId,
             userID: message.userId,
-            username: message.username || 'Unknown',
+            username: message.username,
             bidAmount: message.bidAmount,
             timestamp: new Date().toISOString(),
           };
@@ -72,6 +72,8 @@ export default function ForwardAuctionPage() {
     return () => {
       unsubStatus();
       unsubAuction();
+      // No need to call disconnect() manually—
+      // the WebSocketService will disconnect automatically when no subscribers remain.
     };
   }, [params.id]);
 
@@ -107,7 +109,7 @@ export default function ForwardAuctionPage() {
   if (error) return <div className="text-red-500">{error}</div>;
   if (!auction) return <div>Auction not found</div>;
 
-  const ConnectionStatus = () => (
+  const ConnectionStatusComponent = () => (
     <div className="flex items-center gap-2 text-sm">
       <div
         className={`w-2 h-2 rounded-full ${
@@ -167,7 +169,7 @@ export default function ForwardAuctionPage() {
       <Card className="max-w-2xl mx-auto">
         <CardHeader>
           <CardTitle className="text-2xl">{auction.itemName}</CardTitle>
-          <ConnectionStatus />
+          <ConnectionStatusComponent />
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
@@ -188,7 +190,11 @@ export default function ForwardAuctionPage() {
             </div>
             <div>
               <p className="text-sm text-gray-500">Remaining</p>
-              <CountdownTimer endTime={auction.endTime} />
+              <CountdownTimer
+                endTime={auction.endTime}
+                itemId={auction.itemID}
+                onStatusUpdate={(updatedAuction) => setAuction(updatedAuction)}
+              />
             </div>
           </div>
 
