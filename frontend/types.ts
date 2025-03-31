@@ -41,3 +41,39 @@ export interface ForgotPasswordData {
   newPassword: string;
   securityAnswer: string;
 }
+
+export interface Bid {
+  bidID: string;
+  itemID: string;
+  userID: string;
+  username: string;
+  bidAmount: number;
+  timestamp: string;
+}
+
+export interface AuctionItem {
+  itemID: string;
+  itemName: string;
+  currentPrice: number;
+  auctionStatus: string;
+  auctionType: string;
+  endTime: string;
+  shippingTime: string;
+  highestBidderUsername?: string;
+  bids?: Bid[];
+}
+
+export type WebSocketMessageType = 'BID_PLACED' | 'AUCTION_ENDED' | 'SUBSCRIBE';
+export type ConnectionStatus = 'connecting' | 'connected' | 'disconnected' | 'error';
+
+export interface WebSocketMessage {
+  type: WebSocketMessageType;
+  itemId: string;
+  itemName: string;
+  bidAmount?: number;
+  currentPrice: number;
+  userId?: string;
+  bidId?: string;
+  username?: string;
+  auctionStatus?: string;
+}

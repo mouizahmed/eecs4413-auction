@@ -16,7 +16,7 @@ public interface BidRepository extends JpaRepository<Bid, UUID> {
 
 	List<Bid> findByUser_UserID(UUID userID);
 
-	List<Bid> findByItemID(UUID itemID);
+	List<Bid> findByItemIDOrderByBidAmountDesc(UUID itemID);
 
 	Optional<Bid> findByBidID(UUID bidID);
 }

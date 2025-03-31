@@ -1,22 +1,17 @@
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
+'use client';
+import WelcomePage from '@/components/display/WelcomePage';
+import AuctionList from '@/components/display/AuctionList';
+import { useAuth } from '@/contexts/authContext';
 
 export default function Home() {
-  return (
-    <div className="flex flex-col justify-center items-center min-h-[calc(100vh-160px)] md:grid md:grid-cols-2">
-      <div className="flex flex-col justify-center items-center py-8 md:py-0">
-        <h1 className="scroll-m-20 text-2xl font-bold tracking-tight lg:text-4xl text-center px-4">
-          Welcome to Agile Auctions!
-        </h1>
-      </div>
-      <div className="flex flex-col md:flex-row justify-center items-center md:border-l gap-4 py-8 md:py-0">
-        <Link href="/login">
-          <Button className="text-lg px-7 py-5 cursor-pointer w-full md:w-auto">Login</Button>
-        </Link>
-        <Link href="/register">
-          <Button className="text-lg px-7 py-5 cursor-pointer w-full md:w-auto">Register</Button>
-        </Link>
-      </div>
+  const { userLoggedIn } = useAuth();
+
+  return userLoggedIn ? (
+    <div className="container mx-auto p-6">
+      <h1 className="text-2xl font-bold mb-6">Available Auctions</h1>
+      <AuctionList />
     </div>
+  ) : (
+    <WelcomePage />
   );
 }

@@ -54,7 +54,7 @@ public class BidService {
 	}
 
 	public List<Bid> getBidsByItemId(UUID itemId) {
-		return bidRepository.findByItemID(itemId);
+		return bidRepository.findByItemIDOrderByBidAmountDesc(itemId);
 	}
 
 	public List<Bid> getBidsByUserId(UUID userId) {

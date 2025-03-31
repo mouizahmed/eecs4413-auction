@@ -52,3 +52,17 @@ export const forgotPassword = async (forgotPasswordData: ForgotPasswordData): Pr
     throw new Error('Failed to reset password.');
   }
 };
+
+export const placeBid = async (itemID: string, bidAmount: number): Promise<any> => {
+  try {
+    const response = await api.post('/auction/bid', null, {
+      params: {
+        itemID,
+        bidAmount: bidAmount.toString(),
+      },
+    });
+    return response.data.data;
+  } catch (error) {
+    throw error;
+  }
+};
