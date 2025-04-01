@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, memo } from 'react';
 import { useParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,73 @@ import { placeBid } from '@/requests/postRequests';
 import { webSocketService } from '@/services/websocket';
 import { useAuth } from '@/contexts/authContext';
 
+const ConnectionStatusComponent = memo(
+  ({ status, itemId, isSubscribed }: { status: ConnectionStatus; itemId: string; isSubscribed: boolean }) => (
+    <div className="flex flex-col gap-2 text-sm">
+      <div className="flex items-center gap-2">
+        <div
+          className={`w-2 h-2 rounded-full ${
+            status === 'connected'
+              ? 'bg-green-500'
+              : status === 'connecting'
+              ? 'bg-yellow-500'
+              : status === 'error'
+              ? 'bg-red-500'
+              : 'bg-gray-500'
+          }`}
+        />
+        <span className="text-gray-600">
+          {status === 'connected'
+            ? 'WebSocket Connected'
+            : status === 'connecting'
+            ? 'Connecting...'
+            : status === 'error'
+            ? 'Connection Error'
+            : 'Disconnected - Retrying...'}
+        </span>
+      </div>
+      {status === 'connected' && (
+        <div className="flex items-center gap-2">
+          <div className={`w-2 h-2 rounded-full ${isSubscribed ? 'bg-green-500' : 'bg-yellow-500'}`} />
+          <span className={isSubscribed ? 'text-green-600' : 'text-yellow-600'}>
+            {isSubscribed ? `Subscribed to updates for item` : 'Waiting for subscription confirmation...'}
+          </span>
+        </div>
+      )}
+    </div>
+  )
+);
+
+const BidHistory = memo(({ bids, currentPrice }: { bids: AuctionItem['bids']; currentPrice: number }) => {
+  if (!bids || bids.length === 0) return null;
+
+  return (
+    <div className="pt-4 border-t">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-lg font-semibold">Bid History</h3>
+        <span className="text-sm text-gray-500">{bids.length} bids</span>
+      </div>
+      <div className="space-y-2">
+        {bids.map((bid) => (
+          <div
+            key={bid.bidID}
+            className="flex justify-between items-center p-3 bg-white border rounded-lg shadow-sm hover:shadow-md transition-shadow"
+          >
+            <div>
+              <p className="font-medium text-gray-900">{bid.username}</p>
+              <p className="text-sm text-gray-500">{new Date(bid.timestamp).toLocaleString()}</p>
+            </div>
+            <div className="text-right">
+              <p className="font-semibold text-lg text-primary">${bid.bidAmount}</p>
+              <p className="text-xs text-gray-500">{bid.bidAmount > currentPrice ? 'Winning Bid' : 'Outbid'}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+});
+
 export default function ForwardAuctionPage() {
   const params = useParams();
   const { currentUser } = useAuth();
@@ -19,23 +86,22 @@ export default function ForwardAuctionPage() {
   const [error, setError] = useState<string | null>(null);
   const [bidAmount, setBidAmount] = useState<string>('');
   const [wsStatus, setWsStatus] = useState<ConnectionStatus>('connecting');
+  const [isSubscribed, setIsSubscribed] = useState(false);
   const [isPaying, setIsPaying] = useState(false);
 
-  useEffect(() => {
-    const fetchAuction = async () => {
-      try {
-        const response = await axios.get(`http://localhost:8080/auction/get-by-id?itemID=${params.id}`, {
-          withCredentials: true,
-        });
-        setAuction(response.data.data);
-      } catch (error) {
-        setError('Failed to fetch auction details');
-      } finally {
-        setLoading(false);
+  const handleWebSocketMessage = useCallback(
+    (message: WebSocketMessage) => {
+      if (message.type === 'SUBSCRIBED' && message.itemId === params.id) {
+        setIsSubscribed(true);
+        return;
       }
-    };
 
-    const handleWebSocketMessage = (message: WebSocketMessage) => {
+      if (message.type === 'ERROR') {
+        console.error('WebSocket error:', message);
+        setIsSubscribed(false);
+        return;
+      }
+
       setAuction((prevAuction) => {
         if (!prevAuction) return prevAuction;
 
@@ -63,19 +129,35 @@ export default function ForwardAuctionPage() {
           ...(message.auctionStatus && { auctionStatus: message.auctionStatus }),
         };
       });
+    },
+    [params.id]
+  );
+
+  useEffect(() => {
+    const fetchAuction = async () => {
+      try {
+        const response = await axios.get(`http://localhost:8080/auction/get-by-id?itemID=${params.id}`, {
+          withCredentials: true,
+        });
+        setAuction(response.data.data);
+      } catch (error) {
+        setError('Failed to fetch auction details');
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchAuction();
+    setIsSubscribed(false);
     const unsubStatus = webSocketService.subscribeToStatus(setWsStatus);
     const unsubAuction = webSocketService.subscribe(params.id as string, handleWebSocketMessage);
 
     return () => {
       unsubStatus();
       unsubAuction();
-      // No need to call disconnect() manually—
-      // the WebSocketService will disconnect automatically when no subscribers remain.
+      setIsSubscribed(false);
     };
-  }, [params.id]);
+  }, [params.id, handleWebSocketMessage]);
 
   const handleBid = async () => {
     if (!auction || !bidAmount) return;
@@ -109,67 +191,12 @@ export default function ForwardAuctionPage() {
   if (error) return <div className="text-red-500">{error}</div>;
   if (!auction) return <div>Auction not found</div>;
 
-  const ConnectionStatusComponent = () => (
-    <div className="flex items-center gap-2 text-sm">
-      <div
-        className={`w-2 h-2 rounded-full ${
-          wsStatus === 'connected'
-            ? 'bg-green-500'
-            : wsStatus === 'connecting'
-            ? 'bg-yellow-500'
-            : wsStatus === 'error'
-            ? 'bg-red-500'
-            : 'bg-gray-500'
-        }`}
-      />
-      <span className="text-gray-600">
-        {wsStatus === 'connected'
-          ? 'Live Updates Active'
-          : wsStatus === 'connecting'
-          ? 'Connecting...'
-          : wsStatus === 'error'
-          ? 'Connection Error'
-          : 'Disconnected - Retrying...'}
-      </span>
-    </div>
-  );
-
-  const BidHistory = () =>
-    auction.bids &&
-    auction.bids.length > 0 && (
-      <div className="pt-4 border-t">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold">Bid History</h3>
-          <span className="text-sm text-gray-500">{auction.bids.length} bids</span>
-        </div>
-        <div className="space-y-2">
-          {auction.bids.map((bid) => (
-            <div
-              key={bid.bidID}
-              className="flex justify-between items-center p-3 bg-white border rounded-lg shadow-sm hover:shadow-md transition-shadow"
-            >
-              <div>
-                <p className="font-medium text-gray-900">{bid.username}</p>
-                <p className="text-sm text-gray-500">{new Date(bid.timestamp).toLocaleString()}</p>
-              </div>
-              <div className="text-right">
-                <p className="font-semibold text-lg text-primary">${bid.bidAmount}</p>
-                <p className="text-xs text-gray-500">
-                  {bid.bidAmount > auction.currentPrice ? 'Winning Bid' : 'Outbid'}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-
   return (
     <div className="container mx-auto px-4 py-8">
       <Card className="max-w-2xl mx-auto">
         <CardHeader>
           <CardTitle className="text-2xl">{auction.itemName}</CardTitle>
-          <ConnectionStatusComponent />
+          <ConnectionStatusComponent status={wsStatus} itemId={params.id as string} isSubscribed={isSubscribed} />
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
@@ -251,7 +278,7 @@ export default function ForwardAuctionPage() {
             </div>
           )}
 
-          <BidHistory />
+          {auction.bids && <BidHistory bids={auction.bids} currentPrice={auction.currentPrice} />}
         </CardContent>
       </Card>
     </div>

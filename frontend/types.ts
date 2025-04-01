@@ -63,7 +63,7 @@ export interface AuctionItem {
   bids?: Bid[];
 }
 
-export type WebSocketMessageType = 'BID_PLACED' | 'AUCTION_ENDED' | 'SUBSCRIBE';
+export type WebSocketMessageType = 'BID_PLACED' | 'AUCTION_ENDED' | 'SUBSCRIBE' | 'SUBSCRIBED' | 'ERROR';
 export type ConnectionStatus = 'connecting' | 'connected' | 'disconnected' | 'error';
 
 export interface WebSocketMessage {

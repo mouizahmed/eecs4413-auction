@@ -17,7 +17,6 @@ export function useAuth() {
 
 export function AuthProvider({ children }: ReactChildren) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [userLoggedIn, setUserLoggedIn] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [authChecked, setAuthChecked] = useState<boolean>(false);
 
@@ -32,15 +31,12 @@ export function AuthProvider({ children }: ReactChildren) {
         const user = await checkAuthentication();
         if (user) {
           setCurrentUser(user);
-          setUserLoggedIn(true);
         } else {
           setCurrentUser(null);
-          setUserLoggedIn(false);
         }
       } catch (error) {
         console.log('Auth initialization error:', error);
         setCurrentUser(null);
-        setUserLoggedIn(false);
       } finally {
         setLoading(false);
         setAuthChecked(true);
@@ -50,13 +46,8 @@ export function AuthProvider({ children }: ReactChildren) {
     initAuth();
   }, [authChecked]);
 
-  // Update userLoggedIn when currentUser changes
-  useEffect(() => {
-    setUserLoggedIn(!!currentUser);
-  }, [currentUser]);
-
   const value: AuthenticationContext = {
-    userLoggedIn,
+    userLoggedIn: !!currentUser,
     currentUser,
     setCurrentUser,
   };
