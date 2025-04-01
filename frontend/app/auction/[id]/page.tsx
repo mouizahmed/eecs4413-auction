@@ -39,8 +39,13 @@ export default function ForwardAuctionPage() {
         };
       });
     }
+  }, [lastMessage?.type === 'AUCTION_UPDATE' ? lastMessage : null]);
+
+  useEffect(() => {
+    if (!lastMessage || !auction) return;
 
     if (lastMessage.type === 'BID_PLACED') {
+      console.log('NEW BID');
       setAuction((prevAuction) => {
         if (!prevAuction) return null;
 
@@ -52,14 +57,14 @@ export default function ForwardAuctionPage() {
           bidAmount: lastMessage.bidAmount,
           timestamp: lastMessage.timestamp,
         };
-        console.log('NEW BID');
-        // Check if we already have this bid
-        const existingBidIndex = prevAuction.bids?.findIndex((bid) => bid.bidID === newBid.bidID);
 
-        // If this bid already exists, don't add it
-        if (existingBidIndex !== undefined && existingBidIndex >= 0) {
-          return prevAuction;
-        }
+        // // Check if we already have this bid
+        // const existingBidIndex = prevAuction.bids?.findIndex((bid) => bid.bidID === newBid.bidID);
+
+        // // If this bid already exists, don't add it
+        // if (existingBidIndex !== undefined && existingBidIndex >= 0) {
+        //   return prevAuction;
+        // }
 
         return {
           ...prevAuction,
@@ -72,7 +77,7 @@ export default function ForwardAuctionPage() {
         };
       });
     }
-  }, [lastMessage, auction]);
+  }, [lastMessage?.type === 'BID_PLACED' ? lastMessage : null]);
 
   useEffect(() => {
     const fetchAuction = async () => {

@@ -60,7 +60,7 @@ export interface AuctionItem {
   endTime: string;
   shippingTime: string;
   highestBidderUsername?: string;
-  bids?: Bid[];
+  bids: Bid[];
 }
 
 export type AuctionType = 'forward' | 'dutch';
