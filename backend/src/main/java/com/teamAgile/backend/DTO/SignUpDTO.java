@@ -22,6 +22,9 @@ public class SignUpDTO extends SignInDTO {
 
 	@NotBlank(message = "city is required")
 	private String city;
+	
+	@NotBlank(message = "province is required")
+	private String province;
 
 	@NotBlank(message = "country is required")
 	private String country;
@@ -58,6 +61,10 @@ public class SignUpDTO extends SignInDTO {
 
 	public String getCity() {
 		return city;
+	}
+	
+	public String getProvince() {
+		return province;
 	}
 
 	public String getCountry() {

@@ -22,6 +22,7 @@ export function RegisterForm() {
     streetNum: 0,
     postalCode: '',
     city: '',
+    province: '',
     country: '',
     securityQuestion: '',
     securityAnswer: '',
@@ -95,6 +96,10 @@ export function RegisterForm() {
                   <div className="grid gap-2">
                     <Label htmlFor="city">City</Label>
                     <Input id="city" required value={formData.city} onChange={handleChange} />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="province">Province</Label>
+                    <Input id="province" required value={formData.province} onChange={handleChange} />
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="country">Country</Label>

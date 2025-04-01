@@ -9,10 +9,11 @@ export interface AuthenticationContext {
 export interface User {
   firstName: string;
   lastName: string;
-  streetAddress: string;
-  streetNumber: number;
+  streetName: string;
+  streetNum: number;
   postalCode: string;
   city: string;
+  province: string;
   country: string;
   username: string;
   password: string;
@@ -31,6 +32,7 @@ export interface RegisterData {
   streetNum: number;
   postalCode: string;
   city: string;
+  province: string;
   country: string;
   securityQuestion: string;
   securityAnswer: string;
@@ -62,6 +64,7 @@ export interface AuctionItem {
   highestBidderUsername?: string;
   sellerUsername: string;
   bids: Bid[];
+  reservePrice?: number;
 }
 
 export interface AuctionForm {

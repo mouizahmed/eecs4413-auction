@@ -63,7 +63,7 @@ public class User implements UserDetails, java.io.Serializable {
 	}
 
 	public User(UUID userID, String firstName, String lastName, String username, String streetName, Integer streetNum,
-			String postalCode, String city, String country) {
+			String postalCode, String city, String province, String country) {
 		this.userID = userID;
 		this.firstName = firstName;
 		this.lastName = lastName;
@@ -71,7 +71,7 @@ public class User implements UserDetails, java.io.Serializable {
 		this.password = null;
 		this.securityQuestion = null;
 		this.securityAnswer = null;
-		Address address = new Address(streetName, streetNum, postalCode, city, country);
+		Address address = new Address(streetName, streetNum, postalCode, city, province, country);
 		this.address = address;
 	}
 
@@ -83,7 +83,7 @@ public class User implements UserDetails, java.io.Serializable {
 		this.securityQuestion = signUpDTO.getSecurityQuestion();
 		this.securityAnswer = signUpDTO.getSecurityAnswer();
 		Address address = new Address(signUpDTO.getStreetName(), signUpDTO.getStreetNum(), signUpDTO.getPostalCode(),
-				signUpDTO.getCity(), signUpDTO.getCountry());
+				signUpDTO.getCity(), signUpDTO.getProvince(), signUpDTO.getCountry());
 		this.address = address;
 	}
 

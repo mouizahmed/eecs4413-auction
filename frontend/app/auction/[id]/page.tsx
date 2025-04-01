@@ -1,6 +1,6 @@
 'use client';
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,15 +12,19 @@ import { useAuth } from '@/contexts/authContext';
 import { useAuctionWebSocket } from '@/hooks/useAuctionWebsocket';
 import { BidHistory } from '@/components/display/BidHistory';
 import { getAuctionDetails } from '@/requests/getRequests';
+import { decreasePrice } from '@/requests/patchRequests';
 
 export default function Auctionpage() {
   const params = useParams();
+  const router = useRouter();
   const { currentUser } = useAuth();
   const [auction, setAuction] = useState<AuctionItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [bidAmount, setBidAmount] = useState<number>(0);
   const [isPaying, setIsPaying] = useState(false);
+  const [decreaseAmount, setDecreaseAmount] = useState<string>('');
+  const [isDecreasing, setIsDecreasing] = useState(false);
   const { lastMessage, socketStatus, isSubscribed } = useAuctionWebSocket(String(params.id));
 
   // Handle WebSocket messages
@@ -105,8 +109,6 @@ export default function Auctionpage() {
     try {
       await placeBid(auction.itemID, Number(bidAmount));
       setBidAmount(bidAmount + 1);
-      // No need to refresh auction data after placing bid
-      // The WebSocket will provide the update
     } catch (err) {
       console.error('Error placing bid:', err);
     }
@@ -114,18 +116,21 @@ export default function Auctionpage() {
 
   const handlePay = async () => {
     if (!auction) return;
-    setIsPaying(true);
+    router.push(`/payment/${auction.itemID}`);
+  };
+
+  const handleDecreasePrice = async () => {
+    if (!auction || !decreaseAmount) return;
+    const amount = Number(decreaseAmount);
+    if (amount <= 0) return;
     try {
-      // For Dutch auctions or regular auction winners
-      if (auction.auctionType === 'DUTCH' || (isHighestBidder && isAuctionEnded)) {
-        // TODO: Implement payment API call
-        await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulated API call
-        setAuction((prev) => (prev ? { ...prev, auctionStatus: 'PAID' } : null));
-      }
-    } catch (err) {
-      console.error('Error processing payment:', err);
+      setIsDecreasing(true);
+      await decreasePrice(auction.itemID, amount);
+    } catch (error) {
+      console.log('Error decreasing price:', error);
+      setError('Failed to decrease price');
     } finally {
-      setIsPaying(false);
+      setIsDecreasing(false);
     }
   };
 
@@ -168,11 +173,17 @@ export default function Auctionpage() {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className={`grid gap-4 ${isSeller && auction.auctionType === 'DUTCH' ? 'grid-cols-3' : 'grid-cols-2'}`}>
             <div>
               <p className="text-sm text-gray-500">Current Price</p>
               <p className="text-xl font-semibold">${auction.currentPrice}</p>
             </div>
+            {isSeller && auction.auctionType === 'DUTCH' && (
+              <div>
+                <p className="text-sm text-gray-500">Reserve Price</p>
+                <p className="text-xl font-semibold">${auction.reservePrice}</p>
+              </div>
+            )}
             <div>
               <p className="text-sm text-gray-500">Status</p>
               <p className="text-xl font-semibold">{auction.auctionStatus}</p>
@@ -221,7 +232,7 @@ export default function Auctionpage() {
                     value={bidAmount}
                     onChange={(e) => setBidAmount(Number(e.target.value))}
                     min={auction.currentPrice}
-                    step="0.01"
+                    step="1"
                   />
                   <Button onClick={handleBid} className="w-full">
                     Place Bid
@@ -241,6 +252,29 @@ export default function Auctionpage() {
             <div className="pt-4 border-t">
               <div className="bg-green-50 p-4 rounded-lg">
                 <p className="text-green-700 font-medium">Payment completed successfully!</p>
+              </div>
+            </div>
+          )}
+
+          {isSeller && auction.auctionType === 'DUTCH' && auction.auctionStatus === 'AVAILABLE' && (
+            <div className="space-y-2 pt-4 border-t">
+              <p className="text-sm text-gray-500">Decrease Price</p>
+              <div className="flex gap-2">
+                <Input
+                  type="number"
+                  placeholder="Enter decrease amount"
+                  value={decreaseAmount}
+                  onChange={(e) => setDecreaseAmount(e.target.value)}
+                  min="0"
+                  step="1"
+                  className="flex-1"
+                />
+                <Button
+                  onClick={handleDecreasePrice}
+                  disabled={isDecreasing || !decreaseAmount || Number(decreaseAmount) <= 0}
+                >
+                  {isDecreasing ? 'Decreasing...' : 'Decrease'}
+                </Button>
               </div>
             </div>
           )}

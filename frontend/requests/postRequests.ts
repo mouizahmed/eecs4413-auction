@@ -67,6 +67,13 @@ export const placeBid = async (itemID: string, bidAmount: number): Promise<any> 
   }
 };
 
+export const postPayment = async (): Promise<any> => {
+  try {
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const postAuctionItem = async (auctionType: AuctionType, auctionForm: AuctionForm): Promise<AuctionItem> => {
   try {
     if (auctionType == 'dutch') {

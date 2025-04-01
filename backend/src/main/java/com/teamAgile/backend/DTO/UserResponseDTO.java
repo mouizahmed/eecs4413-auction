@@ -13,6 +13,7 @@ public class UserResponseDTO {
     private String streetName;
     private String postalCode;
     private String city;
+    private String province;
     private String country;
 
     public UserResponseDTO() {
@@ -28,6 +29,7 @@ public class UserResponseDTO {
             this.streetName = user.getAddress().getStreetName();
             this.postalCode = user.getAddress().getPostalCode();
             this.city = user.getAddress().getCity();
+            this.province = user.getAddress().getProvince();
             this.country = user.getAddress().getCountry();
         }
     }
@@ -95,6 +97,14 @@ public class UserResponseDTO {
 
     public void setCity(String city) {
         this.city = city;
+    }
+    
+    public String getProvince() {
+    	return province;
+    }
+    
+    public void setProvince(String province) {
+    	this.province = province;
     }
 
     public String getCountry() {
