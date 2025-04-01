@@ -1,71 +1,148 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 
 export const useAuctionWebSocket = (itemID: string) => {
   const wsRef = useRef<WebSocket | null>(null);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [lastMessage, setLastMessage] = useState<any>(null);
   const [socketStatus, setSocketStatus] = useState<'OPEN' | 'CLOSED' | 'CONNECTING'>('CONNECTING');
+  const [retryCount, setRetryCount] = useState(0);
 
+  // Connection parameters
+  const MAX_RETRIES = 5;
+  const BASE_DELAY = 500; // Start with 500ms
+
+  const connect = useCallback(() => {
+    // Don't attempt to connect if we're at max retries
+    if (retryCount >= MAX_RETRIES) {
+      console.log('Max retry attempts reached, giving up');
+      setSocketStatus('CLOSED');
+      return;
+    }
+
+    // Calculate exponential backoff delay (500ms, 1000ms, 2000ms, etc.)
+    const delay = retryCount === 0 ? 0 : BASE_DELAY * Math.pow(2, retryCount - 1);
+
+    // If this is a retry, wait for the calculated delay
+    if (retryCount > 0) {
+      console.log(`Attempting to reconnect in ${delay}ms (try ${retryCount}/${MAX_RETRIES})...`);
+    }
+
+    // Clear any existing connection
+    if (wsRef.current) {
+      try {
+        wsRef.current.close();
+      } catch (err) {
+        // Ignore errors when closing
+      }
+      wsRef.current = null;
+    }
+
+    // Set a timeout for the next connection attempt
+    reconnectTimeoutRef.current = setTimeout(() => {
+      setSocketStatus('CONNECTING');
+
+      try {
+        const ws = new WebSocket('ws://localhost:8080/ws/auction-updates');
+        wsRef.current = ws;
+
+        ws.onopen = () => {
+          console.log('WebSocket connection established');
+          setSocketStatus('OPEN');
+          setRetryCount(0); // Reset retry count on successful connection
+
+          // Send the itemID to subscribe to specific auction updates
+          try {
+            ws.send(
+              JSON.stringify({
+                type: 'SUBSCRIBE',
+                itemId: itemID,
+              })
+            );
+          } catch (err) {
+            console.error('Error sending subscribe message:', err);
+          }
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            console.log('WebSocket message received:', data);
+            setLastMessage(data);
+          } catch (err) {
+            console.error('Error parsing WebSocket message:', err);
+          }
+        };
+
+        ws.onerror = (error) => {
+          console.error('WebSocket error:', error);
+          // Let onclose handle the reconnection
+        };
+
+        ws.onclose = (event) => {
+          console.log(`WebSocket connection closed: ${event.code} ${event.reason}`);
+          wsRef.current = null;
+          setSocketStatus('CLOSED');
+
+          // Only try to reconnect if we haven't reached max retries
+          if (retryCount < MAX_RETRIES) {
+            setRetryCount((prev) => prev + 1);
+            connect(); // This will apply the appropriate delay before reconnecting
+          }
+        };
+      } catch (err) {
+        console.error('Error creating WebSocket connection:', err);
+        setSocketStatus('CLOSED');
+
+        // Try again with exponential backoff
+        if (retryCount < MAX_RETRIES) {
+          setRetryCount((prev) => prev + 1);
+          connect();
+        }
+      }
+    }, delay);
+  }, [itemID, retryCount]);
+
+  // Initialize connection
   useEffect(() => {
-    // Create WebSocket connection
-    const ws = new WebSocket('ws://localhost:8080/ws/auction-updates');
-    wsRef.current = ws;
+    connect();
 
-    // Connection opened
-    ws.onopen = () => {
-      console.log('WebSocket connection established');
-      setSocketStatus('OPEN');
-      // Send the itemID to subscribe to specific auction updates
-      ws.send(
-        JSON.stringify({
-          type: 'SUBSCRIBE',
-          itemId: itemID,
-        })
-      );
-    };
-
-    // Listen for messages
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      console.log('WebSocket message received:', data);
-      setLastMessage(data);
-    };
-
-    // Listen for errors
-    ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
-      setSocketStatus('CLOSED');
-    };
-
-    // Listen for connection close
-    ws.onclose = () => {
-      console.log('WebSocket connection closed');
-      setSocketStatus('CLOSED');
-    };
-
-    // Clean up function - modified to prevent errors
+    // Clean up function
     return () => {
       console.log('Cleaning up WebSocket connection');
 
-      // Only close if connection is open or connecting
-      if (
-        wsRef.current &&
-        (wsRef.current.readyState === WebSocket.OPEN || wsRef.current.readyState === WebSocket.CONNECTING)
-      ) {
-        // Remove all event listeners before closing
-        wsRef.current.onopen = null;
-        wsRef.current.onmessage = null;
-        wsRef.current.onerror = null;
-        wsRef.current.onclose = null;
-
-        // Close with code 1000 (normal closure)
-        wsRef.current.close(1000, 'Component unmounting');
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
       }
 
-      // Clear the reference
-      wsRef.current = null;
-    };
-  }, [itemID]);
+      if (wsRef.current) {
+        const ws = wsRef.current;
 
-  return { lastMessage, socketStatus };
+        // Remove all listeners to prevent callback errors
+        ws.onopen = null;
+        ws.onmessage = null;
+        ws.onerror = null;
+        ws.onclose = null;
+
+        try {
+          if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
+            ws.close(1000, 'Component unmounting');
+          }
+        } catch (err) {
+          console.error('Error closing WebSocket:', err);
+        }
+
+        wsRef.current = null;
+      }
+    };
+  }, [connect]);
+
+  // Public API for manual reconnection
+  const reconnect = useCallback(() => {
+    setRetryCount(0);
+    connect();
+  }, [connect]);
+
+  return { lastMessage, socketStatus, reconnect };
 };
