@@ -1,4 +1,4 @@
-import { ForgotPasswordData, RegisterData } from '@/types';
+import { AuctionForm, AuctionItem, AuctionType, ForgotPasswordData, RegisterData } from '@/types';
 import axios from 'axios';
 
 const api = axios.create({
@@ -62,6 +62,34 @@ export const placeBid = async (itemID: string, bidAmount: number): Promise<any> 
       },
     });
     return response.data.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const postAuctionItem = async (auctionType: AuctionType, auctionForm: AuctionForm): Promise<AuctionItem> => {
+  try {
+    if (auctionType == 'dutch') {
+      const response = await api.post('/auction/dutch/post', {
+        itemName: auctionForm.itemName,
+        reservePrice: auctionForm.reservePrice,
+        currentPrice: auctionForm.currentPrice,
+        shippingTime: auctionForm.shippingTime,
+      });
+
+      return response.data.data;
+    } else {
+      console.log(auctionForm.endDate);
+      const response = await api.post('/auction/forward/post', {
+        itemName: auctionForm.itemName,
+        reservePrice: auctionForm.reservePrice,
+        currentPrice: auctionForm.currentPrice,
+        shippingTime: auctionForm.shippingTime,
+        endTime: auctionForm.endDate,
+      });
+
+      return response.data.data;
+    }
   } catch (error) {
     throw error;
   }

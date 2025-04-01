@@ -8,18 +8,19 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { DateTimePicker } from '@/components/ui/date-time-picker';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { AuctionType } from '@/types';
+import { AuctionForm, AuctionItem, AuctionType } from '@/types';
+import { postAuctionItem } from '@/requests/postRequests';
 
 export default function PostAuction() {
   const router = useRouter();
   const { userLoggedIn } = useAuth();
   const [auctionType, setAuctionType] = useState<AuctionType>('forward');
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<AuctionForm>({
     itemName: '',
-    shippingTime: '',
-    startingPrice: '',
-    endDate: '',
-    reservePrice: '',
+    shippingTime: 0,
+    currentPrice: 0,
+    endDate: new Date(),
+    reservePrice: 0,
   });
 
   if (!userLoggedIn) {
@@ -29,9 +30,8 @@ export default function PostAuction() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement auction creation logic
-    console.log('Form submitted:', { type: auctionType, ...formData });
-    router.push('/');
+    const newAuctionItem: AuctionItem = await postAuctionItem(auctionType, formData);
+    router.push(`/auction/${newAuctionItem.itemID}`);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -45,7 +45,7 @@ export default function PostAuction() {
   const handleDateChange = (date: Date) => {
     setFormData((prev) => ({
       ...prev,
-      endDate: date.toISOString().slice(0, 16),
+      endDate: date,
     }));
   };
 
@@ -94,12 +94,12 @@ export default function PostAuction() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="startingPrice">Starting Price ($)</Label>
+              <Label htmlFor="currentPrice">Starting Price ($)</Label>
               <Input
                 type="number"
-                id="startingPrice"
-                name="startingPrice"
-                value={formData.startingPrice}
+                id="currentPrice"
+                name="currentPrice"
+                value={formData.currentPrice}
                 onChange={handleChange}
                 required
                 min="0"
@@ -110,10 +110,7 @@ export default function PostAuction() {
             {auctionType === 'forward' ? (
               <div className="space-y-2">
                 <Label>End Date</Label>
-                <DateTimePicker
-                  value={formData.endDate ? new Date(formData.endDate) : undefined}
-                  onChange={handleDateChange}
-                />
+                <DateTimePicker value={formData.endDate} onChange={handleDateChange} />
               </div>
             ) : (
               <div className="space-y-2">

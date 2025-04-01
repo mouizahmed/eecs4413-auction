@@ -33,6 +33,15 @@ export const getAvailableItems = async (): Promise<AuctionItem[]> => {
   }
 };
 
+export const getAuctionDetails = async (auctionID: string): Promise<AuctionItem> => {
+  try {
+    const response = await api.get(`/auction/get-by-id?itemID=${auctionID}`);
+    return response.data.data.auctionItem;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const placeBid = async (itemID: string, bidAmount: number): Promise<any> => {
   try {
     const response = await api.post('/auction/bid', null, {

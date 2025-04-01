@@ -143,7 +143,7 @@ public class AuctionController extends BaseController {
 	}
 
 	@GetMapping("/get-by-id")
-	public ResponseEntity<ApiResponse<AuctionItemResponseDTO>> getAuctionItemByID(
+	public ResponseEntity<ApiResponse<AuctionItemModel>> getAuctionItemByID(
 			@RequestParam("itemID") String itemID) {
 		try {
 			if (!ValidationUtil.isValidUUID(itemID)) {
@@ -158,8 +158,9 @@ public class AuctionController extends BaseController {
 			}
 
 			AuctionItemResponseDTO responseItem = AuctionItemResponseDTO.fromAuctionItem(item, item.getBids());
+			AuctionItemModel itemModel = auctionItemModelAssembler.toModel(responseItem);
 
-			return ResponseUtil.ok(responseItem);
+			return ResponseUtil.ok(itemModel);
 		} catch (IllegalArgumentException e) {
 			return ResponseUtil.badRequest("Invalid item ID format: " + e.getMessage());
 		} catch (Exception e) {

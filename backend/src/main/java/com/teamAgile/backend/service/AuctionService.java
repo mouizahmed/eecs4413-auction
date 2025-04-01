@@ -146,11 +146,7 @@ public class AuctionService {
 	}
 
 	public AuctionItem saveAuctionItem(AuctionItem item) {
-		Optional<?> existingItem = auctionRepository.findByItemName(item.getItemName());
-		if (existingItem.isPresent()) {
-			throw new IllegalArgumentException("Auction item already exists.");
-		}
-
+		// Just save the item as is - this is an update operation
 		return auctionRepository.save(item);
 	}
 

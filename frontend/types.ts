@@ -60,7 +60,16 @@ export interface AuctionItem {
   endTime: string;
   shippingTime: string;
   highestBidderUsername?: string;
+  sellerUsername: string;
   bids: Bid[];
+}
+
+export interface AuctionForm {
+  itemName: string;
+  shippingTime: number;
+  currentPrice: number;
+  endDate?: Date;
+  reservePrice?: number;
 }
 
 export type AuctionType = 'forward' | 'dutch';

@@ -11,14 +11,15 @@ import { placeBid } from '@/requests/postRequests';
 import { useAuth } from '@/contexts/authContext';
 import { useAuctionWebSocket } from '@/hooks/useAuctionWebsocket';
 import { BidHistory } from '@/components/display/BidHistory';
+import { getAuctionDetails } from '@/requests/getRequests';
 
-export default function ForwardAuctionPage() {
+export default function Auctionpage() {
   const params = useParams();
   const { currentUser } = useAuth();
   const [auction, setAuction] = useState<AuctionItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [bidAmount, setBidAmount] = useState<string>('');
+  const [bidAmount, setBidAmount] = useState<number>(0);
   const [isPaying, setIsPaying] = useState(false);
   const { lastMessage, socketStatus, isSubscribed } = useAuctionWebSocket(String(params.id));
 
@@ -82,13 +83,13 @@ export default function ForwardAuctionPage() {
   useEffect(() => {
     const fetchAuction = async () => {
       try {
-        const response = await axios.get(`http://localhost:8080/auction/get-by-id?itemID=${params.id}`, {
-          withCredentials: true,
-        });
-
-        setAuction({
-          ...response.data.data,
-        });
+        const auctionItem: AuctionItem = await getAuctionDetails(String(params.id));
+        setAuction(auctionItem);
+        if (auctionItem.auctionType.toLowerCase() == 'dutch') {
+          setBidAmount(auctionItem.currentPrice);
+        } else {
+          setBidAmount(auctionItem.currentPrice + 1);
+        }
       } catch (error) {
         setError('Failed to fetch auction details');
       } finally {
@@ -103,7 +104,7 @@ export default function ForwardAuctionPage() {
     if (!auction || !bidAmount) return;
     try {
       await placeBid(auction.itemID, Number(bidAmount));
-      setBidAmount('');
+      setBidAmount(bidAmount + 1);
       // No need to refresh auction data after placing bid
       // The WebSocket will provide the update
     } catch (err) {
@@ -115,9 +116,12 @@ export default function ForwardAuctionPage() {
     if (!auction) return;
     setIsPaying(true);
     try {
-      // TODO: Implement payment API call
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulated API call
-      setAuction((prev) => (prev ? { ...prev, auctionStatus: 'PAID' } : null));
+      // For Dutch auctions or regular auction winners
+      if (auction.auctionType === 'DUTCH' || (isHighestBidder && isAuctionEnded)) {
+        // TODO: Implement payment API call
+        await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulated API call
+        setAuction((prev) => (prev ? { ...prev, auctionStatus: 'PAID' } : null));
+      }
     } catch (err) {
       console.error('Error processing payment:', err);
     } finally {
@@ -128,6 +132,7 @@ export default function ForwardAuctionPage() {
   const isHighestBidder = currentUser && auction?.highestBidderUsername === currentUser.username;
   const isAuctionEnded = auction?.auctionStatus === 'SOLD';
   const canPay = isHighestBidder && isAuctionEnded && auction?.auctionStatus !== 'PAID';
+  const isSeller = currentUser && auction?.sellerUsername === currentUser.username;
 
   if (loading) return <div>Loading auction details...</div>;
   if (error) return <div className="text-red-500">{error}</div>;
@@ -137,7 +142,10 @@ export default function ForwardAuctionPage() {
     <div className="container mx-auto px-4 py-8">
       <Card className="max-w-2xl mx-auto">
         <CardHeader>
-          <CardTitle className="text-2xl">{auction.itemName}</CardTitle>
+          <CardTitle className="text-2xl">
+            {auction.itemName}
+            <p className="text-sm text-muted-foreground">{auction.auctionType}</p>
+          </CardTitle>
           <div className="mt-2 flex items-center gap-2">
             <div
               className={`w-2 h-2 rounded-full ${
@@ -176,61 +184,57 @@ export default function ForwardAuctionPage() {
               <p className="text-sm text-gray-500">Shipping Time</p>
               <p className="text-xl font-semibold">{auction.shippingTime}</p>
             </div>
-            <div>
-              <p className="text-sm text-gray-500">Remaining</p>
-              <CountdownTimer
-                endTime={auction.endTime}
-                itemId={auction.itemID}
-                onStatusUpdate={(updatedAuction) =>
-                  setAuction((prev) => ({ ...(prev as AuctionItem), ...updatedAuction }))
-                }
-              />
-            </div>
+            {auction.auctionType !== 'DUTCH' && (
+              <div>
+                <p className="text-sm text-gray-500">Remaining</p>
+                <CountdownTimer
+                  endTime={auction.endTime}
+                  itemId={auction.itemID}
+                  onStatusUpdate={(updatedAuction) =>
+                    setAuction((prev) => ({ ...(prev as AuctionItem), ...updatedAuction }))
+                  }
+                />
+              </div>
+            )}
           </div>
 
           {auction.highestBidderUsername && (
             <div className="bg-primary/5 p-3 rounded-lg">
-              <p className="text-sm text-gray-500">Current Highest Bidder</p>
-              <p className="text-lg font-semibold text-primary">{auction.highestBidderUsername}</p>
+              <p className="text-sm text-gray-500">
+                {auction.auctionStatus === 'AVAILABLE' ? 'Highest Bidder' : 'Winner'}
+              </p>
+              <p className="text-xl font-semibold">{auction.highestBidderUsername}</p>
             </div>
           )}
 
-          {auction.auctionStatus === 'AVAILABLE' && (
-            <div className="pt-4 border-t">
-              <div className="space-y-4">
-                <div>
-                  <label htmlFor="bidAmount" className="block text-sm font-medium text-gray-700">
-                    Your Bid Amount
-                  </label>
+          {!isSeller && auction.auctionStatus === 'AVAILABLE' && (
+            <div className="space-y-2">
+              {auction.auctionType === 'DUTCH' ? (
+                <Button onClick={handleBid} className="w-full">
+                  Buy Now
+                </Button>
+              ) : (
+                <>
                   <Input
-                    id="bidAmount"
                     type="number"
-                    min={String(auction.currentPrice + 1)}
+                    placeholder="Enter bid amount"
                     value={bidAmount}
-                    onChange={(e) => setBidAmount(e.target.value)}
-                    className="mt-1"
+                    onChange={(e) => setBidAmount(Number(e.target.value))}
+                    min={auction.currentPrice}
+                    step="0.01"
                   />
-                </div>
-                <Button
-                  className="w-full"
-                  onClick={handleBid}
-                  disabled={!bidAmount || Number(bidAmount) <= auction.currentPrice}
-                >
-                  Place Bid
-                </Button>
-              </div>
+                  <Button onClick={handleBid} className="w-full">
+                    Place Bid
+                  </Button>
+                </>
+              )}
             </div>
           )}
 
-          {canPay && (
-            <div className="pt-4 border-t">
-              <div className="space-y-4">
-                <p className="text-sm text-gray-500">Congratulations! You won the auction!</p>
-                <Button className="w-full" onClick={handlePay} disabled={isPaying}>
-                  {isPaying ? 'Processing Payment...' : 'Pay Now'}
-                </Button>
-              </div>
-            </div>
+          {!isSeller && canPay && (
+            <Button onClick={handlePay} className="w-full" disabled={isPaying}>
+              {isPaying ? 'Processing Payment...' : 'Pay Now'}
+            </Button>
           )}
 
           {auction.auctionStatus === 'PAID' && (
