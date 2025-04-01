@@ -10,36 +10,7 @@ import axios from 'axios';
 import { placeBid } from '@/requests/postRequests';
 import { useAuth } from '@/contexts/authContext';
 import { useAuctionWebSocket } from '@/hooks/useAuctionWebsocket';
-
-const BidHistory = ({ bids, currentPrice }: { bids: AuctionItem['bids']; currentPrice: number }) => {
-  if (!bids || bids.length === 0) return null;
-
-  return (
-    <div className="pt-4 border-t">
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-semibold">Bid History</h3>
-        <span className="text-sm text-gray-500">{bids.length} bids</span>
-      </div>
-      <div className="space-y-2">
-        {bids.map((bid) => (
-          <div
-            key={bid.bidID}
-            className="flex justify-between items-center p-3 bg-white border rounded-lg shadow-sm hover:shadow-md transition-shadow"
-          >
-            <div>
-              <p className="font-medium text-gray-900">{bid.username}</p>
-              <p className="text-sm text-gray-500">{new Date(bid.timestamp).toLocaleString()}</p>
-            </div>
-            <div className="text-right">
-              <p className="font-semibold text-lg text-primary">${bid.bidAmount}</p>
-              <p className="text-xs text-gray-500">{bid.bidAmount > currentPrice ? 'Winning Bid' : 'Outbid'}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
+import { BidHistory } from '@/components/display/BidHistory';
 
 export default function ForwardAuctionPage() {
   const params = useParams();
@@ -49,7 +20,84 @@ export default function ForwardAuctionPage() {
   const [error, setError] = useState<string | null>(null);
   const [bidAmount, setBidAmount] = useState<string>('');
   const [isPaying, setIsPaying] = useState(false);
-  const { lastMessage, socketStatus } = useAuctionWebSocket(String(params.id));
+  const [processedBidIds, setProcessedBidIds] = useState<Set<string>>(new Set());
+  const { lastMessage, socketStatus, isSubscribed } = useAuctionWebSocket(String(params.id));
+
+  // Handle WebSocket messages
+  useEffect(() => {
+    if (!lastMessage || !auction) return;
+
+    // Generate a unique ID for this message to track if we've processed it
+    const messageId =
+      lastMessage.bidId || `${lastMessage.type}-${lastMessage.itemId || lastMessage.itemID}-${Date.now()}`;
+
+    // Skip if we've already processed this message
+    if (processedBidIds.has(messageId)) {
+      return;
+    }
+
+    // Handle different message types
+    if (lastMessage.type === 'AUCTION_UPDATE') {
+      setAuction((prevAuction) => {
+        if (!prevAuction) return null;
+
+        return {
+          ...prevAuction,
+          currentPrice: lastMessage.currentPrice,
+          highestBidderUsername: lastMessage.highestBidder,
+          auctionStatus: lastMessage.auctionStatus,
+          lastUpdateTimestamp: new Date().toISOString(),
+        };
+      });
+
+      // Mark this message as processed
+      setProcessedBidIds((prev) => new Set([...prev, messageId]));
+    }
+
+    if (lastMessage.type === 'BID_PLACED') {
+      setAuction((prevAuction) => {
+        if (!prevAuction) return null;
+
+        // Create the new bid object
+        const newBid = {
+          bidID: lastMessage.bidId,
+          itemID: lastMessage.itemId,
+          userID: lastMessage.userId,
+          username: lastMessage.username,
+          bidAmount: lastMessage.bidAmount,
+          timestamp: new Date().toISOString(),
+        };
+
+        // Check if we already have this bid (or a very similar one)
+        const existingBidIndex = prevAuction.bids?.findIndex(
+          (bid) =>
+            bid.bidID === newBid.bidID ||
+            (bid.userID === newBid.userID &&
+              Math.abs(bid.bidAmount - newBid.bidAmount) < 0.01 &&
+              Math.abs(new Date(bid.timestamp).getTime() - new Date(newBid.timestamp).getTime()) < 5000)
+        );
+
+        // If this bid already exists or is very similar to an existing one, don't add it
+        if (existingBidIndex !== undefined && existingBidIndex >= 0) {
+          return prevAuction;
+        }
+
+        return {
+          ...prevAuction,
+          currentPrice: lastMessage.currentPrice || prevAuction.currentPrice,
+          highestBidderUsername:
+            lastMessage.bidAmount >= prevAuction.currentPrice
+              ? lastMessage.username
+              : prevAuction.highestBidderUsername,
+          lastUpdateTimestamp: new Date().toISOString(),
+          bids: [newBid, ...(prevAuction.bids || [])],
+        };
+      });
+
+      // Mark this message as processed
+      setProcessedBidIds((prev) => new Set([...prev, messageId]));
+    }
+  }, [lastMessage, auction, processedBidIds]);
 
   useEffect(() => {
     const fetchAuction = async () => {
@@ -57,7 +105,12 @@ export default function ForwardAuctionPage() {
         const response = await axios.get(`http://localhost:8080/auction/get-by-id?itemID=${params.id}`, {
           withCredentials: true,
         });
-        setAuction(response.data.data);
+
+        // Add lastUpdateTimestamp to track when this data was last updated
+        setAuction({
+          ...response.data.data,
+          lastUpdateTimestamp: new Date().toISOString(),
+        });
       } catch (error) {
         setError('Failed to fetch auction details');
       } finally {
@@ -73,11 +126,8 @@ export default function ForwardAuctionPage() {
     try {
       await placeBid(auction.itemID, Number(bidAmount));
       setBidAmount('');
-      // // Refresh auction data after placing bid
-      // const response = await axios.get(`http://localhost:8080/auction/get-by-id?itemID=${params.id}`, {
-      //   withCredentials: true,
-      // });
-      // setAuction(response.data.data);
+      // No need to refresh auction data after placing bid
+      // The WebSocket will provide the update
     } catch (err) {
       console.error('Error placing bid:', err);
     }
@@ -110,6 +160,26 @@ export default function ForwardAuctionPage() {
       <Card className="max-w-2xl mx-auto">
         <CardHeader>
           <CardTitle className="text-2xl">{auction.itemName}</CardTitle>
+          <div className="mt-2 flex items-center gap-2">
+            <div
+              className={`w-2 h-2 rounded-full ${
+                socketStatus === 'OPEN'
+                  ? 'bg-green-500'
+                  : socketStatus === 'CONNECTING'
+                  ? 'bg-yellow-500'
+                  : 'bg-red-500'
+              }`}
+            />
+            <span className="text-sm text-gray-500">
+              {socketStatus === 'OPEN' && isSubscribed
+                ? 'Connected & Subscribed'
+                : socketStatus === 'OPEN'
+                ? 'Connected'
+                : socketStatus === 'CONNECTING'
+                ? 'Connecting...'
+                : 'Disconnected'}
+            </span>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
@@ -133,7 +203,9 @@ export default function ForwardAuctionPage() {
               <CountdownTimer
                 endTime={auction.endTime}
                 itemId={auction.itemID}
-                onStatusUpdate={(updatedAuction) => setAuction(updatedAuction)}
+                onStatusUpdate={(updatedAuction) =>
+                  setAuction((prev) => ({ ...(prev as AuctionItem), ...updatedAuction }))
+                }
               />
             </div>
           </div>

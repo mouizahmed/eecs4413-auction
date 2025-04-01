@@ -74,7 +74,7 @@ public class AuctionItemResponseDTO {
         return dto;
     }
 
-	// Getters
+    // Getters
     public UUID getItemID() {
         return itemID;
     }

@@ -50,7 +50,8 @@ public abstract class AuctionItem {
 	private User seller;
 
 	@ManyToOne(optional = true)
-	@JoinColumn(name = "highestBidderId")
+	@JoinColumn(name = "highestBidderId", nullable = true)
+	@JsonManagedReference(value = "user-highestBidder")
 	private User highestBidder;
 
 	@Transient

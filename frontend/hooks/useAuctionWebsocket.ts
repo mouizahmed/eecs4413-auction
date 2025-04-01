@@ -7,6 +7,7 @@ export const useAuctionWebSocket = (itemID: string) => {
   const [lastMessage, setLastMessage] = useState<any>(null);
   const [socketStatus, setSocketStatus] = useState<'OPEN' | 'CLOSED' | 'CONNECTING'>('CONNECTING');
   const [retryCount, setRetryCount] = useState(0);
+  const [isSubscribed, setIsSubscribed] = useState(false);
 
   // Connection parameters
   const MAX_RETRIES = 5;
@@ -51,16 +52,23 @@ export const useAuctionWebSocket = (itemID: string) => {
           setSocketStatus('OPEN');
           setRetryCount(0); // Reset retry count on successful connection
 
-          // Send the itemID to subscribe to specific auction updates
-          try {
-            ws.send(
-              JSON.stringify({
-                type: 'SUBSCRIBE',
-                itemId: itemID,
-              })
-            );
-          } catch (err) {
-            console.error('Error sending subscribe message:', err);
+          // Verify the connection is actually open
+          if (ws.readyState === WebSocket.OPEN) {
+            // Send the itemID to subscribe to specific auction updates
+            try {
+              ws.send(
+                JSON.stringify({
+                  type: 'SUBSCRIBE',
+                  itemId: itemID,
+                })
+              );
+            } catch (err) {
+              console.error('Error sending subscribe message:', err);
+              setSocketStatus('CLOSED');
+            }
+          } else {
+            console.error('WebSocket connection not actually open');
+            setSocketStatus('CLOSED');
           }
         };
 
@@ -69,6 +77,11 @@ export const useAuctionWebSocket = (itemID: string) => {
             const data = JSON.parse(event.data);
             console.log('WebSocket message received:', data);
             setLastMessage(data);
+
+            // Check if the message indicates successful subscription
+            if (data.type === 'SUBSCRIBED') {
+              setIsSubscribed(true);
+            }
           } catch (err) {
             console.error('Error parsing WebSocket message:', err);
           }
@@ -76,6 +89,7 @@ export const useAuctionWebSocket = (itemID: string) => {
 
         ws.onerror = (error) => {
           console.error('WebSocket error:', error);
+          setSocketStatus('CLOSED');
           // Let onclose handle the reconnection
         };
 
@@ -83,6 +97,7 @@ export const useAuctionWebSocket = (itemID: string) => {
           console.log(`WebSocket connection closed: ${event.code} ${event.reason}`);
           wsRef.current = null;
           setSocketStatus('CLOSED');
+          setIsSubscribed(false); // Reset subscription status on close
 
           // Only try to reconnect if we haven't reached max retries
           if (retryCount < MAX_RETRIES) {
@@ -144,5 +159,5 @@ export const useAuctionWebSocket = (itemID: string) => {
     connect();
   }, [connect]);
 
-  return { lastMessage, socketStatus, reconnect };
+  return { lastMessage, socketStatus, reconnect, isSubscribed };
 };

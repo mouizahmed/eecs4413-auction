@@ -55,7 +55,7 @@ class DutchBidStrategyTest {
 		strategy.placeBid(auctionItem, bidAmount, bidder);
 
 		assertEquals(bidAmount, auctionItem.getCurrentPrice());
-		assertEquals(bidder, auctionItem.getHighestBidder());
+		assertEquals(bidder.getUsername(), auctionItem.getHighestBidderUsername());
 		assertEquals(AuctionItem.AuctionStatus.SOLD, auctionItem.getAuctionStatus());
 	}
 
@@ -69,7 +69,7 @@ class DutchBidStrategyTest {
 
 		assertEquals("For Dutch auctions, bid amount must equal the current price.", exception.getMessage());
 		assertEquals(currentPrice, auctionItem.getCurrentPrice());
-		assertNull(auctionItem.getHighestBidder());
+		assertNull(auctionItem.getHighestBidderUsername());
 		assertEquals(AuctionItem.AuctionStatus.AVAILABLE, auctionItem.getAuctionStatus());
 
 	}

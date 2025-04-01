@@ -157,9 +157,15 @@ public class AuctionWebSocketHandler extends TextWebSocketHandler {
 
 	public void broadcastAuctionUpdate(AuctionItem auctionItem) {
 		try {
+			UUID highestBidderID = auctionItem.getHighestBidder() != null ? auctionItem.getHighestBidder().getUserID()
+					: null;
+			String highestBidderUsername = auctionItem.getHighestBidder() != null
+					? auctionItem.getHighestBidder().getUsername()
+					: null;
+
 			AuctionUpdateMessage updateMessage = new AuctionUpdateMessage(AuctionUpdateType.AUCTION_UPDATE,
 					auctionItem.getItemID(), auctionItem.getItemName(), auctionItem.getCurrentPrice(),
-					auctionItem.getHighestBidder().getUserID(), auctionItem.getAuctionStatus().toString());
+					highestBidderID, highestBidderUsername, auctionItem.getAuctionStatus().toString());
 
 			String messageJson = objectMapper.writeValueAsString(updateMessage);
 			TextMessage textMessage = new TextMessage(messageJson);

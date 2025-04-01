@@ -3,9 +3,10 @@ package com.teamAgile.backend.model;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import org.hibernate.annotations.CreationTimestamp;
-import jakarta.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "bids")
@@ -20,7 +21,7 @@ public class Bid {
 	private UUID itemID;
 
 	@ManyToOne(optional = false)
-	@JoinColumn(name = "userId", nullable = false)
+	@JoinColumn(name = "user_id", nullable = false)
 	@JsonManagedReference(value = "user-bids")
 	private User user;
 
