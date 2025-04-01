@@ -63,17 +63,4 @@ export interface AuctionItem {
   bids?: Bid[];
 }
 
-export type WebSocketMessageType = 'BID_PLACED' | 'AUCTION_ENDED' | 'SUBSCRIBE' | 'SUBSCRIBED' | 'ERROR';
-export type ConnectionStatus = 'connecting' | 'connected' | 'disconnected' | 'error';
-
-export interface WebSocketMessage {
-  type: WebSocketMessageType;
-  itemId: string;
-  itemName: string;
-  bidAmount?: number;
-  currentPrice: number;
-  userId?: string;
-  bidId?: string;
-  username?: string;
-  auctionStatus?: string;
-}
+export type AuctionType = 'forward' | 'dutch';

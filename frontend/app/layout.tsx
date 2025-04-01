@@ -5,13 +5,15 @@ import Navbar from '@/components/display/Navbar';
 import { AuthProvider } from '@/contexts/authContext';
 
 const geistSans = Geist({
-  variable: '--font-geist-sans',
   subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-geist-sans',
 });
 
 const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
   subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-geist-mono',
 });
 
 export const metadata: Metadata = {
