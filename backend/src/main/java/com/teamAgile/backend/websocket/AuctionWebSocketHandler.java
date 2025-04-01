@@ -132,6 +132,7 @@ public class AuctionWebSocketHandler extends TextWebSocketHandler {
 			bidUpdateMessage.put("bidAmount", bid.getBidAmount());
 			bidUpdateMessage.put("itemName", item.getItemName());
 			bidUpdateMessage.put("currentPrice", item.getCurrentPrice());
+			bidUpdateMessage.put("timestamp", bid.getTimestamp().toString());
 
 			String messageJson = objectMapper.writeValueAsString(bidUpdateMessage);
 			TextMessage textMessage = new TextMessage(messageJson);
