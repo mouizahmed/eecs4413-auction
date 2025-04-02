@@ -58,16 +58,16 @@ export const placeBid = async (itemID: string, bidAmount: number): Promise<any> 
 
 export const getBidHistory = async (itemID: string): Promise<any> => {
   try {
-    const response = await api.get(`/auction/${itemID}/bids`);
+    const response = await api.get(`/auction/bids?itemID=${itemID}`);
     return response.data.data.content;
   } catch (error) {
     throw error;
   }
 };
 
-export const getReceiptDetails = async (receiptId: string): Promise<ReceiptResponseDTO> => {
+export const getReceiptDetails = async (receiptID: string): Promise<ReceiptResponseDTO> => {
   try {
-    const response = await api.get(`/auction/receipt/${receiptId}`);
+    const response = await api.get(`/auction/receipt?receiptID=${receiptID}`);
     console.log(response.data.data.receipt);
     return response.data.data.receipt;
   } catch (error) {

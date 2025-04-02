@@ -13,7 +13,7 @@ function CountdownTimer({ endTime, itemId, onStatusUpdate }: CountdownTimerProps
 
   const checkAuctionStatus = async () => {
     try {
-      const response = await axios.post(`http://localhost:8080/auction/check-status/${itemId}`, null, {
+      const response = await axios.post(`http://localhost:8080/auction/check-status?itemID=${itemId}`, null, {
         withCredentials: true,
       });
       onStatusUpdate(response.data.data);

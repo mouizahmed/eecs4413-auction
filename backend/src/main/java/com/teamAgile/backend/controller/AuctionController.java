@@ -109,15 +109,9 @@ public class AuctionController extends BaseController {
 
 	@GetMapping("/get-by-id")
 	public ResponseEntity<ApiResponse<AuctionItemModel>> getAuctionItemByID(
-			@RequestParam("itemID") String itemID) {
+			@RequestParam("itemID") UUID itemID) {
 		try {
-			if (!ValidationUtil.isValidUUID(itemID)) {
-				return ResponseUtil.badRequest("Invalid item ID format");
-			}
-
-			UUID itemUUID = UUID.fromString(itemID);
-
-			AuctionItem item = auctionService.getAuctionItemWithBidsByID(itemUUID);
+			AuctionItem item = auctionService.getAuctionItemWithBidsByID(itemID);
 			if (item == null) {
 				return ResponseUtil.notFound("Auction item not found");
 			}
@@ -128,30 +122,6 @@ public class AuctionController extends BaseController {
 			return ResponseUtil.ok(itemModel);
 		} catch (IllegalArgumentException e) {
 			return ResponseUtil.badRequest("Invalid item ID format: " + e.getMessage());
-		} catch (Exception e) {
-			return ResponseUtil.internalError("Error retrieving auction item: " + e.getMessage());
-		}
-	}
-
-	@GetMapping("/get-by-name")
-	public ResponseEntity<ApiResponse<AuctionItemResponseDTO>> getAuctionItemByName(
-			@RequestParam("itemName") String itemName) {
-		try {
-			String sanitizedItemName = ValidationUtil.sanitizeString(itemName);
-			if (sanitizedItemName == null || sanitizedItemName.isEmpty()) {
-				return ResponseUtil.badRequest("Item name cannot be empty");
-			}
-
-			AuctionItem item = auctionService.getAuctionItemByName(sanitizedItemName);
-			if (item == null) {
-				return ResponseUtil.notFound("Auction item not found");
-			}
-
-			List<Bid> bids = bidService.getBidsByItemId(item.getItemID());
-
-			AuctionItemResponseDTO responseItem = AuctionItemResponseDTO.fromAuctionItem(item, bids);
-
-			return ResponseUtil.ok(responseItem);
 		} catch (Exception e) {
 			return ResponseUtil.internalError("Error retrieving auction item: " + e.getMessage());
 		}
@@ -342,27 +312,10 @@ public class AuctionController extends BaseController {
 		}
 	}
 
-	@GetMapping("/{itemId}")
-	public ResponseEntity<ApiResponse<AuctionItemModel>> getAuctionItemById(@PathVariable UUID itemId) {
+	@GetMapping("/bids")
+	public ResponseEntity<ApiResponse<CollectionModel<BidModel>>> getBidsForItem(@RequestParam("itemID") UUID itemID) {
 		try {
-			AuctionItem item = auctionService.getAuctionItemById(itemId);
-			if (item == null) {
-				return ResponseUtil.notFound("Auction item not found with ID: " + itemId);
-			}
-
-			AuctionItemResponseDTO responseItem = AuctionItemResponseDTO.fromAuctionItem(item);
-			AuctionItemModel itemModel = auctionItemModelAssembler.toModel(responseItem);
-
-			return ResponseUtil.ok(itemModel);
-		} catch (Exception e) {
-			return ResponseUtil.internalError("Error retrieving auction item: " + e.getMessage());
-		}
-	}
-
-	@GetMapping("/{itemId}/bids")
-	public ResponseEntity<ApiResponse<CollectionModel<BidModel>>> getBidsForItem(@PathVariable UUID itemId) {
-		try {
-			List<Bid> bids = bidService.getBidsByItemId(itemId);
+			List<Bid> bids = bidService.getBidsByItemId(itemID);
 
 			List<BidResponseDTO> responseBids = bids.stream().map(BidResponseDTO::fromBid).collect(Collectors.toList());
 
@@ -370,8 +323,8 @@ public class AuctionController extends BaseController {
 					.collect(Collectors.toList());
 
 			CollectionModel<BidModel> collectionModel = CollectionModel.of(bidModels,
-					linkTo(methodOn(AuctionController.class).getBidsForItem(itemId)).withSelfRel(),
-					linkTo(methodOn(AuctionController.class).getAuctionItemById(itemId)).withRel("auctionItem"));
+					linkTo(methodOn(AuctionController.class).getBidsForItem(itemID)).withSelfRel(),
+					linkTo(methodOn(AuctionController.class).getAuctionItemByID(itemID)).withRel("auctionItem"));
 
 			return ResponseUtil.ok(collectionModel);
 		} catch (Exception e) {
@@ -379,11 +332,11 @@ public class AuctionController extends BaseController {
 		}
 	}
 
-	@PostMapping("/check-status/{itemId}")
-	public ResponseEntity<ApiResponse<AuctionItemResponseDTO>> checkAuctionStatus(@PathVariable UUID itemId) {
+	@PostMapping("/check-status")
+	public ResponseEntity<ApiResponse<AuctionItemResponseDTO>> checkAuctionStatus(@RequestParam("itemID") UUID itemID) {
 		try {
 			LocalDateTime now = LocalDateTime.now();
-			AuctionItem item = auctionService.getAuctionItemById(itemId);
+			AuctionItem item = auctionService.getAuctionItemById(itemID);
 
 			if (item == null) {
 				return ResponseUtil.notFound("Auction item not found");
@@ -396,7 +349,7 @@ public class AuctionController extends BaseController {
 						&& forwardItem.getEndTime() != null
 						&& now.isAfter(forwardItem.getEndTime())) {
 
-					boolean hasBids = !bidService.getBidsByItemId(itemId).isEmpty();
+					boolean hasBids = !bidService.getBidsByItemId(itemID).isEmpty();
 					forwardItem.setAuctionStatus(hasBids ? AuctionStatus.SOLD : AuctionStatus.EXPIRED);
 					item = auctionService.saveAuctionItem(forwardItem);
 				}
@@ -409,8 +362,8 @@ public class AuctionController extends BaseController {
 		}
 	}
 
-	@GetMapping("/receipt/{receiptId}")
-	public ResponseEntity<ApiResponse<ReceiptModel>> getReceiptById(@PathVariable String receiptId,
+	@GetMapping("/receipt")
+	public ResponseEntity<ApiResponse<ReceiptModel>> getReceiptById(@RequestParam("receiptID") String receiptID,
 			HttpServletRequest request) {
 		try {
 			User currentUser = getCurrentUser(request);
@@ -418,11 +371,11 @@ public class AuctionController extends BaseController {
 				return ResponseUtil.unauthorized("User not authenticated");
 			}
 
-			if (!ValidationUtil.isValidUUID(receiptId)) {
+			if (!ValidationUtil.isValidUUID(receiptID)) {
 				return ResponseUtil.badRequest("Invalid receipt ID format");
 			}
 
-			UUID receiptUUID = UUID.fromString(receiptId);
+			UUID receiptUUID = UUID.fromString(receiptID);
 			Receipt receipt = paymentService.getReceiptById(receiptUUID);
 
 			// Check if the current user is authorized to view this receipt

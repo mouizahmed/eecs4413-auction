@@ -20,7 +20,7 @@ public class ReceiptModelAssembler implements RepresentationModelAssembler<Recei
                         .withSelfRel());
 
         receiptModel.add(
-                linkTo(methodOn(AuctionController.class).getAuctionItemById(receipt.getItemID()))
+                linkTo(methodOn(AuctionController.class).getAuctionItemByID(receipt.getItemID()))
                         .withRel("auctionItem"));
 
         return receiptModel;

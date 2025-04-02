@@ -18,7 +18,7 @@ public class AuctionItemModelAssembler
         AuctionItemModel itemModel = new AuctionItemModel(auctionItem);
 
         itemModel.add(
-                linkTo(methodOn(AuctionController.class).getAuctionItemById(auctionItem.getItemID())).withSelfRel());
+                linkTo(methodOn(AuctionController.class).getAuctionItemByID(auctionItem.getItemID())).withSelfRel());
 
         itemModel.add(
                 linkTo(methodOn(AuctionController.class).getAllAuctionItems()).withRel("auctionItems"));

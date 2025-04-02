@@ -30,6 +30,7 @@ export default function PostAuction() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log(formData.endDate);
     const newAuctionItem: AuctionItem = await postAuctionItem(auctionType, formData);
     router.push(`/auction/${newAuctionItem.itemID}`);
   };

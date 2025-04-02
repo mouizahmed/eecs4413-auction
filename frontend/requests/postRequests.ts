@@ -112,13 +112,13 @@ export const postAuctionItem = async (auctionType: AuctionType, auctionForm: Auc
 
       return response.data.data;
     } else {
-      console.log(auctionForm.endDate);
+      const utcDate = new Date(auctionForm.endDate!.getTime() - auctionForm.endDate!.getTimezoneOffset() * 60000);
       const response = await api.post('/auction/forward/post', {
         itemName: auctionForm.itemName,
         reservePrice: auctionForm.reservePrice,
         currentPrice: auctionForm.currentPrice,
         shippingTime: auctionForm.shippingTime,
-        endTime: auctionForm.endDate,
+        endTime: utcDate.toISOString(),
       });
 
       return response.data.data;
