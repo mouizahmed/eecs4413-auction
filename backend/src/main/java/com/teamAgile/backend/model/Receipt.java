@@ -15,6 +15,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.teamAgile.backend.util.CreditCardValidator;
 
 @Entity
 @Table(name = "receipts")
@@ -66,21 +67,11 @@ public class Receipt {
         }
 
         // Validate credit card
-        if (creditCard.getCardNum() == null || creditCard.getCardNum().length() != 16) {
+        if (!CreditCardValidator.isValidCreditCard(creditCard.getCardNum())) {
             throw new IllegalArgumentException("Invalid credit card number");
         }
         if (creditCard.getExpDate() == null || creditCard.getExpDate().isBefore(YearMonth.now())) {
             throw new IllegalArgumentException("Credit card is expired");
-        }
-
-        // Validate address
-        if (address.getStreetName() == null || address.getStreetName().trim().isEmpty() ||
-                address.getStreetNum() == null || address.getStreetNum() <= 0 ||
-                address.getPostalCode() == null || !address.getPostalCode().matches("[A-Z][0-9][A-Z][0-9][A-Z][0-9]") ||
-                address.getCity() == null || address.getCity().trim().isEmpty() ||
-                address.getProvince() == null || address.getProvince().trim().isEmpty() ||
-                address.getCountry() == null || address.getCountry().trim().isEmpty()) {
-            throw new IllegalArgumentException("Invalid address");
         }
 
         this.itemID = itemID;

@@ -11,6 +11,7 @@ import com.teamAgile.backend.model.User;
 import com.teamAgile.backend.repository.AuctionRepository;
 import com.teamAgile.backend.repository.BidRepository;
 import com.teamAgile.backend.websocket.AuctionWebSocketHandler;
+import com.teamAgile.backend.model.AuctionItem.AuctionStatus;
 
 @Service
 public class BidService {
@@ -28,6 +29,13 @@ public class BidService {
 	}
 
 	public Bid createBid(UUID itemId, User user, Double bidAmount) {
+		// Check for unpaid items first
+		List<AuctionItem> unpaidItems = auctionRepository.findByHighestBidderAndAuctionStatus(user, AuctionStatus.SOLD);
+		if (!unpaidItems.isEmpty()) {
+			throw new IllegalArgumentException(
+					"You have unpaid items. Please pay for your won auctions before placing new bids.");
+		}
+
 		Optional<AuctionItem> itemOptional = auctionRepository.findByItemID(itemId);
 		if (itemOptional.isEmpty()) {
 			throw new IllegalArgumentException("Auction item not found");
