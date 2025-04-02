@@ -18,6 +18,18 @@ export const getCurrentUser = async (): Promise<any> => {
   }
 };
 
+export const getUnpaidItems = async (): Promise<AuctionItem[]> => {
+  try {
+    const response = await api.get('/user/unpaid-items');
+    return response.data.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      throw new Error(error.response.data.message || 'Failed to get unpaid items for user');
+    }
+    throw new Error('Failed to get unpaid items for user');
+  }
+};
+
 export const getSecurityQuestion = async (username: string): Promise<any> => {
   try {
     const response = await api.get(`/user/get-security-question?username=${username}`);
@@ -82,11 +94,23 @@ export const getReceiptDetails = async (receiptID: string): Promise<ReceiptRespo
 export const getUserReceipts = async (): Promise<ReceiptResponseDTO[]> => {
   try {
     const response = await api.get('/auction/receipts');
-    return response.data.data.receipts;
+    return response.data.data.map((item: any) => item.receipt);
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       throw new Error(error.response.data.message || 'Failed to fetch user receipts');
     }
     throw new Error('Failed to fetch user receipts');
+  }
+};
+
+export const getWonAuctions = async (): Promise<AuctionItem[]> => {
+  try {
+    const response = await api.get('/auction/won');
+    return response.data.data.content.map((item: any) => item.auctionItem);
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      throw new Error(error.response.data.message || 'Failed to fetch won auctions');
+    }
+    throw new Error('Failed to fetch won auctions');
   }
 };

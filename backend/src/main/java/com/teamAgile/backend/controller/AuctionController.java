@@ -332,6 +332,33 @@ public class AuctionController extends BaseController {
 		}
 	}
 
+	@GetMapping("/won")
+	public ResponseEntity<ApiResponse<CollectionModel<AuctionItemModel>>> getWonAuctions(HttpServletRequest request) {
+		try {
+			User currentUser = getCurrentUser(request);
+			if (currentUser == null) {
+				return ResponseUtil.unauthorized("User not authenticated");
+			}
+
+			List<AuctionItem> wonAuctions = auctionService.getWonAuctionsForUser(currentUser);
+
+			List<AuctionItemResponseDTO> responseItems = wonAuctions.stream()
+					.map(AuctionItemResponseDTO::fromAuctionItem)
+					.collect(Collectors.toList());
+
+			List<AuctionItemModel> itemModels = responseItems.stream()
+					.map(auctionItemModelAssembler::toModel)
+					.collect(Collectors.toList());
+
+			CollectionModel<AuctionItemModel> collectionModel = CollectionModel.of(itemModels,
+					linkTo(methodOn(AuctionController.class).getWonAuctions(null)).withSelfRel());
+
+			return ResponseUtil.ok(collectionModel);
+		} catch (Exception e) {
+			return ResponseUtil.internalError("Error retrieving won auctions: " + e.getMessage());
+		}
+	}
+
 	@PostMapping("/check-status")
 	public ResponseEntity<ApiResponse<AuctionItemResponseDTO>> checkAuctionStatus(@RequestParam("itemID") UUID itemID) {
 		try {

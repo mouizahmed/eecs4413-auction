@@ -166,4 +166,8 @@ public class AuctionService {
 		return auctionRepository.findByItemNameContainingIgnoreCaseAndAuctionStatus(keyword,
 				AuctionItem.AuctionStatus.AVAILABLE);
 	}
+
+	public List<AuctionItem> getWonAuctionsForUser(User user) {
+		return auctionRepository.findByHighestBidderAndAuctionStatus(user, AuctionItem.AuctionStatus.SOLD);
+	}
 }
