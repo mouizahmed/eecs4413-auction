@@ -59,8 +59,18 @@ class ReceiptTest {
     void testTimestampBehavior() {
         // Test that timestamp is set on creation
         assertNotNull(receipt.getTimestamp());
-        assertTrue(receipt.getTimestamp().isBefore(LocalDateTime.now()) ||
-                receipt.getTimestamp().isEqual(LocalDateTime.now()));
+
+        // Get current time and create a window of 1 second before and after
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime oneSecondBefore = now.minusSeconds(1);
+        LocalDateTime oneSecondAfter = now.plusSeconds(1);
+
+        // Receipt timestamp should be within 1 second of current time
+        LocalDateTime receiptTime = receipt.getTimestamp();
+        assertTrue(
+                (receiptTime.isEqual(oneSecondBefore) || receiptTime.isAfter(oneSecondBefore)) &&
+                        (receiptTime.isEqual(oneSecondAfter) || receiptTime.isBefore(oneSecondAfter)),
+                "Receipt timestamp should be within 1 second of current time");
 
         // Store initial timestamp
         LocalDateTime initialTimestamp = receipt.getTimestamp();
@@ -150,6 +160,42 @@ class ReceiptTest {
         // Test invalid shipping time
         assertThrows(IllegalArgumentException.class, () -> {
             new Receipt(UUID.randomUUID(), user, 100.0, creditCard, address, -1);
+        });
+    }
+
+    @Test
+    void testPaymentAmountValidation() {
+        // Test setting negative payment amount
+        assertThrows(IllegalArgumentException.class, () -> {
+            receipt.setTotalCost(-100.0);
+        });
+
+        // Test setting zero payment amount
+        assertThrows(IllegalArgumentException.class, () -> {
+            receipt.setTotalCost(0.0);
+        });
+
+        // Test setting null payment amount
+        assertThrows(IllegalArgumentException.class, () -> {
+            receipt.setTotalCost(null);
+        });
+
+        // Test setting valid payment amount
+        Double validAmount = 200.0;
+        receipt.setTotalCost(validAmount);
+        assertEquals(validAmount, receipt.getTotalCost(), DELTA);
+
+        // Test creating receipt with invalid payment amount
+        assertThrows(IllegalArgumentException.class, () -> {
+            new Receipt(UUID.randomUUID(), user, -100.0, creditCard, address, 5);
+        });
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            new Receipt(UUID.randomUUID(), user, 0.0, creditCard, address, 5);
+        });
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            new Receipt(UUID.randomUUID(), user, null, creditCard, address, 5);
         });
     }
 

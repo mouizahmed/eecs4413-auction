@@ -62,6 +62,9 @@ public abstract class AuctionItem {
 
 	public AuctionItem(String itemName, User seller, AuctionType auctionType, AuctionStatus auctionStatus,
 			Double currentPrice, Integer shippingTime) {
+		if (shippingTime == null || shippingTime <= 0) {
+			throw new IllegalArgumentException("Shipping time must be positive");
+		}
 		this.itemName = itemName;
 		this.currentPrice = currentPrice;
 		this.shippingTime = shippingTime;
@@ -111,6 +114,9 @@ public abstract class AuctionItem {
 	}
 
 	public void setShippingTime(Integer shippingTime) {
+		if (shippingTime == null || shippingTime <= 0) {
+			throw new IllegalArgumentException("Shipping time must be positive");
+		}
 		this.shippingTime = shippingTime;
 	}
 

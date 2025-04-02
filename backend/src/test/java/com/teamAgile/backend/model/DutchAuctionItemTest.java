@@ -154,6 +154,29 @@ class DutchAuctionItemTest {
     }
 
     @Test
+    void testShippingTimeValidation() {
+        // Test setting negative shipping time
+        assertThrows(IllegalArgumentException.class, () -> {
+            auctionItem.setShippingTime(-1);
+        });
+
+        // Test setting zero shipping time
+        assertThrows(IllegalArgumentException.class, () -> {
+            auctionItem.setShippingTime(0);
+        });
+
+        // Test setting null shipping time
+        assertThrows(IllegalArgumentException.class, () -> {
+            auctionItem.setShippingTime(null);
+        });
+
+        // Test valid shipping time
+        Integer validShippingTime = 5;
+        auctionItem.setShippingTime(validShippingTime);
+        assertEquals(validShippingTime, auctionItem.getShippingTime());
+    }
+
+    @Test
     void testPaymentManagement() {
         // Test successful payment
         User winningBidder = new User(

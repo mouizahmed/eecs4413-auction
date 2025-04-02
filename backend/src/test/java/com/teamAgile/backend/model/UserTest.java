@@ -209,4 +209,113 @@ class UserTest {
             user.setAddress(invalidAddress);
         });
     }
+
+    @Test
+    void testAddressValidation() {
+        // Test setting null address
+        assertThrows(IllegalArgumentException.class, () -> {
+            user.setAddress(null);
+        });
+
+        // Test setting address with empty street name
+        Address invalidAddress1 = new Address();
+        invalidAddress1.setStreetName(""); // Empty string
+        invalidAddress1.setStreetNum(123);
+        invalidAddress1.setPostalCode("A1A1A1");
+        invalidAddress1.setCity("Test City");
+        invalidAddress1.setProvince("Test Province");
+        invalidAddress1.setCountry("Test Country");
+        assertThrows(IllegalArgumentException.class, () -> {
+            user.setAddress(invalidAddress1);
+        });
+
+        // Test setting address with negative street number
+        Address invalidAddress2 = new Address();
+        invalidAddress2.setStreetName("Test Street");
+        invalidAddress2.setStreetNum(-1); // Negative number
+        invalidAddress2.setPostalCode("A1A1A1");
+        invalidAddress2.setCity("Test City");
+        invalidAddress2.setProvince("Test Province");
+        invalidAddress2.setCountry("Test Country");
+        assertThrows(IllegalArgumentException.class, () -> {
+            user.setAddress(invalidAddress2);
+        });
+
+        // Test setting address with invalid postal code format
+        Address invalidAddress3 = new Address();
+        invalidAddress3.setStreetName("Test Street");
+        invalidAddress3.setStreetNum(123);
+        invalidAddress3.setPostalCode("123456"); // Invalid format
+        invalidAddress3.setCity("Test City");
+        invalidAddress3.setProvince("Test Province");
+        invalidAddress3.setCountry("Test Country");
+        assertThrows(IllegalArgumentException.class, () -> {
+            user.setAddress(invalidAddress3);
+        });
+
+        // Test setting valid address
+        Address validAddress = new Address();
+        validAddress.setStreetName("Test Street");
+        validAddress.setStreetNum(123);
+        validAddress.setPostalCode("A1A1A1"); // Valid format
+        validAddress.setCity("Test City");
+        validAddress.setProvince("Test Province");
+        validAddress.setCountry("Test Country");
+        user.setAddress(validAddress);
+        assertEquals(validAddress, user.getAddress());
+    }
+
+    @Test
+    void testUsernameUniqueness() {
+        // Test setting username to null
+        assertThrows(IllegalArgumentException.class, () -> {
+            user.setUsername(null);
+        });
+
+        // Test setting username to empty string
+        assertThrows(IllegalArgumentException.class, () -> {
+            user.setUsername("");
+        });
+
+        // Test setting username to whitespace
+        assertThrows(IllegalArgumentException.class, () -> {
+            user.setUsername("   ");
+        });
+
+        // Test setting valid username
+        String validUsername = "testuser";
+        user.setUsername(validUsername);
+        assertEquals(validUsername, user.getUsername());
+    }
+
+    @Test
+    void testPasswordValidation() {
+        // Test setting password to null
+        assertThrows(IllegalArgumentException.class, () -> {
+            user.setPassword(null);
+        });
+
+        // Test setting password to empty string
+        assertThrows(IllegalArgumentException.class, () -> {
+            user.setPassword("");
+        });
+
+        // Test setting password to whitespace
+        assertThrows(IllegalArgumentException.class, () -> {
+            user.setPassword("   ");
+        });
+
+        // Test setting valid password
+        String validPassword = "newpassword123";
+        user.setPassword(validPassword);
+
+        // Password should be hashed, so direct comparison won't work
+        // Instead, verify that:
+        // 1. The stored password is not the same as the input (it's hashed)
+        assertNotEquals(validPassword, user.getPassword());
+        // 2. The stored password starts with BCrypt identifier
+        assertTrue(user.getPassword().startsWith("$2a$"));
+        // 3. The stored password is the correct length for BCrypt (60 characters)
+        assertEquals(60, user.getPassword().length());
+    }
 }
