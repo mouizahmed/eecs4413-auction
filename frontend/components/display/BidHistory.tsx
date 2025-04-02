@@ -1,6 +1,6 @@
 import { AuctionItem } from '@/types';
 
-export const BidHistory = ({ bids, currentPrice }: { bids: AuctionItem['bids']; currentPrice: number }) => {
+export const BidHistory = ({ bids, currentPrice }: { bids: AuctionItem['bids']; currentPrice?: number }) => {
   if (!bids || bids.length === 0) return null;
 
   return (
@@ -21,7 +21,9 @@ export const BidHistory = ({ bids, currentPrice }: { bids: AuctionItem['bids']; 
             </div>
             <div className="text-right">
               <p className="font-semibold text-lg text-primary">${bid.bidAmount}</p>
-              <p className="text-xs text-gray-500">{bid.bidAmount === currentPrice ? 'Winning Bid' : 'Outbid'}</p>
+              {currentPrice && (
+                <p className="text-xs text-gray-500">{bid.bidAmount === currentPrice ? 'Winning Bid' : 'Outbid'}</p>
+              )}
             </div>
           </div>
         ))}

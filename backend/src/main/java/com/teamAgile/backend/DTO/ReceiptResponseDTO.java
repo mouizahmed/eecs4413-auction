@@ -6,12 +6,15 @@ import java.util.UUID;
 import com.teamAgile.backend.model.Receipt;
 import com.teamAgile.backend.model.CreditCard;
 import com.teamAgile.backend.model.Address;
+import com.teamAgile.backend.model.AuctionItem;
 
 public class ReceiptResponseDTO {
     private UUID receiptID;
     private UUID itemID;
     private UUID userID;
     private String username;
+    private UUID sellerID;
+    private String sellerUsername;
     private Double totalCost;
     private CreditCard creditCard;
     private Address address;
@@ -34,6 +37,13 @@ public class ReceiptResponseDTO {
         if (receipt.getUser() != null) {
             dto.userID = receipt.getUser().getUserID();
             dto.username = receipt.getUser().getUsername();
+        }
+
+        // Get seller information from the auction item
+        AuctionItem item = receipt.getAuctionItem();
+        if (item != null && item.getSeller() != null) {
+            dto.sellerID = item.getSeller().getUserID();
+            dto.sellerUsername = item.getSeller().getUsername();
         }
 
         return dto;
@@ -76,6 +86,14 @@ public class ReceiptResponseDTO {
         return timestamp;
     }
 
+    public UUID getSellerID() {
+        return sellerID;
+    }
+
+    public String getSellerUsername() {
+        return sellerUsername;
+    }
+
     // Setters
     public void setReceiptID(UUID receiptID) {
         this.receiptID = receiptID;
@@ -111,5 +129,13 @@ public class ReceiptResponseDTO {
 
     public void setTimestamp(LocalDateTime timestamp) {
         this.timestamp = timestamp;
+    }
+
+    public void setSellerID(UUID sellerID) {
+        this.sellerID = sellerID;
+    }
+
+    public void setSellerUsername(String sellerUsername) {
+        this.sellerUsername = sellerUsername;
     }
 }

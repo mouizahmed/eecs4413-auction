@@ -6,6 +6,7 @@ import {
   PaymentData,
   PaymentResponseDTO,
   RegisterData,
+  RatingRequestDTO,
 } from '@/types';
 import axios from 'axios';
 
@@ -146,5 +147,22 @@ export const postAuctionItem = async (auctionType: AuctionType, auctionForm: Auc
       throw new Error(error.response.data.message || 'Failed to post auction item');
     }
     throw new Error('Failed to post auction item');
+  }
+};
+
+export const createRating = async (ratedUserId: string, rating: number, feedback: string): Promise<any> => {
+  try {
+    const ratingRequest: RatingRequestDTO = {
+      ratedUserId,
+      rating,
+      feedback,
+    };
+    const response = await api.post('/ratings', ratingRequest);
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      throw new Error(error.response.data.message || 'Failed to create rating');
+    }
+    throw new Error('Failed to create rating');
   }
 };

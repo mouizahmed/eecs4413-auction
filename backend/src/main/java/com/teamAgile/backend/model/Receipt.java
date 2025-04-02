@@ -34,6 +34,10 @@ public class Receipt {
     @JsonManagedReference(value = "user-receipts")
     private User user;
 
+    @ManyToOne
+    @JoinColumn(name = "itemId", insertable = false, updatable = false)
+    private AuctionItem auctionItem;
+
     @Column(name = "totalCost", nullable = false)
     private Double totalCost;
 
@@ -117,6 +121,10 @@ public class Receipt {
         return timestamp;
     }
 
+    public AuctionItem getAuctionItem() {
+        return auctionItem;
+    }
+
     // Setters
     public void setReceiptID(UUID receiptID) {
         this.receiptID = receiptID;
@@ -165,5 +173,9 @@ public class Receipt {
             throw new IllegalArgumentException("Shipping time must be positive");
         }
         this.shippingTime = shippingTime;
+    }
+
+    public void setAuctionItem(AuctionItem auctionItem) {
+        this.auctionItem = auctionItem;
     }
 }

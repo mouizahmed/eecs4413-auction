@@ -30,7 +30,7 @@ public class UserService {
 			throw new IllegalArgumentException("Username cannot be empty");
 		}
 
-		if (userRepository.findByUsername(newUser.getUsername()).isPresent()) {
+		if (userRepository.findByUsernameIgnoreCase(newUser.getUsername()).isPresent()) {
 			throw new UsernameAlreadyExistsException("Username already taken: " + newUser.getUsername());
 		}
 
@@ -50,7 +50,7 @@ public class UserService {
 			throw new IllegalArgumentException("Password cannot be empty");
 		}
 
-		User user = userRepository.findByUsername(username)
+		User user = userRepository.findByUsernameIgnoreCase(username)
 				.orElseThrow(() -> new UserNotFoundException("User not found with username: " + username));
 
 		if (!BCryptHashing.checkPassword(password, user.getPassword())) {
@@ -70,7 +70,7 @@ public class UserService {
 
 		String sanitizedUsername = ValidationUtil.sanitizeString(username);
 
-		User user = userRepository.findByUsername(sanitizedUsername)
+		User user = userRepository.findByUsernameIgnoreCase(sanitizedUsername)
 				.orElseThrow(() -> new UserNotFoundException("User not found with username: " + sanitizedUsername));
 
 		return user.getSecurityQuestion();
@@ -95,7 +95,7 @@ public class UserService {
 
 		String sanitizedUsername = ValidationUtil.sanitizeString(username);
 
-		User user = userRepository.findByUsername(sanitizedUsername)
+		User user = userRepository.findByUsernameIgnoreCase(sanitizedUsername)
 				.orElseThrow(() -> new UserNotFoundException("User not found with username: " + sanitizedUsername));
 
 		if (!securityAnswerDTO.getSecurityAnswer().toLowerCase().trim()
@@ -122,12 +122,38 @@ public class UserService {
 		return userOpt.get();
 	}
 
+	public User getUserByUsername(String username) {
+		if (username == null || username.trim().isEmpty()) {
+			throw new IllegalArgumentException("Username cannot be empty");
+		}
+		return userRepository.findByUsernameIgnoreCase(username)
+				.orElseThrow(() -> new UserNotFoundException("User not found with username: " + username));
+	}
+
+	public User updateUser(String username, User updatedUser) {
+		if (username == null || username.trim().isEmpty()) {
+			throw new IllegalArgumentException("Username cannot be empty");
+		}
+		User user = userRepository.findByUsernameIgnoreCase(username)
+				.orElseThrow(() -> new UserNotFoundException("User not found with username: " + username));
+		// ... rest of the method
+		return userRepository.save(updatedUser);
+	}
+
+	public void deleteUser(String username) {
+		if (username == null || username.trim().isEmpty()) {
+			throw new IllegalArgumentException("Username cannot be empty");
+		}
+		User user = userRepository.findByUsernameIgnoreCase(username)
+				.orElseThrow(() -> new UserNotFoundException("User not found with username: " + username));
+		userRepository.delete(user);
+	}
+
 	public User findByUsername(String username) {
 		if (username == null || username.trim().isEmpty()) {
 			throw new IllegalArgumentException("Username cannot be empty");
 		}
-
-		return userRepository.findByUsername(username)
+		return userRepository.findByUsernameIgnoreCase(username)
 				.orElseThrow(() -> new UserNotFoundException("User not found with username: " + username));
 	}
 }

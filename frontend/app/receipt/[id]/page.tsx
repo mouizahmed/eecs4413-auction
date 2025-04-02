@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/authContext';
 import { ReceiptResponseDTO } from '@/types';
 import { getReceiptDetails } from '@/requests/getRequests';
+import { RatingDisplay } from '@/components/display/RatingDisplay';
 
 export default function ReceiptPage() {
   const params = useParams();
@@ -105,6 +106,23 @@ export default function ReceiptPage() {
           </div>
         </CardContent>
       </Card>
+
+      {currentUser?.userID && (
+        <div className="mt-8">
+          <Card className="max-w-3xl mx-auto">
+            <CardHeader>
+              <CardTitle className="text-2xl text-center">Rate {receipt.sellerUsername}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <RatingDisplay
+                userId={receipt.sellerID}
+                currentUserId={currentUser.userID}
+                username={receipt.sellerUsername}
+              />
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

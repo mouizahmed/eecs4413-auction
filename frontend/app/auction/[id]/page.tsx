@@ -12,6 +12,8 @@ import { useAuctionWebSocket } from '@/hooks/useAuctionWebsocket';
 import { BidHistory } from '@/components/display/BidHistory';
 import { getAuctionDetails } from '@/requests/getRequests';
 import { decreasePrice } from '@/requests/patchRequests';
+import { SellerRating } from '@/components/display/SellerRating';
+import Link from 'next/link';
 
 export default function Auctionpage() {
   const params = useParams();
@@ -208,6 +210,21 @@ export default function Auctionpage() {
             )}
           </div>
 
+          <div className="bg-primary/5 p-4 rounded-lg">
+            <div>
+              <p className="text-sm text-gray-500">Seller</p>
+              <div className="flex items-center gap-2">
+                <Link
+                  href={`/ratings/${auction.sellerUsername}`}
+                  className="text-xl font-semibold hover:text-primary transition-colors"
+                >
+                  {auction.sellerUsername}
+                </Link>
+                <SellerRating sellerId={auction.sellerID} sellerUsername={auction.sellerUsername} />
+              </div>
+            </div>
+          </div>
+
           {auction.highestBidderUsername && (
             <div className="bg-primary/5 p-3 rounded-lg">
               <p className="text-sm text-gray-500">
@@ -248,13 +265,9 @@ export default function Auctionpage() {
             </Button>
           )}
 
-          {auction.auctionStatus === 'PAID' && (
-            <div className="pt-4 border-t">
-              <div className="bg-green-50 p-4 rounded-lg">
-                <p className="text-green-700 font-medium">Payment completed successfully!</p>
-              </div>
-            </div>
-          )}
+          <div className="mt-8">
+            <BidHistory bids={auction.bids} currentPrice={auction.currentPrice} />
+          </div>
 
           {isSeller && auction.auctionType === 'DUTCH' && auction.auctionStatus === 'AVAILABLE' && (
             <div className="space-y-2 pt-4 border-t">
@@ -278,8 +291,6 @@ export default function Auctionpage() {
               </div>
             </div>
           )}
-
-          {auction.bids && <BidHistory bids={auction.bids} currentPrice={auction.currentPrice} />}
         </CardContent>
       </Card>
     </div>

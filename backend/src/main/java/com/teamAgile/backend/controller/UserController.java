@@ -252,13 +252,48 @@ public class UserController extends BaseController {
 			if (currentUser == null) {
 				throw new SecurityException("User not authenticated");
 			}
-
 			UserResponseDTO userResponseDTO = new UserResponseDTO(currentUser);
-			return ResponseUtil.ok(userResponseDTO);
+			return ResponseUtil.ok("Retrieved current user successfully", userResponseDTO);
 		} catch (SecurityException e) {
 			return ResponseUtil.unauthorized(e.getMessage());
 		} catch (Exception e) {
 			return ResponseUtil.internalError("Error retrieving current user: " + e.getMessage());
+		}
+	}
+
+	@GetMapping("/get-by-username")
+	public ResponseEntity<ApiResponse<UserResponseDTO>> getUserByUsername(@RequestParam("username") String username) {
+		try {
+			String sanitizedUsername = ValidationUtil.sanitizeString(username);
+			if (sanitizedUsername == null || sanitizedUsername.isEmpty()) {
+				throw new IllegalArgumentException("Username cannot be empty");
+			}
+
+			User user = userService.findByUsername(sanitizedUsername);
+			UserResponseDTO userResponseDTO = new UserResponseDTO(user);
+			return ResponseUtil.ok("Retrieved user successfully", userResponseDTO);
+		} catch (IllegalArgumentException e) {
+			return ResponseUtil.badRequest(e.getMessage());
+		} catch (UserNotFoundException e) {
+			return ResponseUtil.notFound(e.getMessage());
+		} catch (Exception e) {
+			return ResponseUtil.internalError("Error retrieving user: " + e.getMessage());
+		}
+	}
+
+	@GetMapping("/get-by-id")
+	public ResponseEntity<ApiResponse<UserResponseDTO>> getUserById(@RequestParam("userId") String userId) {
+		try {
+			UUID userUUID = UUID.fromString(userId);
+			User user = userService.getUserById(userUUID);
+			UserResponseDTO userResponseDTO = new UserResponseDTO(user);
+			return ResponseUtil.ok("Retrieved user successfully", userResponseDTO);
+		} catch (IllegalArgumentException e) {
+			return ResponseUtil.badRequest("Invalid user ID format");
+		} catch (UserNotFoundException e) {
+			return ResponseUtil.notFound(e.getMessage());
+		} catch (Exception e) {
+			return ResponseUtil.internalError("Error retrieving user: " + e.getMessage());
 		}
 	}
 }

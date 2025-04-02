@@ -14,6 +14,7 @@ import {
   getWonAuctions,
   getSellingItems,
 } from '@/requests/getRequests';
+import { RatingDisplay } from '@/components/display/RatingDisplay';
 
 export default function ProfilePage() {
   const { currentUser } = useAuth();
@@ -125,11 +126,12 @@ export default function ProfilePage() {
       )}
 
       <Tabs defaultValue="current-bids" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="current-bids">Current Bids</TabsTrigger>
           <TabsTrigger value="won-auctions">Won Auctions</TabsTrigger>
           <TabsTrigger value="purchase-history">Purchase History</TabsTrigger>
           <TabsTrigger value="selling">Selling</TabsTrigger>
+          <TabsTrigger value="ratings">Ratings</TabsTrigger>
         </TabsList>
 
         <TabsContent value="current-bids">
@@ -165,6 +167,17 @@ export default function ProfilePage() {
             <p className="text-muted-foreground">No items being sold</p>
           ) : (
             sellingItems.map((item) => <AuctionCard key={item.itemID} item={item} />)
+          )}
+        </TabsContent>
+
+        <TabsContent value="ratings">
+          <h3 className="text-xl font-semibold mb-4">Your Ratings</h3>
+          {currentUser?.userID && (
+            <RatingDisplay
+              userId={currentUser.userID}
+              currentUserId={currentUser.userID}
+              username={currentUser.username}
+            />
           )}
         </TabsContent>
       </Tabs>

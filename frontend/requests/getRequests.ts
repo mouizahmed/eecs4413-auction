@@ -138,3 +138,63 @@ export const getSellingItems = async (): Promise<AuctionItem[]> => {
     throw new Error('Failed to fetch selling items');
   }
 };
+
+export const getUserRatings = async (userId: string): Promise<any[]> => {
+  try {
+    const response = await api.get(`/ratings/user?userID=${userId}`);
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      throw new Error(error.response.data.message || 'Failed to fetch user ratings');
+    }
+    throw new Error('Failed to fetch user ratings');
+  }
+};
+
+export const getUserAverageRating = async (userId: string): Promise<number> => {
+  try {
+    const response = await api.get(`/ratings/user/average?userID=${userId}`);
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      throw new Error(error.response.data.message || 'Failed to fetch average rating');
+    }
+    throw new Error('Failed to fetch average rating');
+  }
+};
+
+export const getUserTotalRatings = async (userId: string): Promise<number> => {
+  try {
+    const response = await api.get(`/ratings/user/total?userID=${userId}`);
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      throw new Error(error.response.data.message || 'Failed to fetch total ratings');
+    }
+    throw new Error('Failed to fetch total ratings');
+  }
+};
+
+export const getUserById = async (userId: string) => {
+  try {
+    const response = await api.get(`/user/get-by-id?userId=${userId}`);
+    return response.data.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      throw new Error(error.response.data.message || 'Failed to fetch user details');
+    }
+    throw new Error('Failed to fetch user details');
+  }
+};
+
+export const findByUsername = async (username: string) => {
+  try {
+    const response = await api.get(`/user/get-by-username?username=${username}`);
+    return response.data.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      throw new Error(error.response.data.message || 'Failed to fetch user details');
+    }
+    throw new Error('Failed to fetch user details');
+  }
+};

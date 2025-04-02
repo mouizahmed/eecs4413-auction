@@ -82,6 +82,7 @@ export interface AuctionItem {
   shippingTime: string;
   highestBidderUsername?: string;
   sellerUsername: string;
+  sellerID: string;
   bids: Bid[];
   reservePrice?: number;
 }
@@ -101,6 +102,8 @@ export interface ReceiptResponseDTO {
   itemID: string;
   userID: string;
   username: string;
+  sellerID: string;
+  sellerUsername: string;
   totalCost: number;
   creditCard: {
     cardNum: string;
@@ -121,4 +124,10 @@ export interface ReceiptResponseDTO {
   };
   shippingTime: number;
   timestamp: string;
+}
+
+export interface RatingRequestDTO {
+  ratedUserId: string;
+  rating: number;
+  feedback: string;
 }
