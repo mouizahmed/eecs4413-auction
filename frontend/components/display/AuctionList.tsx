@@ -21,8 +21,8 @@ export default function AuctionList() {
     const fetchAuctions = async () => {
       try {
         const response = await getAvailableItems();
-        const items = response.map((item: any) => item.auctionItem);
-        setAuctions(items);
+        console.log('Raw API response:', response);
+        setAuctions(response);
       } catch (error) {
         setError((error as Error).message);
       } finally {
@@ -34,7 +34,13 @@ export default function AuctionList() {
   }, []);
 
   const filteredAuctions = useMemo(() => {
-    return auctions.filter((auction) => auction.itemName.toLowerCase().includes(searchQuery.toLowerCase()));
+    console.log('Current auctions state:', auctions);
+    console.log('Current search query:', searchQuery);
+    const filtered = auctions.filter(
+      (auction) => auction.itemName?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false
+    );
+    console.log('Filtered auctions:', filtered);
+    return filtered;
   }, [auctions, searchQuery]);
 
   const handleAuctionClick = (auction: AuctionItem) => {

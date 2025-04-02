@@ -23,14 +23,13 @@ export default function Auctionpage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [bidAmount, setBidAmount] = useState<number>(0);
-  const [isPaying, setIsPaying] = useState(false);
   const [decreaseAmount, setDecreaseAmount] = useState<string>('');
   const [isDecreasing, setIsDecreasing] = useState(false);
   const { lastMessage, socketStatus, isSubscribed } = useAuctionWebSocket(String(params.id));
 
   // Handle WebSocket messages
   useEffect(() => {
-    if (!lastMessage || !auction) return;
+    if (!lastMessage) return;
 
     // Handle different message types
     if (lastMessage.type === 'AUCTION_UPDATE') {
@@ -45,10 +44,10 @@ export default function Auctionpage() {
         };
       });
     }
-  }, [lastMessage?.type === 'AUCTION_UPDATE' ? lastMessage : null]);
+  }, [lastMessage]);
 
   useEffect(() => {
-    if (!lastMessage || !auction) return;
+    if (!lastMessage) return;
 
     if (lastMessage.type === 'BID_PLACED') {
       console.log('NEW BID');
@@ -64,14 +63,6 @@ export default function Auctionpage() {
           timestamp: lastMessage.timestamp,
         };
 
-        // // Check if we already have this bid
-        // const existingBidIndex = prevAuction.bids?.findIndex((bid) => bid.bidID === newBid.bidID);
-
-        // // If this bid already exists, don't add it
-        // if (existingBidIndex !== undefined && existingBidIndex >= 0) {
-        //   return prevAuction;
-        // }
-
         return {
           ...prevAuction,
           currentPrice: lastMessage.currentPrice || prevAuction.currentPrice,
@@ -83,7 +74,7 @@ export default function Auctionpage() {
         };
       });
     }
-  }, [lastMessage?.type === 'BID_PLACED' ? lastMessage : null]);
+  }, [lastMessage]);
 
   useEffect(() => {
     const fetchAuction = async () => {
@@ -260,8 +251,8 @@ export default function Auctionpage() {
           )}
 
           {!isSeller && canPay && (
-            <Button onClick={handlePay} className="w-full" disabled={isPaying}>
-              {isPaying ? 'Processing Payment...' : 'Pay Now'}
+            <Button onClick={handlePay} className="w-full">
+              Pay Now
             </Button>
           )}
 

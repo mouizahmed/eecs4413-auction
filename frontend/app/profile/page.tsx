@@ -162,7 +162,7 @@ export default function ProfilePage() {
         </TabsContent>
 
         <TabsContent value="selling">
-          <h3 className="text-xl font-semibold mb-4">Items You're Selling</h3>
+          <h3 className="text-xl font-semibold mb-4">Items You&apos;re Selling</h3>
           {sellingItems.length === 0 ? (
             <p className="text-muted-foreground">No items being sold</p>
           ) : (

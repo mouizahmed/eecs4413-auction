@@ -2,26 +2,27 @@ import { useState } from 'react';
 import { Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { toast } from 'sonner';
 
 interface RatingFormProps {
-  userId: string;
   onSubmit: (rating: number, feedback: string) => Promise<void>;
 }
 
-export function RatingForm({ userId, onSubmit }: RatingFormProps) {
+export function RatingForm({ onSubmit }: RatingFormProps) {
   const [rating, setRating] = useState(0);
   const [feedback, setFeedback] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+
     if (rating === 0) {
-      toast.error('Please select a rating');
+      setError('Please select a rating');
       return;
     }
     if (!feedback.trim()) {
-      toast.error('Please provide feedback');
+      setError('Please provide feedback');
       return;
     }
 
@@ -30,9 +31,9 @@ export function RatingForm({ userId, onSubmit }: RatingFormProps) {
       await onSubmit(rating, feedback);
       setRating(0);
       setFeedback('');
-      toast.success('Rating submitted successfully');
     } catch (error) {
-      toast.error('Failed to submit rating');
+      console.log(error);
+      setError('Failed to submit rating');
     } finally {
       setIsSubmitting(false);
     }
@@ -40,6 +41,7 @@ export function RatingForm({ userId, onSubmit }: RatingFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {error && <div className="text-red-500 text-sm">{error}</div>}
       <div className="flex items-center gap-2">
         {[1, 2, 3, 4, 5].map((star) => (
           <button key={star} type="button" onClick={() => setRating(star)} className="focus:outline-none">

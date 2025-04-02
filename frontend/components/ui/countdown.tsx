@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { checkStatus } from '@/requests/postRequests';
+import { AuctionItem } from '@/types';
 
 interface CountdownTimerProps {
   endTime: string;
   itemId: string;
-  onStatusUpdate: (updatedAuction: any) => void;
+  onStatusUpdate: (updatedAuction: AuctionItem) => void;
 }
 
 function CountdownTimer({ endTime, itemId, onStatusUpdate }: CountdownTimerProps) {
@@ -12,15 +13,16 @@ function CountdownTimer({ endTime, itemId, onStatusUpdate }: CountdownTimerProps
   const [hasCompleted, setHasCompleted] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const checkAuctionStatus = async () => {
+  const checkAuctionStatus = useCallback(async () => {
     try {
       setError(null);
       const response = await checkStatus(itemId);
       onStatusUpdate(response);
-    } catch (error) {
+    } catch (err) {
       setError('Failed to check auction status');
+      console.error('Error checking auction status:', err);
     }
-  };
+  }, [itemId, onStatusUpdate]);
 
   useEffect(() => {
     const calculateTimeLeft = () => {
@@ -50,9 +52,10 @@ function CountdownTimer({ endTime, itemId, onStatusUpdate }: CountdownTimerProps
         const seconds = Math.floor((difference % (1000 * 60)) / 1000);
 
         setTimeLeft(`${days}d ${hours}h ${minutes}m ${seconds}s`);
-      } catch (error) {
+      } catch (err) {
         setError('Error calculating time left');
         setTimeLeft('Error calculating time');
+        console.error('Error calculating time left:', err);
       }
     };
 
@@ -65,7 +68,7 @@ function CountdownTimer({ endTime, itemId, onStatusUpdate }: CountdownTimerProps
     const timer = setInterval(calculateTimeLeft, 1000);
 
     return () => clearInterval(timer);
-  }, [endTime, itemId, hasCompleted, onStatusUpdate]);
+  }, [endTime, hasCompleted, checkAuctionStatus]);
 
   if (error) {
     return <p className="text-sm text-red-500">{error}</p>;

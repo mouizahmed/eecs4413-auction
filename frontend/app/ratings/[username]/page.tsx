@@ -29,7 +29,6 @@ export default function RatingsPage() {
         const username = String(params.username);
         setUsername(username);
 
-        // First get the user's ID from their username
         const user = await findByUsername(username);
 
         const [ratingsData, avgData] = await Promise.all([
@@ -55,7 +54,7 @@ export default function RatingsPage() {
     <div className="container mx-auto px-4 py-8">
       <Card className="max-w-3xl mx-auto">
         <CardHeader>
-          <CardTitle className="text-2xl text-center">{username}'s Ratings</CardTitle>
+          <CardTitle className="text-2xl text-center">{username}&apos;s Ratings</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-6">

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
 import { StarRating } from '../ui/star-rating';
 import { RatingForm } from './RatingForm';
@@ -27,7 +27,7 @@ export function RatingDisplay({ userId, currentUserId, username }: RatingDisplay
   const [averageRating, setAverageRating] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchRatings = async () => {
+  const fetchRatings = useCallback(async () => {
     try {
       const [ratingsData, avgData] = await Promise.all([getUserRatings(userId), getUserAverageRating(userId)]);
       setRatings(ratingsData);
@@ -37,11 +37,11 @@ export function RatingDisplay({ userId, currentUserId, username }: RatingDisplay
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [userId]);
 
   useEffect(() => {
     fetchRatings();
-  }, [userId]);
+  }, [fetchRatings]);
 
   const handleSubmitRating = async (rating: number, feedback: string) => {
     try {
@@ -73,7 +73,7 @@ export function RatingDisplay({ userId, currentUserId, username }: RatingDisplay
       {currentUserId !== userId && (
         <Card className="p-4">
           <h3 className="text-lg font-semibold mb-4">Rate {username}</h3>
-          <RatingForm userId={userId} onSubmit={handleSubmitRating} />
+          <RatingForm onSubmit={handleSubmitRating} />
         </Card>
       )}
 

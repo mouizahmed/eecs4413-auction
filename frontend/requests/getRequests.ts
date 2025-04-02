@@ -45,7 +45,7 @@ export const getSecurityQuestion = async (username: string): Promise<any> => {
 export const getAvailableItems = async (): Promise<AuctionItem[]> => {
   try {
     const response = await api.get('/auction/get-all');
-    return response.data.data.content;
+    return response.data.data.content.map((item: any) => item.auctionItem);
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       throw new Error(error.response.data.message || 'Failed to get available items');
