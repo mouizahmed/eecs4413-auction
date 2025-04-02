@@ -62,12 +62,12 @@ export const useAuctionWebSocket = (itemID: string) => {
                   itemId: itemID,
                 })
               );
-            } catch (err) {
-              console.error('Error sending subscribe message:', err);
+            } catch (error) {
+              console.log('Error sending subscribe message:', error);
               setSocketStatus('CLOSED');
             }
           } else {
-            console.error('WebSocket connection not actually open');
+            console.log('WebSocket connection not actually open');
             setSocketStatus('CLOSED');
           }
         };
@@ -82,13 +82,13 @@ export const useAuctionWebSocket = (itemID: string) => {
             if (data.type === 'SUBSCRIBED') {
               setIsSubscribed(true);
             }
-          } catch (err) {
-            console.error('Error parsing WebSocket message:', err);
+          } catch (error) {
+            console.log('Error parsing WebSocket message:', error);
           }
         };
 
         ws.onerror = (error) => {
-          console.error('WebSocket error:', error);
+          console.log('WebSocket error:', error);
           setSocketStatus('CLOSED');
           // Let onclose handle the reconnection
         };
@@ -105,8 +105,8 @@ export const useAuctionWebSocket = (itemID: string) => {
             connect(); // This will apply the appropriate delay before reconnecting
           }
         };
-      } catch (err) {
-        console.error('Error creating WebSocket connection:', err);
+      } catch (error) {
+        console.log('Error creating WebSocket connection:', error);
         setSocketStatus('CLOSED');
 
         // Try again with exponential backoff
@@ -144,8 +144,8 @@ export const useAuctionWebSocket = (itemID: string) => {
           if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
             ws.close(1000, 'Component unmounting');
           }
-        } catch (err) {
-          console.error('Error closing WebSocket:', err);
+        } catch (error) {
+          console.log('Error closing WebSocket:', error);
         }
 
         wsRef.current = null;

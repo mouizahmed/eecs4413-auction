@@ -11,7 +11,10 @@ export const getCurrentUser = async (): Promise<any> => {
     const response = await api.get('/user/current');
     return response.data.data;
   } catch (error) {
-    console.log(error);
+    if (axios.isAxiosError(error) && error.response) {
+      throw new Error(error.response.data.message || 'Failed to get current user');
+    }
+    throw new Error('Failed to get current user');
   }
 };
 
@@ -20,7 +23,10 @@ export const getSecurityQuestion = async (username: string): Promise<any> => {
     const response = await api.get(`/user/get-security-question?username=${username}`);
     return response.data.data;
   } catch (error) {
-    throw error;
+    if (axios.isAxiosError(error) && error.response) {
+      throw new Error(error.response.data.message || 'Failed to get security question');
+    }
+    throw new Error('Failed to get security question');
   }
 };
 
@@ -29,7 +35,10 @@ export const getAvailableItems = async (): Promise<AuctionItem[]> => {
     const response = await api.get('/auction/get-all');
     return response.data.data.content;
   } catch (error) {
-    throw error;
+    if (axios.isAxiosError(error) && error.response) {
+      throw new Error(error.response.data.message || 'Failed to get available items');
+    }
+    throw new Error('Failed to get available items');
   }
 };
 
@@ -38,21 +47,10 @@ export const getAuctionDetails = async (auctionID: string): Promise<AuctionItem>
     const response = await api.get(`/auction/get-by-id?itemID=${auctionID}`);
     return response.data.data.auctionItem;
   } catch (error) {
-    throw error;
-  }
-};
-
-export const placeBid = async (itemID: string, bidAmount: number): Promise<any> => {
-  try {
-    const response = await api.post('/auction/bid', null, {
-      params: {
-        itemID,
-        bidAmount: bidAmount.toString(),
-      },
-    });
-    return response.data.data;
-  } catch (error) {
-    throw error;
+    if (axios.isAxiosError(error) && error.response) {
+      throw new Error(error.response.data.message || 'Failed to get auction details');
+    }
+    throw new Error('Failed to get auction details');
   }
 };
 
@@ -61,7 +59,10 @@ export const getBidHistory = async (itemID: string): Promise<any> => {
     const response = await api.get(`/auction/bids?itemID=${itemID}`);
     return response.data.data.content;
   } catch (error) {
-    throw error;
+    if (axios.isAxiosError(error) && error.response) {
+      throw new Error(error.response.data.message || 'Failed to get bidding history');
+    }
+    throw new Error('Failed to get bidding history');
   }
 };
 

@@ -28,14 +28,6 @@ export default function PaymentPage() {
 
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const validateCardNumber = (value: string) => {
-    const cleaned = value.replace(/\s/g, '');
-    if (!/^\d{16}$/.test(cleaned)) {
-      return 'Card number must be 16 digits';
-    }
-    return '';
-  };
-
   const validateCardName = (value: string) => {
     if (!/^[A-Za-z\s]+$/.test(value)) {
       return 'Name can only contain letters and spaces';
@@ -86,7 +78,7 @@ export default function PaymentPage() {
         const auctionItem = await getAuctionDetails(String(params.id));
         setAuction(auctionItem);
       } catch (error) {
-        setError('Failed to fetch auction details');
+        setError((error as Error).message);
       } finally {
         setLoading(false);
       }
@@ -101,7 +93,6 @@ export default function PaymentPage() {
       ...prev,
       [id]: value,
     }));
-    // Clear submit error when user starts typing
     setSubmitError(null);
   };
 
@@ -129,10 +120,9 @@ export default function PaymentPage() {
 
     try {
       const response = await postPayment(String(params.id), formData);
-      console.log(response);
       router.push(`/receipt/${response.receiptID}`);
     } catch (error) {
-      setSubmitError(error instanceof Error ? error.message : 'Failed to process payment');
+      setSubmitError((error as Error).message);
     } finally {
       setIsSubmitting(false);
     }
@@ -194,7 +184,6 @@ export default function PaymentPage() {
               </div>
             )}
             <div className="grid grid-cols-2 gap-8">
-              {/* Shipping Information */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Winning Bidder Information</h3>
                 <div className="space-y-2">
@@ -232,7 +221,6 @@ export default function PaymentPage() {
                 </div>
               </div>
 
-              {/* Payment Information */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Payment Details</h3>
                 <div className="space-y-2">

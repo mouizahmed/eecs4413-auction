@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CountdownTimer } from '@/components/ui/countdown';
 import { AuctionItem } from '@/types';
-import axios from 'axios';
 import { placeBid } from '@/requests/postRequests';
 import { useAuth } from '@/contexts/authContext';
 import { useAuctionWebSocket } from '@/hooks/useAuctionWebsocket';
@@ -95,7 +94,7 @@ export default function Auctionpage() {
           setBidAmount(auctionItem.currentPrice + 1);
         }
       } catch (error) {
-        setError('Failed to fetch auction details');
+        setError((error as Error).message);
       } finally {
         setLoading(false);
       }
@@ -109,8 +108,8 @@ export default function Auctionpage() {
     try {
       await placeBid(auction.itemID, Number(bidAmount));
       setBidAmount(bidAmount + 1);
-    } catch (err) {
-      console.error('Error placing bid:', err);
+    } catch (error) {
+      setError((error as Error).message);
     }
   };
 
@@ -127,8 +126,7 @@ export default function Auctionpage() {
       setIsDecreasing(true);
       await decreasePrice(auction.itemID, amount);
     } catch (error) {
-      console.log('Error decreasing price:', error);
-      setError('Failed to decrease price');
+      setError((error as Error).message);
     } finally {
       setIsDecreasing(false);
     }

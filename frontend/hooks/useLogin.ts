@@ -19,13 +19,7 @@ export const useLogin = () => {
       router.push('/');
       return userData;
     } catch (error) {
-      console.log('Login error:', error);
-      if (error instanceof Error) {
-        setError(error.message);
-      } else {
-        setError('Failed to login');
-      }
-      throw error;
+      setError((error as Error).message);
     } finally {
       setIsLoading(false);
     }

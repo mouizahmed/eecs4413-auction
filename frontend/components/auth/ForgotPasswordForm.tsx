@@ -6,7 +6,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { getSecurityQuestion } from '@/requests/getRequests';
-import { AxiosError } from 'axios';
 import { forgotPassword } from '@/requests/postRequests';
 
 export function ForgotPasswordForm({ onBackToLogin }: { onBackToLogin: () => void }) {
@@ -29,13 +28,7 @@ export function ForgotPasswordForm({ onBackToLogin }: { onBackToLogin: () => voi
       setSecurityQuestion(await getSecurityQuestion(formData.username));
       setFormStep('security-question');
     } catch (error) {
-      if (error instanceof AxiosError && error.response) {
-        if (error.response.status === 404) {
-          setError(error.response.data.message);
-        } else {
-          setError(error.message);
-        }
-      }
+      setError((error as Error).message);
     } finally {
       setIsLoading(false);
     }
@@ -50,11 +43,7 @@ export function ForgotPasswordForm({ onBackToLogin }: { onBackToLogin: () => voi
       await forgotPassword(formData);
       setFormStep('success');
     } catch (error) {
-      if (error instanceof Error) {
-        setError(error.message);
-      } else {
-        setError('Failed to reset password. Please try again.');
-      }
+      setError((error as Error).message);
     } finally {
       setIsLoading(false);
     }

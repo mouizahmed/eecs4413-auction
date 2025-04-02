@@ -29,8 +29,11 @@ export const signIn = async (username: string, password: string): Promise<any> =
 export const signOut = async (): Promise<void> => {
   try {
     await api.post('/user/sign-out');
-  } catch (error: unknown) {
-    console.log('Error during sign-out:', error);
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      throw new Error(error.response.data.message || 'Failed to sign out');
+    }
+    throw new Error('Failed to sign out');
   }
 };
 
@@ -40,7 +43,7 @@ export const register = async (userData: RegisterData): Promise<any> => {
     return response.data.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
-      throw new Error(error.response.data.message);
+      throw new Error(error.response.data.message || 'Failed to register');
     }
     throw new Error('Failed to register');
   }
@@ -55,9 +58,9 @@ export const forgotPassword = async (forgotPasswordData: ForgotPasswordData): Pr
     return response.data.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
-      throw new Error(error.response.data.message);
+      throw new Error(error.response.data.message || 'Failed to reset password');
     }
-    throw new Error('Failed to reset password.');
+    throw new Error('Failed to reset password');
   }
 };
 
@@ -71,13 +74,28 @@ export const placeBid = async (itemID: string, bidAmount: number): Promise<any> 
     });
     return response.data.data;
   } catch (error) {
-    throw error;
+    if (axios.isAxiosError(error) && error.response) {
+      throw new Error(error.response.data.message || 'Failed to place bid');
+    }
+    throw new Error('Failed to place bid');
+  }
+};
+
+export const checkStatus = async (itemID: string): Promise<any> => {
+  try {
+    const response = await api.post(`auction/check-status?itemID=${itemID}`);
+
+    return response.data.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      throw new Error(error.response.data.message || 'Failed to update status');
+    }
+    throw new Error('Failed to update status');
   }
 };
 
 export const postPayment = async (itemID: string, paymentData: PaymentData): Promise<PaymentResponseDTO> => {
   try {
-    // Format expiration date as YYYY-MM
     const expMonth = paymentData.expMonth.padStart(2, '0');
     const expYear = '20' + paymentData.expYear;
     const formattedPaymentData = {
@@ -112,7 +130,6 @@ export const postAuctionItem = async (auctionType: AuctionType, auctionForm: Auc
 
       return response.data.data;
     } else {
-      // Convert the date to UTC ISO string
       const utcDate = new Date(auctionForm.endDate!.getTime() - auctionForm.endDate!.getTimezoneOffset() * 60000);
       const response = await api.post('/auction/forward/post', {
         itemName: auctionForm.itemName,
@@ -125,6 +142,9 @@ export const postAuctionItem = async (auctionType: AuctionType, auctionForm: Auc
       return response.data.data;
     }
   } catch (error) {
-    throw error;
+    if (axios.isAxiosError(error) && error.response) {
+      throw new Error(error.response.data.message || 'Failed to post auction item');
+    }
+    throw new Error('Failed to post auction item');
   }
 };

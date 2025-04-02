@@ -22,6 +22,7 @@ export default function PostAuction() {
     endDate: new Date(),
     reservePrice: 0,
   });
+  const [error, setError] = useState<string>('');
 
   if (!userLoggedIn) {
     router.push('/login');
@@ -30,9 +31,13 @@ export default function PostAuction() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log(formData.endDate);
-    const newAuctionItem: AuctionItem = await postAuctionItem(auctionType, formData);
-    router.push(`/auction/${newAuctionItem.itemID}`);
+    setError('');
+    try {
+      const newAuctionItem: AuctionItem = await postAuctionItem(auctionType, formData);
+      router.push(`/auction/${newAuctionItem.itemID}`);
+    } catch (error) {
+      setError((error as Error).message);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -58,6 +63,7 @@ export default function PostAuction() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            {error && <div className="rounded-md bg-red-50 p-4 text-sm text-red-700">{error}</div>}
             <div className="space-y-2">
               <Label>Auction Type</Label>
               <RadioGroup

@@ -1,12 +1,10 @@
 'use client';
 import React, { useEffect, useState, useMemo } from 'react';
-import axios from 'axios';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CountdownTimer } from '../ui/countdown';
 import { getAvailableItems } from '@/requests/getRequests';
-import { placeBid } from '@/requests/postRequests';
 import { AuctionItem } from '@/types';
 import { Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -23,13 +21,10 @@ export default function AuctionList() {
     const fetchAuctions = async () => {
       try {
         const response = await getAvailableItems();
-        console.log('API Response:', response);
-        // Extract the auction items from the nested structure
         const items = response.map((item: any) => item.auctionItem);
         setAuctions(items);
       } catch (error) {
-        setError('Failed to fetch auctions');
-        console.log(error);
+        setError((error as Error).message);
       } finally {
         setLoading(false);
       }

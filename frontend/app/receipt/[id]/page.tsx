@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/authContext';
 import { ReceiptResponseDTO } from '@/types';
 import { getReceiptDetails } from '@/requests/getRequests';
@@ -18,10 +17,9 @@ export default function ReceiptPage() {
     const fetchReceipt = async () => {
       try {
         const receiptData = await getReceiptDetails(String(params.id));
-        console.log(receiptData);
         setReceipt(receiptData);
       } catch (error) {
-        setError('Failed to fetch receipt details');
+        setError((error as Error).message);
       } finally {
         setLoading(false);
       }

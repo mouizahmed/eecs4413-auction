@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { LogOutIcon } from 'lucide-react';
-import { JSX, SVGProps, useState } from 'react';
+import { JSX, SVGProps } from 'react';
 import {
   Sheet,
   SheetContent,
@@ -62,7 +62,7 @@ export default function Navbar() {
                   <div className="w-full">
                     <SheetClose asChild>
                       <Link href="/profile">
-                        <Button variant={'outline'} className="w-full whitespace-normal break-all">
+                        <Button variant={'outline'} className="w-full whitespace-normal break-all cursor-pointer">
                           {currentUser?.username}
                         </Button>
                       </Link>
@@ -109,12 +109,23 @@ export default function Navbar() {
       </Link>
 
       {/* Navigation for Desktop */}
-      {userLoggedIn && (
+      {userLoggedIn ? (
         <nav className="ml-auto hidden lg:flex gap-6">
           <Link href="/profile">
             <Button variant={'outline'}>{currentUser?.username}</Button>
           </Link>
           <Button onClick={logout}>Log Out</Button>
+        </nav>
+      ) : (
+        <nav className="ml-auto hidden lg:flex gap-6">
+          <Link href="/login">
+            <Button variant="outline" className="cursor-pointer">
+              Login
+            </Button>
+          </Link>
+          <Link href="/register">
+            <Button className="cursor-pointer">Register</Button>
+          </Link>
         </nav>
       )}
     </header>

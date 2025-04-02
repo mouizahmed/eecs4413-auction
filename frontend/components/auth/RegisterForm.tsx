@@ -44,8 +44,8 @@ export function RegisterForm() {
     try {
       await register(formData);
       setSuccess(true);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to register');
+    } catch (error) {
+      setError((error as Error).message);
     } finally {
       setLoading(false);
     }

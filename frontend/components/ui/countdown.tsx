@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import { checkStatus } from '@/requests/postRequests';
 
 interface CountdownTimerProps {
   endTime: string;
@@ -13,12 +13,10 @@ function CountdownTimer({ endTime, itemId, onStatusUpdate }: CountdownTimerProps
 
   const checkAuctionStatus = async () => {
     try {
-      const response = await axios.post(`http://localhost:8080/auction/check-status?itemID=${itemId}`, null, {
-        withCredentials: true,
-      });
-      onStatusUpdate(response.data.data);
+      const response = await checkStatus(itemId);
+      onStatusUpdate(response);
     } catch (error) {
-      console.error('Error checking auction status:', error);
+      console.log('Error checking auction status:', error);
     }
   };
 
@@ -50,7 +48,7 @@ function CountdownTimer({ endTime, itemId, onStatusUpdate }: CountdownTimerProps
 
         setTimeLeft(`${days}d ${hours}h ${minutes}m ${seconds}s`);
       } catch (error) {
-        console.error('Error calculating time left:', error);
+        console.log('Error calculating time left:', error);
         setTimeLeft('Error calculating time');
       }
     };
