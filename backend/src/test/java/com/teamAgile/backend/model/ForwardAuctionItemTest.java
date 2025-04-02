@@ -1,180 +1,136 @@
 package com.teamAgile.backend.model;
 
 import static org.junit.jupiter.api.Assertions.*;
-
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
 class ForwardAuctionItemTest {
+    private ForwardAuctionItem auctionItem;
+    private User testSeller;
+    private String testItemName;
+    private Double testCurrentPrice;
+    private Integer testShippingTime;
+    private LocalDateTime testEndTime;
 
-	private ForwardAuctionItem auctionItem;
-	private String itemName;
-	private User seller;
-	private AuctionItem.AuctionStatus auctionStatus;
-	private Double currentPrice;
-	private Integer shippingTime;
-	private LocalDateTime endTime;
+    @BeforeEach
+    void setUp() {
+        testSeller = new User();
+        testSeller.setUserID(UUID.randomUUID());
+        testItemName = "Test Item";
+        testCurrentPrice = 100.0;
+        testShippingTime = 5;
+        testEndTime = LocalDateTime.now().plusDays(7); // 7 days from now
+        auctionItem = new ForwardAuctionItem(testItemName, testSeller, AuctionItem.AuctionStatus.AVAILABLE,
+                testCurrentPrice, testShippingTime, testEndTime);
+        testSeller.addAuctionItem(auctionItem);
+    }
 
-	@BeforeEach
-	void setUp() throws Exception {
-		itemName = "Test Item";
-		seller = new User();
-		seller.setUserID(UUID.randomUUID());
-		seller.setUsername("testSeller");
-		auctionStatus = AuctionItem.AuctionStatus.AVAILABLE;
-		currentPrice = 100.0;
-		shippingTime = 5;
-		endTime = LocalDateTime.now().plusDays(7);
+    @Test
+    void testGettersAndSetters() {
+        // Test itemName
+        String newItemName = "New Item Name";
+        auctionItem.setItemName(newItemName);
+        assertEquals(newItemName, auctionItem.getItemName());
 
-		auctionItem = new ForwardAuctionItem();
-		auctionItem.setItemName(itemName);
-		auctionItem.setSeller(seller);
-		auctionItem.setAuctionStatus(auctionStatus);
-		auctionItem.setCurrentPrice(currentPrice);
-		auctionItem.setShippingTime(shippingTime);
-		auctionItem.setEndTime(endTime);
+        // Test currentPrice
+        Double newPrice = 200.0;
+        auctionItem.setCurrentPrice(newPrice);
+        assertEquals(newPrice, auctionItem.getCurrentPrice());
 
-		java.lang.reflect.Field field = AuctionItem.class.getDeclaredField("auctionType");
-		field.setAccessible(true);
-		field.set(auctionItem, AuctionItem.AuctionType.FORWARD);
-	}
+        // Test shippingTime
+        Integer newShippingTime = 10;
+        auctionItem.setShippingTime(newShippingTime);
+        assertEquals(newShippingTime, auctionItem.getShippingTime());
 
-	@Test
-	void testDefaultConstructor() {
-		ForwardAuctionItem newItem = new ForwardAuctionItem();
-		assertNotNull(newItem);
-	}
+        // Test endTime
+        LocalDateTime newEndTime = LocalDateTime.now().plusDays(14);
+        auctionItem.setEndTime(newEndTime);
+        assertEquals(newEndTime, auctionItem.getEndTime());
 
-	@Test
-	void testParameterizedConstructor() {
-		ForwardAuctionItem newItem = new ForwardAuctionItem(itemName, seller, auctionStatus, currentPrice, shippingTime,
-				endTime);
+        // Test seller
+        User newSeller = new User();
+        auctionItem.setSeller(newSeller);
+        assertEquals(newSeller, auctionItem.getSeller());
 
-		assertEquals(itemName, newItem.getItemName());
-		assertEquals(seller, newItem.getSeller());
-		assertEquals(auctionStatus, newItem.getAuctionStatus());
-		assertEquals(currentPrice, newItem.getCurrentPrice());
-		assertEquals(shippingTime, newItem.getShippingTime());
-		assertEquals(endTime, newItem.getEndTime());
-	}
+        // Test highestBidder
+        User newHighestBidder = new User();
+        auctionItem.setHighestBidder(newHighestBidder);
+        assertEquals(newHighestBidder, auctionItem.getHighestBidder());
 
-	@Test
-	void testGettersAndSetters() {
-		assertEquals(itemName, auctionItem.getItemName());
-		assertEquals(seller, auctionItem.getSeller());
-		assertEquals(auctionStatus, auctionItem.getAuctionStatus());
-		assertEquals(currentPrice, auctionItem.getCurrentPrice());
-		assertEquals(shippingTime, auctionItem.getShippingTime());
-		assertEquals(endTime, auctionItem.getEndTime());
+        // Test auctionStatus
+        auctionItem.setAuctionStatus(AuctionItem.AuctionStatus.SOLD);
+        assertEquals(AuctionItem.AuctionStatus.SOLD, auctionItem.getAuctionStatus());
+    }
 
-		String newItemName = "Updated Item";
-		User newSeller = new User();
-		newSeller.setUserID(UUID.randomUUID());
-		newSeller.setUsername("newSeller");
-		AuctionItem.AuctionStatus newAuctionStatus = AuctionItem.AuctionStatus.SOLD;
-		Double newCurrentPrice = 200.0;
-		Integer newShippingTime = 10;
-		LocalDateTime newEndTime = LocalDateTime.now().plusDays(10);
+    @Test
+    void testEndTimeValidation() {
+        // Test setting end time in the past
+        LocalDateTime pastTime = LocalDateTime.now().minusDays(1);
+        assertThrows(IllegalArgumentException.class, () -> {
+            auctionItem.setEndTime(pastTime);
+        });
 
-		auctionItem.setItemName(newItemName);
-		auctionItem.setSeller(newSeller);
-		auctionItem.setAuctionStatus(newAuctionStatus);
-		auctionItem.setCurrentPrice(newCurrentPrice);
-		auctionItem.setShippingTime(newShippingTime);
-		auctionItem.setEndTime(newEndTime);
+        // Test creating with end time in the past
+        assertThrows(IllegalArgumentException.class, () -> {
+            new ForwardAuctionItem(testItemName, testSeller, AuctionItem.AuctionStatus.AVAILABLE,
+                    testCurrentPrice, testShippingTime, pastTime);
+        });
+    }
 
-		assertEquals(newItemName, auctionItem.getItemName());
-		assertEquals(newSeller, auctionItem.getSeller());
-		assertEquals(newAuctionStatus, auctionItem.getAuctionStatus());
-		assertEquals(newCurrentPrice, auctionItem.getCurrentPrice());
-		assertEquals(newShippingTime, auctionItem.getShippingTime());
-		assertEquals(newEndTime, auctionItem.getEndTime());
-	}
+    @Test
+    void testBidManagement() {
+        User bidder = new User();
+        bidder.setUserID(UUID.randomUUID());
+        Double bidAmount = 150.0;
 
-	@Test
-	void testEndTimeValidation() {
+        // Test placing a bid
+        auctionItem.placeBid(bidAmount, bidder);
+        assertEquals(bidAmount, auctionItem.getCurrentPrice());
+        assertEquals(bidder, auctionItem.getHighestBidder());
+        assertTrue(auctionItem.getBids().size() > 0);
+    }
 
-		LocalDateTime pastTime = LocalDateTime.now().minusDays(1);
-		Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-			auctionItem.setEndTime(pastTime);
-		});
+    @Test
+    void testPaymentManagement() {
+        // Test successful payment
+        User winningBidder = new User();
+        winningBidder.setUserID(UUID.randomUUID());
+        ForwardAuctionItem soldItem = new ForwardAuctionItem(testItemName, testSeller,
+                AuctionItem.AuctionStatus.SOLD, testCurrentPrice, testShippingTime, testEndTime);
+        soldItem.setHighestBidder(winningBidder);
+        soldItem.makePayment(winningBidder);
+        assertEquals(AuctionItem.AuctionStatus.PAID, soldItem.getAuctionStatus());
 
-		assertEquals("End time must be in the future.", exception.getMessage());
+        // Test payment by non-winning bidder
+        User otherUser = new User();
+        otherUser.setUserID(UUID.randomUUID());
+        ForwardAuctionItem anotherSoldItem = new ForwardAuctionItem(testItemName + "2", testSeller,
+                AuctionItem.AuctionStatus.SOLD, testCurrentPrice, testShippingTime, testEndTime);
+        anotherSoldItem.setHighestBidder(winningBidder);
+        assertThrows(IllegalArgumentException.class, () -> {
+            anotherSoldItem.makePayment(otherUser);
+        });
 
-		exception = assertThrows(IllegalArgumentException.class, () -> {
-			new ForwardAuctionItem(itemName, seller, auctionStatus, currentPrice, shippingTime, pastTime);
-		});
+        // Test payment on non-sold item
+        ForwardAuctionItem availableItem = new ForwardAuctionItem(testItemName + "3", testSeller,
+                AuctionItem.AuctionStatus.AVAILABLE, testCurrentPrice, testShippingTime, testEndTime);
+        availableItem.setHighestBidder(winningBidder);
+        assertThrows(IllegalArgumentException.class, () -> {
+            availableItem.makePayment(winningBidder);
+        });
+    }
 
-		assertEquals("End time must be in the future.", exception.getMessage());
-	}
+    @Test
+    void testSellerRelationship() {
+        // Test bidirectional relationship
+        assertTrue(testSeller.getAuctionItems().contains(auctionItem));
+        assertEquals(testSeller, auctionItem.getSeller());
 
-	@Test
-	void testPlaceBid() {
-
-		User bidder = new User();
-		bidder.setUserID(UUID.randomUUID());
-		bidder.setUsername("testBidder");
-
-		Double bidAmount = 150.0;
-		auctionItem.placeBid(bidAmount, bidder);
-
-		assertEquals(bidAmount, auctionItem.getCurrentPrice());
-		assertEquals(bidder, auctionItem.getHighestBidder());
-	}
-
-	@Test
-	void testMakePayment() {
-
-		User bidder = new User();
-		bidder.setUserID(UUID.randomUUID());
-		bidder.setUsername("testBidder");
-
-		auctionItem.setHighestBidder(bidder);
-		auctionItem.setAuctionStatus(AuctionItem.AuctionStatus.SOLD);
-
-		auctionItem.makePayment(bidder);
-
-		assertEquals(AuctionItem.AuctionStatus.PAID, auctionItem.getAuctionStatus());
-	}
-
-	@Test
-	void testMakePaymentWithWrongUser() {
-
-		User winningBidder = new User();
-		winningBidder.setUserID(UUID.randomUUID());
-		winningBidder.setUsername("winningBidder");
-
-		User wrongBidder = new User();
-		wrongBidder.setUserID(UUID.randomUUID());
-		wrongBidder.setUsername("wrongBidder");
-
-		auctionItem.setHighestBidder(winningBidder);
-		auctionItem.setAuctionStatus(AuctionItem.AuctionStatus.SOLD);
-
-		Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-			auctionItem.makePayment(wrongBidder);
-		});
-
-		assertEquals("You must be the winning bidder to place a payment on this item.", exception.getMessage());
-	}
-
-	@Test
-	void testMakePaymentWithWrongStatus() {
-
-		User bidder = new User();
-		bidder.setUserID(UUID.randomUUID());
-		bidder.setUsername("testBidder");
-
-		auctionItem.setHighestBidder(bidder);
-		auctionItem.setAuctionStatus(AuctionItem.AuctionStatus.AVAILABLE); // Wrong status
-
-		Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-			auctionItem.makePayment(bidder);
-		});
-
-		assertEquals("The auction is either over or still ongoing.", exception.getMessage());
-	}
+        // Test removing item from seller
+        testSeller.removeAuctionItem(auctionItem);
+        assertFalse(testSeller.getAuctionItems().contains(auctionItem));
+        assertNull(auctionItem.getSeller());
+    }
 }

@@ -1,6 +1,7 @@
 package com.teamAgile.backend.model;
 
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.util.UUID;
 import org.hibernate.annotations.CreationTimestamp;
 import jakarta.persistence.Column;
@@ -53,12 +54,43 @@ public class Receipt {
 
     public Receipt(UUID itemID, User user, Double totalCost, CreditCard creditCard, Address address,
             Integer shippingTime) {
+        if (itemID == null || user == null || totalCost == null || creditCard == null || address == null
+                || shippingTime == null) {
+            throw new IllegalArgumentException("All parameters must be non-null");
+        }
+        if (totalCost <= 0) {
+            throw new IllegalArgumentException("Total cost must be positive");
+        }
+        if (shippingTime <= 0) {
+            throw new IllegalArgumentException("Shipping time must be positive");
+        }
+
+        // Validate credit card
+        if (creditCard.getCardNum() == null || creditCard.getCardNum().length() != 16) {
+            throw new IllegalArgumentException("Invalid credit card number");
+        }
+        if (creditCard.getExpDate() == null || creditCard.getExpDate().isBefore(YearMonth.now())) {
+            throw new IllegalArgumentException("Credit card is expired");
+        }
+
+        // Validate address
+        if (address.getStreetName() == null || address.getStreetName().trim().isEmpty() ||
+                address.getStreetNum() == null || address.getStreetNum() <= 0 ||
+                address.getPostalCode() == null || !address.getPostalCode().matches("[A-Z][0-9][A-Z][0-9][A-Z][0-9]") ||
+                address.getCity() == null || address.getCity().trim().isEmpty() ||
+                address.getProvince() == null || address.getProvince().trim().isEmpty() ||
+                address.getCountry() == null || address.getCountry().trim().isEmpty()) {
+            throw new IllegalArgumentException("Invalid address");
+        }
+
         this.itemID = itemID;
         this.user = user;
         this.totalCost = totalCost;
         this.creditCard = creditCard;
         this.address = address;
         this.shippingTime = shippingTime;
+        this.timestamp = LocalDateTime.now();
+        user.addReceipt(this);
     }
 
     // Getters
@@ -100,6 +132,9 @@ public class Receipt {
     }
 
     public void setItemID(UUID itemID) {
+        if (itemID == null) {
+            throw new IllegalArgumentException("Item ID cannot be null");
+        }
         this.itemID = itemID;
     }
 
@@ -108,18 +143,36 @@ public class Receipt {
     }
 
     public void setTotalCost(Double totalCost) {
+        if (totalCost == null) {
+            throw new IllegalArgumentException("Total cost cannot be null");
+        }
+        if (totalCost <= 0) {
+            throw new IllegalArgumentException("Total cost must be positive");
+        }
         this.totalCost = totalCost;
     }
 
     public void setCreditCard(CreditCard creditCard) {
+        if (creditCard == null) {
+            throw new IllegalArgumentException("Credit card cannot be null");
+        }
         this.creditCard = creditCard;
     }
 
     public void setAddress(Address address) {
+        if (address == null) {
+            throw new IllegalArgumentException("Address cannot be null");
+        }
         this.address = address;
     }
 
     public void setShippingTime(Integer shippingTime) {
+        if (shippingTime == null) {
+            throw new IllegalArgumentException("Shipping time cannot be null");
+        }
+        if (shippingTime <= 0) {
+            throw new IllegalArgumentException("Shipping time must be positive");
+        }
         this.shippingTime = shippingTime;
     }
 }

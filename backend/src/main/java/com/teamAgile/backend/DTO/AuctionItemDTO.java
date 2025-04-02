@@ -28,25 +28,39 @@ public class AuctionItemDTO {
         return itemName;
     }
 
+    public void setItemName(String itemName) {
+        this.itemName = itemName;
+    }
+
     public Double getCurrentPrice() {
         return currentPrice;
+    }
+
+    public void setCurrentPrice(Double currentPrice) {
+        this.currentPrice = currentPrice;
     }
 
     public Integer getShippingTime() {
         return shippingTime;
     }
 
+    public void setShippingTime(Integer shippingTime) {
+        this.shippingTime = shippingTime;
+    }
+
     public AuctionType getAuctionType() {
         return auctionType;
+    }
+
+    public void setAuctionType(AuctionType auctionType) {
+        this.auctionType = auctionType;
     }
 
     public AuctionStatus getAuctionStatus() {
         return auctionStatus;
     }
 
-    public void setAuctionType(AuctionType auctionType) {
-        this.auctionType = auctionType;
-
+    public void setAuctionStatus(AuctionStatus auctionStatus) {
+        this.auctionStatus = auctionStatus;
     }
-
 }

@@ -1,70 +1,46 @@
 package com.teamAgile.backend.model;
 
 import static org.junit.jupiter.api.Assertions.*;
-
-import java.time.YearMonth;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import java.time.YearMonth;
 
 class CreditCardTest {
-
     private CreditCard creditCard;
-    private String cardNum;
-    private String cardName;
-    private YearMonth expDate;
-    private String securityCode;
+    private String testCardNum;
+    private String testCardName;
+    private YearMonth testExpDate;
+    private String testSecurityCode;
 
     @BeforeEach
     void setUp() {
-        cardNum = "1234567890123456";
-        cardName = "Test User";
-        expDate = YearMonth.now().plusYears(1);
-        securityCode = "123";
-
-        creditCard = new CreditCard();
-        creditCard.setCardNum(cardNum);
-        creditCard.setCardName(cardName);
-        creditCard.setExpDate(expDate);
-        creditCard.setSecurityCode(securityCode);
-    }
-
-    @Test
-    void testDefaultConstructor() {
-        CreditCard newCreditCard = new CreditCard();
-        assertNotNull(newCreditCard);
-    }
-
-    @Test
-    void testParameterizedConstructor() {
-        CreditCard newCreditCard = new CreditCard(cardNum, cardName, expDate, securityCode);
-
-        assertEquals(cardNum, newCreditCard.getCardNum());
-        assertEquals(cardName, newCreditCard.getCardName());
-        assertEquals(expDate, newCreditCard.getExpDate());
-        assertEquals(securityCode, newCreditCard.getSecurityCode());
+        testCardNum = "1234567890123456";
+        testCardName = "John Doe";
+        testExpDate = YearMonth.now().plusYears(1);
+        testSecurityCode = "123";
+        creditCard = new CreditCard(testCardNum, testCardName, testExpDate, testSecurityCode);
     }
 
     @Test
     void testGettersAndSetters() {
-        assertEquals(cardNum, creditCard.getCardNum());
-        assertEquals(cardName, creditCard.getCardName());
-        assertEquals(expDate, creditCard.getExpDate());
-        assertEquals(securityCode, creditCard.getSecurityCode());
-        
+        // Test cardNum
         String newCardNum = "9876543210987654";
-        String newCardName = "New User";
-        YearMonth newExpDate = YearMonth.now().plusYears(2);
-        String newSecurityCode = "456";
-
         creditCard.setCardNum(newCardNum);
-        creditCard.setCardName(newCardName);
-        creditCard.setExpDate(newExpDate);
-        creditCard.setSecurityCode(newSecurityCode);
-
         assertEquals(newCardNum, creditCard.getCardNum());
+
+        // Test cardName
+        String newCardName = "Jane Smith";
+        creditCard.setCardName(newCardName);
         assertEquals(newCardName, creditCard.getCardName());
+
+        // Test expDate
+        YearMonth newExpDate = YearMonth.now().plusYears(2);
+        creditCard.setExpDate(newExpDate);
         assertEquals(newExpDate, creditCard.getExpDate());
+
+        // Test securityCode
+        String newSecurityCode = "456";
+        creditCard.setSecurityCode(newSecurityCode);
         assertEquals(newSecurityCode, creditCard.getSecurityCode());
     }
 }

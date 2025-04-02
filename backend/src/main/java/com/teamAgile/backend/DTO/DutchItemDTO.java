@@ -17,4 +17,8 @@ public class DutchItemDTO extends AuctionItemDTO {
 		return reservePrice;
 	}
 
+	public void setReservePrice(Double reservePrice) {
+		this.reservePrice = reservePrice;
+	}
+
 }

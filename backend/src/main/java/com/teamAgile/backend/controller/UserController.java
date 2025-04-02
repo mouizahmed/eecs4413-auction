@@ -85,12 +85,12 @@ public class UserController extends BaseController {
 	public ResponseEntity<ApiResponse<UserResponseDTO>> signUp(@Valid @RequestBody SignUpDTO signUpDTO) {
 		try {
 			if (signUpDTO.getPassword() == null || signUpDTO.getPassword().length() < 8) {
-				return ResponseUtil.badRequest("Password must be at least 8 characters long");
+				throw new IllegalArgumentException("Password must be at least 8 characters long");
 			}
 
 			String username = ValidationUtil.sanitizeString(signUpDTO.getUsername());
 			if (username == null || username.isEmpty()) {
-				return ResponseUtil.badRequest("Username cannot be empty");
+				throw new IllegalArgumentException("Username cannot be empty");
 			}
 
 			User userObj = new User(signUpDTO);
@@ -98,7 +98,9 @@ public class UserController extends BaseController {
 			UserResponseDTO userResponseDTO = new UserResponseDTO(createdUser);
 			return ResponseUtil.created("User registered successfully", userResponseDTO);
 		} catch (Exception e) {
-			// Handle specific exceptions
+			if (e instanceof IllegalArgumentException) {
+				return ResponseUtil.badRequest(e.getMessage());
+			}
 			if (e.getMessage() != null && e.getMessage().contains("Username already taken")) {
 				return ResponseUtil.conflict(e.getMessage());
 			}
@@ -114,11 +116,11 @@ public class UserController extends BaseController {
 			String password = signInDTO.getPassword();
 
 			if (username == null || username.isEmpty()) {
-				return ResponseUtil.badRequest("Username cannot be empty");
+				throw new IllegalArgumentException("Username cannot be empty");
 			}
 
 			if (password == null || password.isEmpty()) {
-				return ResponseUtil.badRequest("Password cannot be empty");
+				throw new IllegalArgumentException("Password cannot be empty");
 			}
 
 			Authentication authentication = authenticationManager
@@ -128,7 +130,7 @@ public class UserController extends BaseController {
 
 			User user = userService.signIn(username, password);
 			if (user == null) {
-				return ResponseUtil.unauthorized("Invalid username or password");
+				throw new BadCredentialsException("Invalid username or password");
 			}
 
 			// Generate JWT token
@@ -148,6 +150,8 @@ public class UserController extends BaseController {
 			return ResponseUtil.ok("Login successful", userResponseDTO);
 		} catch (BadCredentialsException e) {
 			return ResponseUtil.unauthorized("Invalid username or password");
+		} catch (IllegalArgumentException e) {
+			return ResponseUtil.badRequest(e.getMessage());
 		} catch (UserNotFoundException e) {
 			return ResponseUtil.notFound(e.getMessage());
 		} catch (Exception e) {
@@ -179,11 +183,13 @@ public class UserController extends BaseController {
 			// Sanitize input
 			String sanitizedUsername = ValidationUtil.sanitizeString(username);
 			if (sanitizedUsername == null || sanitizedUsername.isEmpty()) {
-				return ResponseUtil.badRequest("Username cannot be empty");
+				throw new IllegalArgumentException("Username cannot be empty");
 			}
 
 			String securityQuestion = userService.findSecurityQuestionByUsername(sanitizedUsername);
 			return ResponseUtil.ok(securityQuestion);
+		} catch (IllegalArgumentException e) {
+			return ResponseUtil.badRequest(e.getMessage());
 		} catch (UserNotFoundException e) {
 			return ResponseUtil.notFound(e.getMessage());
 		} catch (Exception e) {
@@ -197,11 +203,11 @@ public class UserController extends BaseController {
 		try {
 			String sanitizedUsername = ValidationUtil.sanitizeString(username);
 			if (sanitizedUsername == null || sanitizedUsername.isEmpty()) {
-				return ResponseUtil.badRequest("Username cannot be empty");
+				throw new IllegalArgumentException("Username cannot be empty");
 			}
 
 			if (forgotPasswordDTO.getNewPassword() == null || forgotPasswordDTO.getNewPassword().length() < 8) {
-				return ResponseUtil.badRequest("New password must be at least 8 characters long");
+				throw new IllegalArgumentException("New password must be at least 8 characters long");
 			}
 
 			boolean result = userService.validateSecurityAnswer(sanitizedUsername, forgotPasswordDTO);
@@ -210,6 +216,8 @@ public class UserController extends BaseController {
 			} else {
 				return ResponseUtil.badRequest("Invalid security answer");
 			}
+		} catch (IllegalArgumentException e) {
+			return ResponseUtil.badRequest(e.getMessage());
 		} catch (UserNotFoundException e) {
 			return ResponseUtil.notFound(e.getMessage());
 		} catch (Exception e) {
@@ -222,7 +230,7 @@ public class UserController extends BaseController {
 		try {
 			User currentUser = getCurrentUser(request);
 			if (currentUser == null) {
-				return ResponseUtil.unauthorized("User not authenticated");
+				throw new SecurityException("User not authenticated");
 			}
 
 			List<AuctionItem> unpaidItems = auctionService.getUnpaidItemsForUser(currentUser);
@@ -230,6 +238,8 @@ public class UserController extends BaseController {
 					.map(AuctionItemResponseDTO::fromAuctionItem).collect(Collectors.toList());
 
 			return ResponseUtil.ok("Retrieved unpaid items successfully", unpaidItemDTOs);
+		} catch (SecurityException e) {
+			return ResponseUtil.unauthorized(e.getMessage());
 		} catch (Exception e) {
 			return ResponseUtil.internalError("Error retrieving unpaid items: " + e.getMessage());
 		}
@@ -240,11 +250,13 @@ public class UserController extends BaseController {
 		try {
 			User currentUser = getCurrentUser(request);
 			if (currentUser == null) {
-				return ResponseUtil.unauthorized("User not authenticated");
+				throw new SecurityException("User not authenticated");
 			}
 
 			UserResponseDTO userResponseDTO = new UserResponseDTO(currentUser);
 			return ResponseUtil.ok(userResponseDTO);
+		} catch (SecurityException e) {
+			return ResponseUtil.unauthorized(e.getMessage());
 		} catch (Exception e) {
 			return ResponseUtil.internalError("Error retrieving current user: " + e.getMessage());
 		}

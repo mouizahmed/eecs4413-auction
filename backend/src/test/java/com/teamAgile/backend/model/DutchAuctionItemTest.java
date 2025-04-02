@@ -1,254 +1,215 @@
 package com.teamAgile.backend.model;
 
 import static org.junit.jupiter.api.Assertions.*;
-
-import java.util.UUID;
-import java.time.LocalDateTime;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import java.util.UUID;
 
 class DutchAuctionItemTest {
+    private DutchAuctionItem auctionItem;
+    private User testSeller;
+    private String testItemName;
+    private Double testCurrentPrice;
+    private Integer testShippingTime;
+    private Double testReservePrice;
 
-	private DutchAuctionItem dutchAuctionItem;
-	private String itemName;
-	private User seller;
-	private AuctionItem.AuctionStatus auctionStatus;
-	private Double currentPrice;
-	private Integer shippingTime;
-	private Double reservePrice;
+    @BeforeEach
+    void setUp() {
+        testSeller = new User(
+                UUID.randomUUID(),
+                "Test",
+                "Seller",
+                "testseller",
+                "Test Street",
+                123,
+                "A1A 1A1",
+                "Test City",
+                "Test Province",
+                "Test Country");
+        testItemName = "Test Item";
+        testCurrentPrice = 100.0;
+        testShippingTime = 5;
+        testReservePrice = 50.0;
+        auctionItem = new DutchAuctionItem(testItemName, testSeller, AuctionItem.AuctionStatus.AVAILABLE,
+                testCurrentPrice, testShippingTime, testReservePrice);
+        testSeller.addAuctionItem(auctionItem);
+    }
 
-	@BeforeEach
-	void setUp() throws Exception {
-		itemName = "Test Dutch Auction Item";
-		currentPrice = 200.0;
-		reservePrice = 100.0;
-		shippingTime = 5;
-		auctionStatus = AuctionItem.AuctionStatus.AVAILABLE;
+    @Test
+    void testGettersAndSetters() {
+        // Test itemName
+        String newItemName = "New Item Name";
+        auctionItem.setItemName(newItemName);
+        assertEquals(newItemName, auctionItem.getItemName());
 
-		seller = new User();
-		seller.setUserID(UUID.randomUUID());
-		seller.setUsername("testSeller");
+        // Test currentPrice
+        Double newPrice = 200.0;
+        auctionItem.setCurrentPrice(newPrice);
+        assertEquals(newPrice, auctionItem.getCurrentPrice());
 
-		dutchAuctionItem = new DutchAuctionItem();
-		dutchAuctionItem.setItemName(itemName);
-		dutchAuctionItem.setCurrentPrice(currentPrice);
-		dutchAuctionItem.setReservePrice(reservePrice);
-		dutchAuctionItem.setSeller(seller);
-		dutchAuctionItem.setShippingTime(shippingTime);
-		dutchAuctionItem.setAuctionStatus(AuctionItem.AuctionStatus.AVAILABLE);
+        // Test shippingTime
+        Integer newShippingTime = 10;
+        auctionItem.setShippingTime(newShippingTime);
+        assertEquals(newShippingTime, auctionItem.getShippingTime());
 
-		java.lang.reflect.Field field = AuctionItem.class.getDeclaredField("auctionType");
-		field.setAccessible(true);
-		field.set(dutchAuctionItem, AuctionItem.AuctionType.DUTCH);
-	}
+        // Test reservePrice
+        Double newReservePrice = 100.0;
+        auctionItem.setReservePrice(newReservePrice);
+        assertEquals(newReservePrice, auctionItem.getReservePrice());
 
-	@Test
-	void testDefaultConstructor() {
-		DutchAuctionItem newItem = new DutchAuctionItem();
-		assertNotNull(newItem);
-	}
+        // Test seller
+        User newSeller = new User(
+                UUID.randomUUID(),
+                "New",
+                "Seller",
+                "newseller",
+                "New Street",
+                456,
+                "B2B 2B2",
+                "New City",
+                "New Province",
+                "New Country");
+        auctionItem.setSeller(newSeller);
+        assertEquals(newSeller, auctionItem.getSeller());
 
-	@Test
-	void testParameterizedConstructor() {
-		DutchAuctionItem newItem = new DutchAuctionItem(itemName, seller, auctionStatus, currentPrice, shippingTime,
-				reservePrice);
+        // Test highestBidder
+        User newHighestBidder = new User(
+                UUID.randomUUID(),
+                "New",
+                "Bidder",
+                "newbidder",
+                "Bidder Street",
+                789,
+                "C3C 3C3",
+                "Bidder City",
+                "Bidder Province",
+                "Bidder Country");
+        auctionItem.setHighestBidder(newHighestBidder);
+        assertEquals(newHighestBidder, auctionItem.getHighestBidder());
 
-		assertEquals(itemName, newItem.getItemName());
-		assertEquals(seller, newItem.getSeller());
-		assertEquals(auctionStatus, newItem.getAuctionStatus());
-		assertEquals(currentPrice, newItem.getCurrentPrice());
-		assertEquals(shippingTime, newItem.getShippingTime());
-		assertEquals(reservePrice, newItem.getReservePrice());
-		assertEquals(AuctionItem.AuctionType.DUTCH, newItem.getAuctionType());
-	}
+        // Test auctionStatus
+        auctionItem.setAuctionStatus(AuctionItem.AuctionStatus.SOLD);
+        assertEquals(AuctionItem.AuctionStatus.SOLD, auctionItem.getAuctionStatus());
+    }
 
-	@Test
-	void testGettersAndSetters() {
+    @Test
+    void testReservePriceValidation() {
+        // Test setting reserve price equal to current price
+        assertThrows(IllegalArgumentException.class, () -> {
+            auctionItem.setReservePrice(testCurrentPrice);
+        });
 
-		assertEquals(itemName, dutchAuctionItem.getItemName());
-		assertEquals(currentPrice, dutchAuctionItem.getCurrentPrice());
-		assertEquals(reservePrice, dutchAuctionItem.getReservePrice());
-		assertEquals(seller, dutchAuctionItem.getSeller());
-		assertEquals(shippingTime, dutchAuctionItem.getShippingTime());
-		assertEquals(AuctionItem.AuctionStatus.AVAILABLE, dutchAuctionItem.getAuctionStatus());
-		assertEquals(AuctionItem.AuctionType.DUTCH, dutchAuctionItem.getAuctionType());
+        // Test setting reserve price higher than current price
+        assertThrows(IllegalArgumentException.class, () -> {
+            auctionItem.setReservePrice(testCurrentPrice + 10.0);
+        });
 
-		String newItemName = "Updated Item";
-		User newSeller = new User();
-		newSeller.setUserID(UUID.randomUUID());
-		newSeller.setUsername("newSeller");
-		AuctionItem.AuctionStatus newAuctionStatus = AuctionItem.AuctionStatus.SOLD;
-		Double newCurrentPrice = 200.0;
-		Integer newShippingTime = 10;
-		Double newReservePrice = 75.0;
+        // Test creating with invalid reserve price
+        assertThrows(IllegalArgumentException.class, () -> {
+            new DutchAuctionItem(testItemName, testSeller, AuctionItem.AuctionStatus.AVAILABLE,
+                    testCurrentPrice, testShippingTime, testCurrentPrice);
+        });
+    }
 
-		dutchAuctionItem.setItemName(newItemName);
-		dutchAuctionItem.setSeller(newSeller);
-		dutchAuctionItem.setAuctionStatus(newAuctionStatus);
-		dutchAuctionItem.setCurrentPrice(newCurrentPrice);
-		dutchAuctionItem.setShippingTime(newShippingTime);
-		dutchAuctionItem.setReservePrice(newReservePrice);
+    @Test
+    void testDecreasePrice() {
+        // Test normal price decrease
+        auctionItem.decreasePrice(10.0);
+        assertEquals(90.0, auctionItem.getCurrentPrice());
+        assertEquals(AuctionItem.AuctionStatus.AVAILABLE, auctionItem.getAuctionStatus());
 
-		assertEquals(newItemName, dutchAuctionItem.getItemName());
-		assertEquals(newSeller, dutchAuctionItem.getSeller());
-		assertEquals(newAuctionStatus, dutchAuctionItem.getAuctionStatus());
-		assertEquals(newCurrentPrice, dutchAuctionItem.getCurrentPrice());
-		assertEquals(newShippingTime, dutchAuctionItem.getShippingTime());
-		assertEquals(newReservePrice, dutchAuctionItem.getReservePrice());
-	}
+        // Test price decrease to reserve price
+        auctionItem.decreasePrice(40.0);
+        assertEquals(50.0, auctionItem.getCurrentPrice());
+        assertEquals(AuctionItem.AuctionStatus.EXPIRED, auctionItem.getAuctionStatus());
 
-	@Test
-	void testReservePriceValidation() {
+        // Test price decrease below reserve price
+        auctionItem.setCurrentPrice(100.0);
+        auctionItem.setAuctionStatus(AuctionItem.AuctionStatus.AVAILABLE);
+        auctionItem.decreasePrice(60.0);
+        assertEquals(50.0, auctionItem.getCurrentPrice());
+        assertEquals(AuctionItem.AuctionStatus.EXPIRED, auctionItem.getAuctionStatus());
+    }
 
-		Double invalidReservePrice = currentPrice + 10.0;
-		Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-			dutchAuctionItem.setReservePrice(invalidReservePrice);
-		});
+    @Test
+    void testBidManagement() {
+        User bidder = new User(
+                UUID.randomUUID(),
+                "Test",
+                "Bidder",
+                "testbidder",
+                "Bidder Street",
+                123,
+                "A1A 1A1",
+                "Bidder City",
+                "Bidder Province",
+                "Bidder Country");
+        Double bidAmount = 100.0; // Must equal current price for Dutch auction
 
-		assertEquals("Reserve price must be below the current price.", exception.getMessage());
+        // Test placing a bid
+        auctionItem.placeBid(bidAmount, bidder);
+        assertEquals(bidAmount, auctionItem.getCurrentPrice());
+        assertEquals(bidder, auctionItem.getHighestBidder());
+        assertTrue(auctionItem.getBids().size() > 0);
+    }
 
-		exception = assertThrows(IllegalArgumentException.class, () -> {
-			new DutchAuctionItem(itemName, seller, auctionStatus, currentPrice, shippingTime, invalidReservePrice);
-		});
+    @Test
+    void testPaymentManagement() {
+        // Test successful payment
+        User winningBidder = new User(
+                UUID.randomUUID(),
+                "Winning",
+                "Bidder",
+                "winningbidder",
+                "Winning Street",
+                123,
+                "A1A 1A1",
+                "Winning City",
+                "Winning Province",
+                "Winning Country");
+        DutchAuctionItem soldItem = new DutchAuctionItem(testItemName, testSeller,
+                AuctionItem.AuctionStatus.SOLD, testCurrentPrice, testShippingTime, testReservePrice);
+        soldItem.setHighestBidder(winningBidder);
+        soldItem.makePayment(winningBidder);
+        assertEquals(AuctionItem.AuctionStatus.PAID, soldItem.getAuctionStatus());
 
-		assertEquals("Reserve price must be below the current price.", exception.getMessage());
-	}
+        // Test payment by non-winning bidder
+        User otherUser = new User(
+                UUID.randomUUID(),
+                "Other",
+                "User",
+                "otheruser",
+                "Other Street",
+                456,
+                "B2B 2B2",
+                "Other City",
+                "Other Province",
+                "Other Country");
+        DutchAuctionItem anotherSoldItem = new DutchAuctionItem(testItemName + "2", testSeller,
+                AuctionItem.AuctionStatus.SOLD, testCurrentPrice, testShippingTime, testReservePrice);
+        anotherSoldItem.setHighestBidder(winningBidder);
+        assertThrows(IllegalArgumentException.class, () -> {
+            anotherSoldItem.makePayment(otherUser);
+        });
 
-	@Test
-	void testDecreasePrice() {
+        // Test payment on non-sold item
+        DutchAuctionItem availableItem = new DutchAuctionItem(testItemName + "3", testSeller,
+                AuctionItem.AuctionStatus.AVAILABLE, testCurrentPrice, testShippingTime, testReservePrice);
+        availableItem.setHighestBidder(winningBidder);
+        assertThrows(IllegalArgumentException.class, () -> {
+            availableItem.makePayment(winningBidder);
+        });
+    }
 
-		double decreaseAmount = 20.0;
-		double expectedNewPrice = currentPrice - decreaseAmount;
+    @Test
+    void testSellerRelationship() {
+        // Test bidirectional relationship
+        assertTrue(testSeller.getAuctionItems().contains(auctionItem));
+        assertEquals(testSeller, auctionItem.getSeller());
 
-		dutchAuctionItem.decreasePrice(decreaseAmount);
-
-		assertEquals(expectedNewPrice, dutchAuctionItem.getCurrentPrice());
-		assertEquals(AuctionItem.AuctionStatus.AVAILABLE, dutchAuctionItem.getAuctionStatus());
-
-		double largeDecreaseAmount = 100.0;
-
-		dutchAuctionItem.decreasePrice(largeDecreaseAmount);
-
-		assertEquals(reservePrice, dutchAuctionItem.getCurrentPrice());
-		assertEquals(AuctionItem.AuctionStatus.EXPIRED, dutchAuctionItem.getAuctionStatus());
-	}
-
-	@Test
-	void testPlaceBid() {
-
-		User bidder = new User();
-		bidder.setUserID(UUID.randomUUID());
-		bidder.setUsername("testBidder");
-
-		Double bidAmount = currentPrice;
-		dutchAuctionItem.placeBid(bidAmount, bidder);
-
-		assertEquals(bidAmount, dutchAuctionItem.getCurrentPrice());
-		assertEquals(bidder, dutchAuctionItem.getHighestBidder());
-	}
-
-	@Test
-	void testPlaceBidWithIncorrectAmount() {
-		User bidder = new User();
-		bidder.setUserID(UUID.randomUUID());
-		bidder.setUsername("testBidder");
-
-		Double bidAmount = currentPrice - 10.0;
-
-		Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-			dutchAuctionItem.placeBid(bidAmount, bidder);
-		});
-
-		assertEquals("For Dutch auctions, bid amount must equal the current price.", exception.getMessage());
-		assertNull(dutchAuctionItem.getHighestBidder());
-	}
-
-	@Test
-	void testPlaceBidWhenAuctionNotAvailable() {
-		dutchAuctionItem.setAuctionStatus(AuctionItem.AuctionStatus.SOLD);
-
-		User bidder = new User();
-		bidder.setUserID(UUID.randomUUID());
-		bidder.setUsername("testBidder");
-
-		Double bidAmount = currentPrice;
-
-		Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-			dutchAuctionItem.placeBid(bidAmount, bidder);
-		});
-
-		assertEquals("Auction Item is currently not available.", exception.getMessage());
-	}
-
-	@Test
-	void testMakePayment() {
-
-		User bidder = new User();
-		bidder.setUserID(UUID.randomUUID());
-		bidder.setUsername("testBidder");
-
-		dutchAuctionItem.setHighestBidder(bidder);
-		dutchAuctionItem.setAuctionStatus(AuctionItem.AuctionStatus.SOLD);
-
-		dutchAuctionItem.makePayment(bidder);
-
-		assertEquals(AuctionItem.AuctionStatus.PAID, dutchAuctionItem.getAuctionStatus());
-	}
-
-	@Test
-	void testMakePaymentWithWrongUser() {
-		User winningBidder = new User();
-		winningBidder.setUserID(UUID.randomUUID());
-		winningBidder.setUsername("winningBidder");
-
-		User wrongBidder = new User();
-		wrongBidder.setUserID(UUID.randomUUID());
-		wrongBidder.setUsername("wrongBidder");
-
-		dutchAuctionItem.setHighestBidder(winningBidder);
-		dutchAuctionItem.setAuctionStatus(AuctionItem.AuctionStatus.SOLD);
-
-		Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-			dutchAuctionItem.makePayment(wrongBidder);
-		});
-
-		assertEquals("You must be the winning bidder to place a payment on this item.", exception.getMessage());
-	}
-
-	@Test
-	void testMakePaymentWhenAuctionNotSold() {
-		User bidder = new User();
-		bidder.setUserID(UUID.randomUUID());
-		bidder.setUsername("testBidder");
-
-		dutchAuctionItem.setHighestBidder(bidder);
-		dutchAuctionItem.setAuctionStatus(AuctionItem.AuctionStatus.AVAILABLE);
-
-		Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-			dutchAuctionItem.makePayment(bidder);
-		});
-
-		assertEquals("The auction is either over or still ongoing.", exception.getMessage());
-	}
-
-	@Test
-	void testAuctionStatusTransitions() {
-
-		assertEquals(AuctionItem.AuctionStatus.AVAILABLE, dutchAuctionItem.getAuctionStatus());
-
-		dutchAuctionItem.setAuctionStatus(AuctionItem.AuctionStatus.SOLD);
-		assertEquals(AuctionItem.AuctionStatus.SOLD, dutchAuctionItem.getAuctionStatus());
-
-		dutchAuctionItem.setAuctionStatus(AuctionItem.AuctionStatus.PAID);
-		assertEquals(AuctionItem.AuctionStatus.PAID, dutchAuctionItem.getAuctionStatus());
-
-		dutchAuctionItem.setAuctionStatus(AuctionItem.AuctionStatus.AVAILABLE);
-
-		dutchAuctionItem.setAuctionStatus(AuctionItem.AuctionStatus.EXPIRED);
-		assertEquals(AuctionItem.AuctionStatus.EXPIRED, dutchAuctionItem.getAuctionStatus());
-
-		dutchAuctionItem.setAuctionStatus(AuctionItem.AuctionStatus.CANCELLED);
-		assertEquals(AuctionItem.AuctionStatus.CANCELLED, dutchAuctionItem.getAuctionStatus());
-	}
+        // Test removing item from seller
+        testSeller.removeAuctionItem(auctionItem);
+        assertFalse(testSeller.getAuctionItems().contains(auctionItem));
+        assertNull(auctionItem.getSeller());
+    }
 }

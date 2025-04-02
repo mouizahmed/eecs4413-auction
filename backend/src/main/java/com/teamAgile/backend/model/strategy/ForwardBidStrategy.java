@@ -2,9 +2,7 @@ package com.teamAgile.backend.model.strategy;
 
 import java.time.LocalDateTime;
 
-import com.teamAgile.backend.model.AuctionItem;
-import com.teamAgile.backend.model.ForwardAuctionItem;
-import com.teamAgile.backend.model.User;
+import com.teamAgile.backend.model.*;
 import com.teamAgile.backend.model.AuctionItem.AuctionStatus;
 
 public class ForwardBidStrategy implements BidStrategy {
@@ -25,6 +23,8 @@ public class ForwardBidStrategy implements BidStrategy {
             throw new IllegalArgumentException("This forward auction has now closed.");
         }
 
+        Bid bid = new Bid(auctionItem.getItemID(), user, bidAmount);
+        auctionItem.getBids().add(bid);
         auctionItem.setHighestBidder(user);
         auctionItem.setCurrentPrice(bidAmount);
     }

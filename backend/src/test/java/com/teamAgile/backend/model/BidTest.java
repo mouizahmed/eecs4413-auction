@@ -1,79 +1,69 @@
 package com.teamAgile.backend.model;
 
 import static org.junit.jupiter.api.Assertions.*;
-
-import java.time.LocalDateTime;
-import java.util.UUID;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import java.util.UUID;
 
 class BidTest {
-
     private Bid bid;
-    private UUID itemId;
-    private User user;
-    private Double bidAmount;
+    private UUID testItemID;
+    private User testUser;
+    private Double testBidAmount;
 
     @BeforeEach
     void setUp() {
-        itemId = UUID.randomUUID();
-        user = new User();
-        user.setUserID(UUID.randomUUID());
-        user.setUsername("testUser");
-        bidAmount = 100.0;
-
-        bid = new Bid();
-        bid.setItemID(itemId);
-        bid.setUser(user);
-        bid.setBidAmount(bidAmount);
-    }
-
-    @Test
-    void testDefaultConstructor() {
-        Bid newBid = new Bid();
-        assertNotNull(newBid);
-    }
-
-    @Test
-    void testParameterizedConstructor() {
-        Bid newBid = new Bid(itemId, user, bidAmount);
-
-        assertEquals(itemId, newBid.getItemID());
-        assertEquals(user, newBid.getUser());
-        assertEquals(bidAmount, newBid.getBidAmount());
-        assertNull(newBid.getTimestamp()); 
+        testItemID = UUID.randomUUID();
+        testUser = new User();
+        testBidAmount = 100.0;
+        bid = new Bid(testItemID, testUser, testBidAmount);
     }
 
     @Test
     void testGettersAndSetters() {
-        assertEquals(itemId, bid.getItemID());
-        assertEquals(user, bid.getUser());
-        assertEquals(bidAmount, bid.getBidAmount());
+        // Test itemID
+        UUID newItemID = UUID.randomUUID();
+        bid.setItemID(newItemID);
+        assertEquals(newItemID, bid.getItemID());
 
-  
-        UUID newItemId = UUID.randomUUID();
+        // Test user
         User newUser = new User();
-        newUser.setUserID(UUID.randomUUID());
-        newUser.setUsername("newUser");
-        Double newBidAmount = 200.0;
-
-        bid.setItemID(newItemId);
         bid.setUser(newUser);
-        bid.setBidAmount(newBidAmount);
-
-        assertEquals(newItemId, bid.getItemID());
         assertEquals(newUser, bid.getUser());
+
+        // Test bidAmount
+        Double newBidAmount = 200.0;
+        bid.setBidAmount(newBidAmount);
         assertEquals(newBidAmount, bid.getBidAmount());
     }
 
     @Test
-    void testBidID() {
-        assertNull(bid.getBidID());
+    void testBidAmountValidation() {
+        // Test setting a negative bid amount
+        assertThrows(IllegalArgumentException.class, () -> {
+            bid.setBidAmount(-100.0);
+        });
+
+        // Test setting a zero bid amount
+        assertThrows(IllegalArgumentException.class, () -> {
+            bid.setBidAmount(0.0);
+        });
+
+        // Test setting a null bid amount
+        assertThrows(IllegalArgumentException.class, () -> {
+            bid.setBidAmount(null);
+        });
     }
 
     @Test
-    void testTimestamp() {
-        assertNull(bid.getTimestamp());
+    void testUserRelationship() {
+        // Test bidirectional relationship
+        assertTrue(testUser.getBids().contains(bid));
+        assertEquals(testUser, bid.getUser());
+
+        // Test removing bid from user
+        testUser.removeBid(bid);
+        assertFalse(testUser.getBids().contains(bid));
+        assertNull(bid.getUser());
     }
 }

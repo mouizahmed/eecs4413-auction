@@ -35,15 +35,25 @@ public class SecurityConfig {
 
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-		http.cors(cors -> cors.configurationSource(corsConfigurationSource())).csrf(csrf -> csrf.disable())
-				.authorizeHttpRequests(auth -> auth.requestMatchers(HttpMethod.GET, "/**").permitAll()
-						.requestMatchers("/user/sign-up", "/user/sign-in", "/user/sign-out", "user/forgot-password")
+		http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
+				.csrf(csrf -> csrf.disable())
+				.authorizeHttpRequests(auth -> auth
+						.requestMatchers(HttpMethod.GET, "/**").permitAll()
+						.requestMatchers("/user/sign-up", "/user/sign-in", "/user/sign-out", "/user/forgot-password",
+								"/user/get-security-question", "/user/get-all", "/user/validate-security-answer")
+						.permitAll()
+						.requestMatchers("/auction/admin/**").hasRole("ADMIN")
+						.requestMatchers("/auction/get-all", "/auction/get-by-id", "/auction/search",
+								"/auction/bids", "/auction/bid", "/auction/pay", "/auction/forward/post",
+								"/auction/dutch/post", "/auction/dutch/decreasePrice", "/auction/check-status",
+								"/auction/receipt", "/auction/receipts")
 						.permitAll()
 						.anyRequest().authenticated())
 				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.authenticationProvider(authenticationProvider)
 				.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class)
-				.httpBasic(httpBasic -> httpBasic.disable()).formLogin(form -> form.disable())
+				.httpBasic(httpBasic -> httpBasic.disable())
+				.formLogin(form -> form.disable())
 				.logout(logout -> logout.disable());
 
 		return http.build();

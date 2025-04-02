@@ -1,143 +1,212 @@
 package com.teamAgile.backend.model;
 
 import static org.junit.jupiter.api.Assertions.*;
-
-import java.util.UUID;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
+import java.util.UUID;
+import java.time.YearMonth;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import com.teamAgile.backend.DTO.SignUpDTO;
 import com.teamAgile.backend.util.BCryptHashing;
+import java.time.LocalDateTime;
 
 class UserTest {
+    private User user;
+    private SignUpDTO signUpDTO;
 
-	private User user;
-	private UUID userId;
-	private String firstName;
-	private String lastName;
-	private String username;
-	private String password;
-	private String securityQuestion;
-	private String securityAnswer;
-	private String streetName;
-	private Integer streetNum;
-	private String postalCode;
-	private String city;
-	private String country;
+    @BeforeEach
+    void setUp() {
+        signUpDTO = new SignUpDTO();
+        signUpDTO.setFirstName("John");
+        signUpDTO.setLastName("Doe");
+        signUpDTO.setUsername("johndoe");
+        signUpDTO.setPassword("password123");
+        signUpDTO.setSecurityQuestion("What is your mother's maiden name?");
+        signUpDTO.setSecurityAnswer("Smith");
+        signUpDTO.setStreetName("Main Street");
+        signUpDTO.setStreetNum(123);
+        signUpDTO.setPostalCode("A1A1A1");
+        signUpDTO.setCity("Toronto");
+        signUpDTO.setProvince("Ontario");
+        signUpDTO.setCountry("Canada");
 
-	@BeforeEach
-	void setUp() {
-		userId = UUID.randomUUID();
-		firstName = "John";
-		lastName = "Doe";
-		username = "johndoe";
-		password = "password123";
-		securityQuestion = "What is your pet's name?";
-		securityAnswer = "Fluffy";
-		streetName = "Main St";
-		streetNum = 123;
-		postalCode = "12345";
-		city = "New York";
-		country = "USA";
+        user = new User(signUpDTO);
+    }
 
-		user = new User();
-		user.setUserID(userId);
-		user.setFirstName(firstName);
-		user.setLastName(lastName);
-		user.setUsername(username);
-		user.setPassword(password);
-		user.setSecurityQuestion(securityQuestion);
-		user.setSecurityAnswer(securityAnswer);
+    @Test
+    void testPasswordHashing() {
+        // Test that password is hashed during creation
+        assertNotEquals("password123", user.getPassword());
+        assertTrue(BCryptHashing.checkPassword("password123", user.getPassword()));
 
-		Address address = new Address(streetName, streetNum, postalCode, city, country);
-		user.setAddress(address);
-	}
+        // Test password update
+        user.setPassword("newpassword123");
+        assertNotEquals("newpassword123", user.getPassword());
+        assertTrue(BCryptHashing.checkPassword("newpassword123", user.getPassword()));
 
-	@Test
-	void testDefaultConstructor() {
-		User newUser = new User();
-		assertNotNull(newUser);
-	}
+        // Test null password
+        assertThrows(IllegalArgumentException.class, () -> {
+            user.setPassword(null);
+        });
 
-	@Test
-	void testParameterizedConstructor() {
-		User newUser = new User(userId, firstName, lastName, username, streetName, streetNum, postalCode, city,
-				country);
+        // Test empty password
+        assertThrows(IllegalArgumentException.class, () -> {
+            user.setPassword("");
+        });
+    }
 
-		assertEquals(userId, newUser.getUserID());
-		assertEquals(firstName, newUser.getFirstName());
-		assertEquals(lastName, newUser.getLastName());
-		assertEquals(username, newUser.getUsername());
-		assertNull(newUser.getPassword());
-		assertNull(newUser.getSecurityQuestion());
-		assertNull(newUser.getSecurityAnswer());
+    @Test
+    void testSecurityQuestionHandling() {
+        // Test security question validation
+        assertThrows(IllegalArgumentException.class, () -> {
+            user.setSecurityQuestion(null);
+        });
 
-		Address address = newUser.getAddress();
-		assertNotNull(address);
-		assertEquals(streetName, address.getStreetName());
-		assertEquals(streetNum, address.getStreetNum());
-		assertEquals(postalCode, address.getPostalCode());
-		assertEquals(city, address.getCity());
-		assertEquals(country, address.getCountry());
-	}
+        assertThrows(IllegalArgumentException.class, () -> {
+            user.setSecurityQuestion("");
+        });
 
-	@Test
-	void testGettersAndSetters() {
-		assertEquals(userId, user.getUserID());
-		assertEquals(firstName, user.getFirstName());
-		assertEquals(lastName, user.getLastName());
-		assertEquals(username, user.getUsername());
-		assertTrue(BCryptHashing.checkPassword(password, user.getPassword()));
-		assertEquals(securityQuestion, user.getSecurityQuestion());
-		assertEquals(securityAnswer, user.getSecurityAnswer());
+        // Test security answer validation
+        assertThrows(IllegalArgumentException.class, () -> {
+            user.setSecurityAnswer(null);
+        });
 
-		Address address = user.getAddress();
-		assertNotNull(address);
-		assertEquals(streetName, address.getStreetName());
-		assertEquals(streetNum, address.getStreetNum());
-		assertEquals(postalCode, address.getPostalCode());
-		assertEquals(city, address.getCity());
-		assertEquals(country, address.getCountry());
+        assertThrows(IllegalArgumentException.class, () -> {
+            user.setSecurityAnswer("");
+        });
 
-		UUID newUserId = UUID.randomUUID();
-		String newFirstName = "Jane";
-		String newLastName = "Smith";
-		String newUsername = "janesmith";
-		String newPassword = "newpassword456";
-		String newSecurityQuestion = "What is your mother's maiden name?";
-		String newSecurityAnswer = "Johnson";
-		String newStreetName = "Broadway";
-		Integer newStreetNum = 456;
-		String newPostalCode = "67890";
-		String newCity = "Los Angeles";
-		String newCountry = "USA";
+        // Test security answer verification with original answer from setUp
+        assertTrue(user.checkSecurityAnswer("Smith"));
+        assertFalse(user.checkSecurityAnswer("wronganswer"));
 
-		user.setUserID(newUserId);
-		user.setFirstName(newFirstName);
-		user.setLastName(newLastName);
-		user.setUsername(newUsername);
-		user.setPassword(newPassword);
-		user.setSecurityQuestion(newSecurityQuestion);
-		user.setSecurityAnswer(newSecurityAnswer);
+        // Test setting a new security answer
+        user.setSecurityAnswer("NewAnswer");
+        assertTrue(user.checkSecurityAnswer("NewAnswer"));
+        assertFalse(user.checkSecurityAnswer("Smith")); // Old answer should no longer work
+    }
 
-		Address newAddress = new Address(newStreetName, newStreetNum, newPostalCode, newCity, newCountry);
-		user.setAddress(newAddress);
+    @Test
+    void testUserRoles() {
+        // Test default role assignment
+        assertTrue(user.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_USER")));
+        assertEquals(1, user.getAuthorities().size());
 
-		assertEquals(newUserId, user.getUserID());
-		assertEquals(newFirstName, user.getFirstName());
-		assertEquals(newLastName, user.getLastName());
-		assertEquals(newUsername, user.getUsername());
-		assertTrue(BCryptHashing.checkPassword(newPassword, user.getPassword()));
-		assertEquals(newSecurityQuestion, user.getSecurityQuestion());
-		assertEquals(newSecurityAnswer, user.getSecurityAnswer());
+        // Test user account status
+        assertTrue(user.isAccountNonExpired());
+        assertTrue(user.isAccountNonLocked());
+        assertTrue(user.isCredentialsNonExpired());
+        assertTrue(user.isEnabled());
+    }
 
-		Address updatedAddress = user.getAddress();
-		assertNotNull(updatedAddress);
-		assertEquals(newStreetName, updatedAddress.getStreetName());
-		assertEquals(newStreetNum, updatedAddress.getStreetNum());
-		assertEquals(newPostalCode, updatedAddress.getPostalCode());
-		assertEquals(newCity, updatedAddress.getCity());
-		assertEquals(newCountry, updatedAddress.getCountry());
-	}
+    @Test
+    void testBidManagement() {
+        // Create test auction item and bid
+        AuctionItem auctionItem = new ForwardAuctionItem("Test Item", user, AuctionItem.AuctionStatus.AVAILABLE, 100.0,
+                5,
+                LocalDateTime.now().plusDays(7));
+        user.addAuctionItem(auctionItem);
+
+        // Create a bid using a random UUID since we can't set the item ID directly
+        Bid bid = new Bid(UUID.randomUUID(), user, 100.0);
+
+        // Test bid addition
+        user.addBid(bid);
+        assertTrue(user.getBids().contains(bid));
+        assertEquals(user, bid.getUser());
+
+        // Test bid removal
+        user.removeBid(bid);
+        assertFalse(user.getBids().contains(bid));
+        assertNull(bid.getUser());
+
+        // Test null bid
+        assertThrows(IllegalArgumentException.class, () -> {
+            user.addBid(null);
+        });
+    }
+
+    @Test
+    void testAuctionManagement() {
+        // Create test auction items
+        ForwardAuctionItem forwardAuction = new ForwardAuctionItem();
+        DutchAuctionItem dutchAuction = new DutchAuctionItem();
+
+        // Test auction addition
+        user.addAuctionItem(forwardAuction);
+        user.addAuctionItem(dutchAuction);
+        assertTrue(user.getAuctionItems().contains(forwardAuction));
+        assertTrue(user.getAuctionItems().contains(dutchAuction));
+        assertEquals(user, forwardAuction.getSeller());
+        assertEquals(user, dutchAuction.getSeller());
+
+        // Test auction removal
+        user.removeAuctionItem(forwardAuction);
+        assertFalse(user.getAuctionItems().contains(forwardAuction));
+        assertNull(forwardAuction.getSeller());
+
+        // Test null auction
+        assertThrows(IllegalArgumentException.class, () -> {
+            user.addAuctionItem(null);
+        });
+    }
+
+    @Test
+    void testReceiptManagement() {
+        // Create test receipt
+        CreditCard creditCard = new CreditCard();
+        creditCard.setCardNum("4111111111111111");
+        creditCard.setCardName("John Doe");
+        creditCard.setExpDate(YearMonth.of(2025, 12));
+        creditCard.setSecurityCode("123");
+
+        Address address = new Address();
+        address.setStreetName("Main Street");
+        address.setStreetNum(123);
+        address.setPostalCode("A1A1A1");
+        address.setCity("Toronto");
+        address.setProvince("Ontario");
+        address.setCountry("Canada");
+
+        Receipt receipt = new Receipt(UUID.randomUUID(), user, 100.0, creditCard, address, 5);
+
+        // Test receipt addition
+        assertTrue(user.getReceipts().contains(receipt));
+        assertEquals(user, receipt.getUser());
+
+        // Test receipt removal
+        user.removeReceipt(receipt);
+        assertFalse(user.getReceipts().contains(receipt));
+        assertNull(receipt.getUser());
+
+        // Test null receipt
+        assertThrows(IllegalArgumentException.class, () -> {
+            user.addReceipt(null);
+        });
+    }
+
+    @Test
+    void testAddressManagement() {
+        // Test address update
+        Address newAddress = new Address();
+        newAddress.setStreetName("New Street");
+        newAddress.setStreetNum(456);
+        newAddress.setPostalCode("B2B2B2");
+        newAddress.setCity("Vancouver");
+        newAddress.setProvince("BC");
+        newAddress.setCountry("Canada");
+
+        user.setAddress(newAddress);
+        assertEquals(newAddress, user.getAddress());
+
+        // Test null address
+        assertThrows(IllegalArgumentException.class, () -> {
+            user.setAddress(null);
+        });
+
+        // Test invalid address
+        Address invalidAddress = new Address();
+        assertThrows(IllegalArgumentException.class, () -> {
+            user.setAddress(invalidAddress);
+        });
+    }
 }

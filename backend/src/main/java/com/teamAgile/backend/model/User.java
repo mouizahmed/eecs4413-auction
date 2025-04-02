@@ -81,7 +81,7 @@ public class User implements UserDetails, java.io.Serializable {
 		this.username = signUpDTO.getUsername();
 		this.password = BCryptHashing.hashPassword(signUpDTO.getPassword());
 		this.securityQuestion = signUpDTO.getSecurityQuestion();
-		this.securityAnswer = signUpDTO.getSecurityAnswer();
+		this.setSecurityAnswer(signUpDTO.getSecurityAnswer());
 		Address address = new Address(signUpDTO.getStreetName(), signUpDTO.getStreetNum(), signUpDTO.getPostalCode(),
 				signUpDTO.getCity(), signUpDTO.getProvince(), signUpDTO.getCountry());
 		this.address = address;
@@ -102,6 +102,9 @@ public class User implements UserDetails, java.io.Serializable {
 	}
 
 	public void setFirstName(String firstName) {
+		if (firstName == null || firstName.trim().isEmpty()) {
+			throw new IllegalArgumentException("First name cannot be null or empty");
+		}
 		this.firstName = firstName;
 	}
 
@@ -110,6 +113,9 @@ public class User implements UserDetails, java.io.Serializable {
 	}
 
 	public void setLastName(String lastName) {
+		if (lastName == null || lastName.trim().isEmpty()) {
+			throw new IllegalArgumentException("Last name cannot be null or empty");
+		}
 		this.lastName = lastName;
 	}
 
@@ -119,6 +125,9 @@ public class User implements UserDetails, java.io.Serializable {
 	}
 
 	public void setUsername(String username) {
+		if (username == null || username.trim().isEmpty()) {
+			throw new IllegalArgumentException("Username cannot be null or empty");
+		}
 		this.username = username;
 	}
 
@@ -128,6 +137,9 @@ public class User implements UserDetails, java.io.Serializable {
 	}
 
 	public void setPassword(String password) {
+		if (password == null || password.trim().isEmpty()) {
+			throw new IllegalArgumentException("Password cannot be null or empty");
+		}
 		this.password = BCryptHashing.hashPassword(password);
 	}
 
@@ -136,6 +148,17 @@ public class User implements UserDetails, java.io.Serializable {
 	}
 
 	public void setAddress(Address address) {
+		if (address == null) {
+			throw new IllegalArgumentException("Address cannot be null");
+		}
+		if (address.getStreetName() == null || address.getStreetName().trim().isEmpty() ||
+				address.getStreetNum() == null || address.getStreetNum() <= 0 ||
+				address.getPostalCode() == null || !address.getPostalCode().matches("[A-Z][0-9][A-Z][0-9][A-Z][0-9]") ||
+				address.getCity() == null || address.getCity().trim().isEmpty() ||
+				address.getProvince() == null || address.getProvince().trim().isEmpty() ||
+				address.getCountry() == null || address.getCountry().trim().isEmpty()) {
+			throw new IllegalArgumentException("Invalid address");
+		}
 		this.address = address;
 	}
 
@@ -144,6 +167,9 @@ public class User implements UserDetails, java.io.Serializable {
 	}
 
 	public void setSecurityQuestion(String securityQuestion) {
+		if (securityQuestion == null || securityQuestion.trim().isEmpty()) {
+			throw new IllegalArgumentException("Security question cannot be null or empty");
+		}
 		this.securityQuestion = securityQuestion;
 	}
 
@@ -152,7 +178,14 @@ public class User implements UserDetails, java.io.Serializable {
 	}
 
 	public void setSecurityAnswer(String securityAnswer) {
-		this.securityAnswer = securityAnswer;
+		if (securityAnswer == null || securityAnswer.trim().isEmpty()) {
+			throw new IllegalArgumentException("Security answer cannot be null or empty");
+		}
+		this.securityAnswer = BCryptHashing.hashPassword(securityAnswer);
+	}
+
+	public boolean checkSecurityAnswer(String answer) {
+		return BCryptHashing.checkPassword(answer, this.securityAnswer);
 	}
 
 	// UserDetails implementation
@@ -196,13 +229,23 @@ public class User implements UserDetails, java.io.Serializable {
 	}
 
 	public void addReceipt(Receipt receipt) {
+		if (receipt == null) {
+			throw new IllegalArgumentException("Receipt cannot be null");
+		}
 		receipts.add(receipt);
-		receipt.setUser(this);
+		if (receipt.getUser() != this) {
+			receipt.setUser(this);
+		}
 	}
 
 	public void removeReceipt(Receipt receipt) {
+		if (receipt == null) {
+			throw new IllegalArgumentException("Receipt cannot be null");
+		}
 		receipts.remove(receipt);
-		receipt.setUser(null);
+		if (receipt.getUser() == this) {
+			receipt.setUser(null);
+		}
 	}
 
 	// Getters and setters for bids
@@ -215,13 +258,26 @@ public class User implements UserDetails, java.io.Serializable {
 	}
 
 	public void addBid(Bid bid) {
-		bids.add(bid);
-		bid.setUser(this);
+		if (bid == null) {
+			throw new IllegalArgumentException("Bid cannot be null");
+		}
+		if (!bids.contains(bid)) {
+			bids.add(bid);
+			if (bid.getUser() != this) {
+				bid.setUser(this);
+			}
+		}
 	}
 
 	public void removeBid(Bid bid) {
-		bids.remove(bid);
-		bid.setUser(null);
+		if (bid == null) {
+			throw new IllegalArgumentException("Bid cannot be null");
+		}
+		if (bids.remove(bid)) {
+			if (bid.getUser() == this) {
+				bid.setUser(null);
+			}
+		}
 	}
 
 	public List<AuctionItem> getAuctionItems() {
@@ -233,12 +289,22 @@ public class User implements UserDetails, java.io.Serializable {
 	}
 
 	public void addAuctionItem(AuctionItem auctionItem) {
+		if (auctionItem == null) {
+			throw new IllegalArgumentException("Auction item cannot be null");
+		}
 		auctionItems.add(auctionItem);
-		auctionItem.setSeller(this);
+		if (auctionItem.getSeller() != this) {
+			auctionItem.setSeller(this);
+		}
 	}
 
 	public void removeAuctionItem(AuctionItem auctionItem) {
+		if (auctionItem == null) {
+			throw new IllegalArgumentException("Auction item cannot be null");
+		}
 		auctionItems.remove(auctionItem);
-		auctionItem.setSeller(null);
+		if (auctionItem.getSeller() == this) {
+			auctionItem.setSeller(null);
+		}
 	}
 }

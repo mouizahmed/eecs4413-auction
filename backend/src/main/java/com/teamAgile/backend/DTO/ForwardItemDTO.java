@@ -22,4 +22,8 @@ public class ForwardItemDTO extends AuctionItemDTO {
 		return endTime;
 	}
 
+	public void setEndTime(LocalDateTime endTime) {
+		this.endTime = endTime;
+	}
+
 }

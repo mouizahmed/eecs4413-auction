@@ -1,8 +1,6 @@
 package com.teamAgile.backend.model.strategy;
 
-import com.teamAgile.backend.model.AuctionItem;
-import com.teamAgile.backend.model.DutchAuctionItem;
-import com.teamAgile.backend.model.User;
+import com.teamAgile.backend.model.*;
 import com.teamAgile.backend.model.AuctionItem.AuctionStatus;
 
 public class DutchBidStrategy implements BidStrategy {
@@ -21,6 +19,8 @@ public class DutchBidStrategy implements BidStrategy {
 			throw new IllegalArgumentException("For Dutch auctions, bid amount must equal the current price.");
 		}
 
+		Bid bid = new Bid(auctionItem.getItemID(), user, bidAmount);
+		auctionItem.getBids().add(bid);
 		auctionItem.setHighestBidder(user);
 		auctionItem.setAuctionStatus(AuctionStatus.SOLD);
 	}
