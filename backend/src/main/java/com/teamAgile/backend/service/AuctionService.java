@@ -168,7 +168,12 @@ public class AuctionService {
 	}
 
 	public List<AuctionItem> getWonAuctionsForUser(User user) {
-		return auctionRepository.findByHighestBidderAndAuctionStatus(user, AuctionItem.AuctionStatus.SOLD);
+		List<AuctionItem> soldItems = auctionRepository.findByHighestBidderAndAuctionStatus(user,
+				AuctionItem.AuctionStatus.SOLD);
+		List<AuctionItem> paidItems = auctionRepository.findByHighestBidderAndAuctionStatus(user,
+				AuctionItem.AuctionStatus.PAID);
+		soldItems.addAll(paidItems);
+		return soldItems;
 	}
 
 	public List<AuctionItem> getActiveBidsForUser(User user) {

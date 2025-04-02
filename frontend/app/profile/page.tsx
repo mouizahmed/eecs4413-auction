@@ -50,7 +50,9 @@ export default function ProfilePage() {
     <Card className="mb-4">
       <CardHeader>
         <CardTitle>{item.itemName}</CardTitle>
-        <CardDescription>End Time: {format(new Date(item.endTime), 'PPP p')}</CardDescription>
+        {item.auctionType === 'FORWARD' && (
+          <CardDescription>End Time: {format(new Date(item.endTime), 'PPP p')}</CardDescription>
+        )}
       </CardHeader>
       <CardContent>
         <div className="flex justify-between items-center">
