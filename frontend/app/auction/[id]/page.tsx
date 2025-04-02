@@ -136,6 +136,7 @@ export default function Auctionpage() {
   const isAuctionEnded = auction?.auctionStatus === 'SOLD';
   const canPay = isHighestBidder && isAuctionEnded && auction?.auctionStatus !== 'PAID';
   const isSeller = currentUser && auction?.sellerUsername === currentUser.username;
+  const canBid = !isHighestBidder && auction?.auctionStatus === 'AVAILABLE';
 
   if (loading) return <div>Loading auction details...</div>;
   if (error) return <div className="text-red-500">{error}</div>;
@@ -219,7 +220,7 @@ export default function Auctionpage() {
           {!isSeller && auction.auctionStatus === 'AVAILABLE' && (
             <div className="space-y-2">
               {auction.auctionType === 'DUTCH' ? (
-                <Button onClick={handleBid} className="w-full">
+                <Button onClick={handleBid} className="w-full" disabled={!canBid}>
                   Buy Now
                 </Button>
               ) : (
@@ -231,8 +232,9 @@ export default function Auctionpage() {
                     onChange={(e) => setBidAmount(Number(e.target.value))}
                     min={auction.currentPrice}
                     step="1"
+                    disabled={!canBid}
                   />
-                  <Button onClick={handleBid} className="w-full">
+                  <Button onClick={handleBid} className="w-full mt-2" disabled={!canBid}>
                     Place Bid
                   </Button>
                 </>

@@ -21,6 +21,9 @@ public class ForwardBidStrategy implements BidStrategy {
             throw new IllegalArgumentException("Bid price must be greater than the current price.");
         } else if (LocalDateTime.now().isAfter(forwardItem.getEndTime())) {
             throw new IllegalArgumentException("This forward auction has now closed.");
+        } else if (auctionItem.getHighestBidder() != null
+                && auctionItem.getHighestBidder().getUserID().equals(user.getUserID())) {
+            throw new IllegalArgumentException("You are already the highest bidder on this item.");
         }
 
         Bid bid = new Bid(auctionItem.getItemID(), user, bidAmount);
