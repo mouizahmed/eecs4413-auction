@@ -26,6 +26,8 @@ import com.teamAgile.backend.DTO.hateoas.AuctionItemModel;
 import com.teamAgile.backend.DTO.hateoas.AuctionItemModelAssembler;
 import com.teamAgile.backend.DTO.hateoas.BidModel;
 import com.teamAgile.backend.DTO.hateoas.BidModelAssembler;
+import com.teamAgile.backend.DTO.hateoas.ReceiptModel;
+import com.teamAgile.backend.DTO.hateoas.ReceiptModelAssembler;
 import com.teamAgile.backend.model.AuctionItem;
 import com.teamAgile.backend.model.AuctionItem.AuctionStatus;
 import com.teamAgile.backend.model.Bid;
@@ -52,14 +54,17 @@ public class AuctionController extends BaseController {
 	private final PaymentService paymentService;
 	private final AuctionItemModelAssembler auctionItemModelAssembler;
 	private final BidModelAssembler bidModelAssembler;
+	private final ReceiptModelAssembler receiptModelAssembler;
 
 	public AuctionController(AuctionService auctionService, BidService bidService, PaymentService paymentService,
-			AuctionItemModelAssembler auctionItemModelAssembler, BidModelAssembler bidModelAssembler) {
+			AuctionItemModelAssembler auctionItemModelAssembler, BidModelAssembler bidModelAssembler,
+			ReceiptModelAssembler receiptModelAssembler) {
 		this.auctionService = auctionService;
 		this.bidService = bidService;
 		this.paymentService = paymentService;
 		this.auctionItemModelAssembler = auctionItemModelAssembler;
 		this.bidModelAssembler = bidModelAssembler;
+		this.receiptModelAssembler = receiptModelAssembler;
 	}
 
 	@GetMapping("/get-all")
@@ -82,26 +87,6 @@ public class AuctionController extends BaseController {
 		}
 	}
 
-	@GetMapping("/admin/get-all-items")
-	public ResponseEntity<ApiResponse<CollectionModel<AuctionItemModel>>> getAllAuctionItemsAdmin() {
-		try {
-			List<AuctionItem> auctionItems = auctionService.getAllAuctionItems();
-
-			List<AuctionItemResponseDTO> responseItems = auctionItems.stream()
-					.map(AuctionItemResponseDTO::fromAuctionItem).collect(Collectors.toList());
-
-			List<AuctionItemModel> itemModels = responseItems.stream().map(auctionItemModelAssembler::toModel)
-					.collect(Collectors.toList());
-
-			CollectionModel<AuctionItemModel> collectionModel = CollectionModel.of(itemModels,
-					linkTo(methodOn(AuctionController.class).getAllAuctionItemsAdmin()).withSelfRel());
-
-			return ResponseUtil.ok(collectionModel);
-		} catch (Exception e) {
-			return ResponseUtil.internalError("Error retrieving all auction items: " + e.getMessage());
-		}
-	}
-
 	@GetMapping("/search")
 	public ResponseEntity<ApiResponse<List<AuctionItemResponseDTO>>> searchAuctionItems(
 			@RequestParam("keyword") String keyword) {
@@ -119,26 +104,6 @@ public class AuctionController extends BaseController {
 			return ResponseUtil.ok(responseItems);
 		} catch (Exception e) {
 			return ResponseUtil.internalError("Error searching auction items: " + e.getMessage());
-		}
-	}
-
-	@GetMapping("/admin/search")
-	public ResponseEntity<ApiResponse<List<AuctionItemResponseDTO>>> searchAllAuctionItems(
-			@RequestParam("keyword") String keyword) {
-		try {
-			String sanitizedKeyword = ValidationUtil.sanitizeString(keyword);
-			if (sanitizedKeyword == null || sanitizedKeyword.isEmpty()) {
-				return ResponseUtil.badRequest("Search keyword cannot be empty");
-			}
-
-			List<AuctionItem> items = auctionService.searchByKeyword(sanitizedKeyword);
-
-			List<AuctionItemResponseDTO> responseItems = items.stream().map(AuctionItemResponseDTO::fromAuctionItem)
-					.collect(Collectors.toList());
-
-			return ResponseUtil.ok(responseItems);
-		} catch (Exception e) {
-			return ResponseUtil.internalError("Error searching all auction items: " + e.getMessage());
 		}
 	}
 
@@ -328,7 +293,7 @@ public class AuctionController extends BaseController {
 	}
 
 	@PostMapping("/pay")
-	public ResponseEntity<ApiResponse<ReceiptResponseDTO>> processPayment(@RequestParam("itemID") String itemID,
+	public ResponseEntity<ApiResponse<ReceiptModel>> processPayment(@RequestParam("itemID") String itemID,
 			@Valid @RequestBody CreditCardDTO cardDetails, HttpServletRequest request) {
 		try {
 			User currentUser = getCurrentUser(request);
@@ -368,7 +333,8 @@ public class AuctionController extends BaseController {
 			}
 
 			ReceiptResponseDTO responseDto = ReceiptResponseDTO.fromReceipt(receipt);
-			return ResponseUtil.ok("Payment processed successfully", responseDto);
+			ReceiptModel receiptModel = receiptModelAssembler.toModel(responseDto);
+			return ResponseUtil.ok("Payment processed successfully", receiptModel);
 		} catch (IllegalArgumentException e) {
 			return ResponseUtil.badRequest(e.getMessage());
 		} catch (Exception e) {
@@ -440,6 +406,59 @@ public class AuctionController extends BaseController {
 			return ResponseUtil.ok(responseItem);
 		} catch (Exception e) {
 			return ResponseUtil.internalError("Error checking auction status: " + e.getMessage());
+		}
+	}
+
+	@GetMapping("/receipt/{receiptId}")
+	public ResponseEntity<ApiResponse<ReceiptModel>> getReceiptById(@PathVariable String receiptId,
+			HttpServletRequest request) {
+		try {
+			User currentUser = getCurrentUser(request);
+			if (currentUser == null) {
+				return ResponseUtil.unauthorized("User not authenticated");
+			}
+
+			if (!ValidationUtil.isValidUUID(receiptId)) {
+				return ResponseUtil.badRequest("Invalid receipt ID format");
+			}
+
+			UUID receiptUUID = UUID.fromString(receiptId);
+			Receipt receipt = paymentService.getReceiptById(receiptUUID);
+
+			// Check if the current user is authorized to view this receipt
+			if (!receipt.getUser().getUserID().equals(currentUser.getUserID())) {
+				return ResponseUtil.unauthorized("You are not authorized to view this receipt");
+			}
+
+			ReceiptResponseDTO responseDto = ReceiptResponseDTO.fromReceipt(receipt);
+			ReceiptModel receiptModel = receiptModelAssembler.toModel(responseDto);
+			return ResponseUtil.ok("Receipt retrieved successfully", receiptModel);
+		} catch (IllegalArgumentException e) {
+			return ResponseUtil.badRequest(e.getMessage());
+		} catch (Exception e) {
+			return ResponseUtil.internalError("Error retrieving receipt: " + e.getMessage());
+		}
+	}
+
+	@GetMapping("/receipts")
+	public ResponseEntity<ApiResponse<List<ReceiptModel>>> getUserReceipts(HttpServletRequest request) {
+		try {
+			User currentUser = getCurrentUser(request);
+			if (currentUser == null) {
+				return ResponseUtil.unauthorized("User not authenticated");
+			}
+
+			List<Receipt> receipts = paymentService.getReceiptsByUserId(currentUser.getUserID());
+			List<ReceiptResponseDTO> receiptDtos = receipts.stream()
+					.map(ReceiptResponseDTO::fromReceipt)
+					.toList();
+			List<ReceiptModel> receiptModels = receiptDtos.stream()
+					.map(receiptModelAssembler::toModel)
+					.toList();
+
+			return ResponseUtil.ok("Receipts retrieved successfully", receiptModels);
+		} catch (Exception e) {
+			return ResponseUtil.internalError("Error retrieving receipts: " + e.getMessage());
 		}
 	}
 }

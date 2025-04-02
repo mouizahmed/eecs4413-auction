@@ -1,12 +1,10 @@
 package com.teamAgile.backend.controller;
 
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
-import org.springframework.util.StringUtils;
 
 import com.teamAgile.backend.model.User;
 import com.teamAgile.backend.service.UserService;

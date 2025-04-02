@@ -1,4 +1,4 @@
-import { AuctionItem } from '@/types';
+import { AuctionItem, ReceiptResponseDTO } from '@/types';
 import axios, { AxiosError } from 'axios';
 
 const api = axios.create({
@@ -62,5 +62,30 @@ export const getBidHistory = async (itemID: string): Promise<any> => {
     return response.data.data.content;
   } catch (error) {
     throw error;
+  }
+};
+
+export const getReceiptDetails = async (receiptId: string): Promise<ReceiptResponseDTO> => {
+  try {
+    const response = await api.get(`/auction/receipt/${receiptId}`);
+    console.log(response.data.data.receipt);
+    return response.data.data.receipt;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      throw new Error(error.response.data.message || 'Failed to fetch receipt details');
+    }
+    throw new Error('Failed to fetch receipt details');
+  }
+};
+
+export const getUserReceipts = async (): Promise<ReceiptResponseDTO[]> => {
+  try {
+    const response = await api.get('/auction/receipts');
+    return response.data.data.receipts;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      throw new Error(error.response.data.message || 'Failed to fetch user receipts');
+    }
+    throw new Error('Failed to fetch user receipts');
   }
 };

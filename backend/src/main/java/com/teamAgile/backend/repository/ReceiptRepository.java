@@ -1,5 +1,6 @@
 package com.teamAgile.backend.repository;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -10,5 +11,5 @@ import com.teamAgile.backend.model.User;
 
 @Repository
 public interface ReceiptRepository extends JpaRepository<Receipt, UUID> {
-
+    List<Receipt> findByUser_UserID(UUID userID);
 }

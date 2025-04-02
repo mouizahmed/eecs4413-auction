@@ -16,6 +16,7 @@ export interface User {
   province: string;
   country: string;
   username: string;
+  userID: string;
   password: string;
 }
 
@@ -36,6 +37,24 @@ export interface RegisterData {
   country: string;
   securityQuestion: string;
   securityAnswer: string;
+}
+
+export interface PaymentData {
+  cardNum: string;
+  cardName: string;
+  expMonth: string;
+  expYear: string;
+  securityCode: string;
+}
+
+export interface PaymentResponseDTO {
+  receiptID: string;
+  itemID: string;
+  userID: string;
+  username: string;
+  totalCost: number;
+  shippingTime: number;
+  timestamp: string;
 }
 
 export interface ForgotPasswordData {
@@ -76,3 +95,30 @@ export interface AuctionForm {
 }
 
 export type AuctionType = 'forward' | 'dutch';
+
+export interface ReceiptResponseDTO {
+  receiptID: string;
+  itemID: string;
+  userID: string;
+  username: string;
+  totalCost: number;
+  creditCard: {
+    cardNum: string;
+    cardName: string;
+    expDate: {
+      month: number;
+      year: number;
+    };
+    securityCode: string;
+  };
+  address: {
+    streetNum: number;
+    streetName: string;
+    city: string;
+    province: string;
+    postalCode: string;
+    country: string;
+  };
+  shippingTime: number;
+  timestamp: string;
+}

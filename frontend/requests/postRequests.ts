@@ -1,4 +1,12 @@
-import { AuctionForm, AuctionItem, AuctionType, ForgotPasswordData, RegisterData } from '@/types';
+import {
+  AuctionForm,
+  AuctionItem,
+  AuctionType,
+  ForgotPasswordData,
+  PaymentData,
+  PaymentResponseDTO,
+  RegisterData,
+} from '@/types';
 import axios from 'axios';
 
 const api = axios.create({
@@ -67,10 +75,28 @@ export const placeBid = async (itemID: string, bidAmount: number): Promise<any> 
   }
 };
 
-export const postPayment = async (): Promise<any> => {
+export const postPayment = async (itemID: string, paymentData: PaymentData): Promise<PaymentResponseDTO> => {
   try {
+    // Format expiration date as YYYY-MM
+    const expMonth = paymentData.expMonth.padStart(2, '0');
+    const expYear = '20' + paymentData.expYear;
+    const formattedPaymentData = {
+      ...paymentData,
+      expDate: `${expYear}-${expMonth}`,
+    };
+
+    const response = await api.post('/auction/pay', formattedPaymentData, {
+      params: {
+        itemID,
+      },
+    });
+
+    return response.data.data.receipt;
   } catch (error) {
-    throw error;
+    if (axios.isAxiosError(error) && error.response) {
+      throw new Error(error.response.data.message || 'Failed to process payment');
+    }
+    throw new Error('Failed to process payment');
   }
 };
 

@@ -1,5 +1,6 @@
 package com.teamAgile.backend.service;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,10 +38,12 @@ public class PaymentService {
 
 		AuctionItem item = itemOptional.get();
 
-		CreditCard creditCard = new CreditCard(cardDetails.getCardNum(), cardDetails.getCardName(), cardDetails.getExpDate(), cardDetails.getSecurityCode());
-		Receipt receipt = new Receipt(itemID, user, item.getCurrentPrice(), creditCard, user.getAddress(), item.getShippingTime());
+		CreditCard creditCard = new CreditCard(cardDetails.getCardNum(), cardDetails.getCardName(),
+				cardDetails.getExpDate(), cardDetails.getSecurityCode());
+		Receipt receipt = new Receipt(itemID, user, item.getCurrentPrice(), creditCard, user.getAddress(),
+				item.getShippingTime());
 		item.makePayment(user);
-		
+
 		auctionRepository.save(item);
 		receiptRepository.save(receipt);
 
@@ -49,6 +52,18 @@ public class PaymentService {
 
 		return receipt;
 
+	}
+
+	public Receipt getReceiptById(UUID receiptId) {
+		Optional<Receipt> receiptOptional = receiptRepository.findById(receiptId);
+		if (receiptOptional.isEmpty()) {
+			throw new IllegalArgumentException("Receipt not found");
+		}
+		return receiptOptional.get();
+	}
+
+	public List<Receipt> getReceiptsByUserId(UUID userId) {
+		return receiptRepository.findByUser_UserID(userId);
 	}
 
 }

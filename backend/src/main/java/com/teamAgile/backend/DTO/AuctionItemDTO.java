@@ -8,34 +8,34 @@ import jakarta.validation.constraints.NotNull;
 
 public class AuctionItemDTO {
 
-	@NotBlank(message = "itemName is required")
-	private String itemName;
-	
-	@NotNull(message = "currentPrice is required")
-	private Double currentPrice;
-	
-	@NotNull(message = "shippingTime is required")
-	private Integer shippingTime;
-	
-	private AuctionType auctionType;
-	
-	private AuctionStatus auctionStatus = AuctionStatus.AVAILABLE;
-	
-	public AuctionItemDTO() {
-	}
-	
-	public String getItemName() {
+    @NotBlank(message = "itemName is required")
+    private String itemName;
+
+    @NotNull(message = "currentPrice is required")
+    private Double currentPrice;
+
+    @NotNull(message = "shippingTime is required")
+    private Integer shippingTime;
+
+    private AuctionType auctionType;
+
+    private AuctionStatus auctionStatus = AuctionStatus.AVAILABLE;
+
+    public AuctionItemDTO() {
+    }
+
+    public String getItemName() {
         return itemName;
     }
 
     public Double getCurrentPrice() {
         return currentPrice;
     }
-    
+
     public Integer getShippingTime() {
-    	return shippingTime;
+        return shippingTime;
     }
-    
+
     public AuctionType getAuctionType() {
         return auctionType;
     }
@@ -43,11 +43,10 @@ public class AuctionItemDTO {
     public AuctionStatus getAuctionStatus() {
         return auctionStatus;
     }
-    
+
     public void setAuctionType(AuctionType auctionType) {
-    	this.auctionType = auctionType;
-		
-	}
-	
-	
+        this.auctionType = auctionType;
+
+    }
+
 }
