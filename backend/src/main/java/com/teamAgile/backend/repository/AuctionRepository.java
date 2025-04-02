@@ -32,4 +32,6 @@ public interface AuctionRepository extends JpaRepository<AuctionItem, UUID> {
 
     @Query("SELECT DISTINCT a FROM AuctionItem a JOIN Bid b ON a.itemID = b.itemID WHERE b.user = :user AND a.auctionStatus = :status")
     List<AuctionItem> findByUserBidsAndStatus(@Param("user") User user, @Param("status") AuctionStatus status);
+
+    List<AuctionItem> findBySeller(User seller);
 }

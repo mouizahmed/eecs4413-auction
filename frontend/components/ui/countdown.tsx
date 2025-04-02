@@ -10,19 +10,22 @@ interface CountdownTimerProps {
 function CountdownTimer({ endTime, itemId, onStatusUpdate }: CountdownTimerProps) {
   const [timeLeft, setTimeLeft] = useState<string>('');
   const [hasCompleted, setHasCompleted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const checkAuctionStatus = async () => {
     try {
+      setError(null);
       const response = await checkStatus(itemId);
       onStatusUpdate(response);
     } catch (error) {
-      console.log('Error checking auction status:', error);
+      setError('Failed to check auction status');
     }
   };
 
   useEffect(() => {
     const calculateTimeLeft = () => {
       try {
+        setError(null);
         const end = new Date(endTime);
         if (isNaN(end.getTime())) {
           setTimeLeft('Invalid end time');
@@ -48,7 +51,7 @@ function CountdownTimer({ endTime, itemId, onStatusUpdate }: CountdownTimerProps
 
         setTimeLeft(`${days}d ${hours}h ${minutes}m ${seconds}s`);
       } catch (error) {
-        console.log('Error calculating time left:', error);
+        setError('Error calculating time left');
         setTimeLeft('Error calculating time');
       }
     };
@@ -63,6 +66,10 @@ function CountdownTimer({ endTime, itemId, onStatusUpdate }: CountdownTimerProps
 
     return () => clearInterval(timer);
   }, [endTime, itemId, hasCompleted, onStatusUpdate]);
+
+  if (error) {
+    return <p className="text-sm text-red-500">{error}</p>;
+  }
 
   return <p className="text-sm text-gray-600">{timeLeft}</p>;
 }

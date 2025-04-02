@@ -16,7 +16,9 @@ export default function Home() {
           <Button className="cursor-pointer">Post New Auction</Button>
         </Link>
       </div>
-      <AuctionList />
+      <div className="min-h-[calc(100vh-200px)]">
+        <AuctionList />
+      </div>
     </div>
   ) : (
     <WelcomePage />

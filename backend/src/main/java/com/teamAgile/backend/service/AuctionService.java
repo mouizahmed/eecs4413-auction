@@ -179,4 +179,8 @@ public class AuctionService {
 	public List<AuctionItem> getActiveBidsForUser(User user) {
 		return auctionRepository.findByUserBidsAndStatus(user, AuctionItem.AuctionStatus.AVAILABLE);
 	}
+
+	public List<AuctionItem> getItemsBySeller(User seller) {
+		return auctionRepository.findBySeller(seller);
+	}
 }

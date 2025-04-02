@@ -7,7 +7,13 @@ import { AuctionItem, ReceiptResponseDTO } from '@/types';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { format } from 'date-fns';
-import { getActiveBids, getUnpaidItems, getUserReceipts, getWonAuctions } from '@/requests/getRequests';
+import {
+  getActiveBids,
+  getUnpaidItems,
+  getUserReceipts,
+  getWonAuctions,
+  getSellingItems,
+} from '@/requests/getRequests';
 
 export default function ProfilePage() {
   const { currentUser } = useAuth();
@@ -15,12 +21,14 @@ export default function ProfilePage() {
   const [purchaseHistory, setPurchaseHistory] = useState<ReceiptResponseDTO[]>([]);
   const [unpaidItems, setUnpaidItems] = useState<AuctionItem[]>([]);
   const [currentBids, setCurrentBids] = useState<AuctionItem[]>([]);
+  const [sellingItems, setSellingItems] = useState<AuctionItem[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // TODO: Fetch user's auction data from the backend
-    // This is a placeholder for the actual API calls
     const fetchUserData = async () => {
       try {
+        setError(null);
         // Fetch won auctions
         const wonResponse = await getWonAuctions();
         setWonAuctions(wonResponse);
@@ -36,8 +44,14 @@ export default function ProfilePage() {
         // Fetch current bids
         const bidsResponse = await getActiveBids();
         setCurrentBids(bidsResponse);
+
+        // Fetch selling items
+        const sellingResponse = await getSellingItems();
+        setSellingItems(sellingResponse);
       } catch (error) {
-        console.error('Error fetching user data:', error);
+        setError((error as Error).message);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -45,6 +59,9 @@ export default function ProfilePage() {
       fetchUserData();
     }
   }, [currentUser?.userID]);
+
+  if (loading) return <div className="container mx-auto py-8">Loading profile data...</div>;
+  if (error) return <div className="container mx-auto py-8 text-red-500">Error: {error}</div>;
 
   const AuctionCard = ({ item }: { item: AuctionItem }) => (
     <Card className="mb-4">
@@ -108,10 +125,11 @@ export default function ProfilePage() {
       )}
 
       <Tabs defaultValue="current-bids" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="current-bids">Current Bids</TabsTrigger>
           <TabsTrigger value="won-auctions">Won Auctions</TabsTrigger>
           <TabsTrigger value="purchase-history">Purchase History</TabsTrigger>
+          <TabsTrigger value="selling">Selling</TabsTrigger>
         </TabsList>
 
         <TabsContent value="current-bids">
@@ -138,6 +156,15 @@ export default function ProfilePage() {
             <p className="text-muted-foreground">No purchase history</p>
           ) : (
             purchaseHistory.map((purchase) => <PurchaseCard key={purchase.receiptID} purchase={purchase} />)
+          )}
+        </TabsContent>
+
+        <TabsContent value="selling">
+          <h3 className="text-xl font-semibold mb-4">Items You're Selling</h3>
+          {sellingItems.length === 0 ? (
+            <p className="text-muted-foreground">No items being sold</p>
+          ) : (
+            sellingItems.map((item) => <AuctionCard key={item.itemID} item={item} />)
           )}
         </TabsContent>
       </Tabs>

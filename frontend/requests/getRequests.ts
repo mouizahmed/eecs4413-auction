@@ -126,3 +126,15 @@ export const getWonAuctions = async (): Promise<AuctionItem[]> => {
     throw new Error('Failed to fetch won auctions');
   }
 };
+
+export const getSellingItems = async (): Promise<AuctionItem[]> => {
+  try {
+    const response = await api.get('/auction/selling');
+    return response.data.data.content.map((item: any) => item.auctionItem);
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      throw new Error(error.response.data.message || 'Failed to fetch selling items');
+    }
+    throw new Error('Failed to fetch selling items');
+  }
+};
