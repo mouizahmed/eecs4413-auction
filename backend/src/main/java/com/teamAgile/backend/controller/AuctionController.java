@@ -359,6 +359,33 @@ public class AuctionController extends BaseController {
 		}
 	}
 
+	@GetMapping("/active-bids")
+	public ResponseEntity<ApiResponse<CollectionModel<AuctionItemModel>>> getActiveBids(HttpServletRequest request) {
+		try {
+			User currentUser = getCurrentUser(request);
+			if (currentUser == null) {
+				return ResponseUtil.unauthorized("User not authenticated");
+			}
+
+			List<AuctionItem> activeBids = auctionService.getActiveBidsForUser(currentUser);
+
+			List<AuctionItemResponseDTO> responseItems = activeBids.stream()
+					.map(AuctionItemResponseDTO::fromAuctionItem)
+					.collect(Collectors.toList());
+
+			List<AuctionItemModel> itemModels = responseItems.stream()
+					.map(auctionItemModelAssembler::toModel)
+					.collect(Collectors.toList());
+
+			CollectionModel<AuctionItemModel> collectionModel = CollectionModel.of(itemModels,
+					linkTo(methodOn(AuctionController.class).getActiveBids(null)).withSelfRel());
+
+			return ResponseUtil.ok(collectionModel);
+		} catch (Exception e) {
+			return ResponseUtil.internalError("Error retrieving active bids: " + e.getMessage());
+		}
+	}
+
 	@PostMapping("/check-status")
 	public ResponseEntity<ApiResponse<AuctionItemResponseDTO>> checkAuctionStatus(@RequestParam("itemID") UUID itemID) {
 		try {

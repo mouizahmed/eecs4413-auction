@@ -170,4 +170,8 @@ public class AuctionService {
 	public List<AuctionItem> getWonAuctionsForUser(User user) {
 		return auctionRepository.findByHighestBidderAndAuctionStatus(user, AuctionItem.AuctionStatus.SOLD);
 	}
+
+	public List<AuctionItem> getActiveBidsForUser(User user) {
+		return auctionRepository.findByUserBidsAndStatus(user, AuctionItem.AuctionStatus.AVAILABLE);
+	}
 }

@@ -7,7 +7,7 @@ import { AuctionItem, ReceiptResponseDTO } from '@/types';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { format } from 'date-fns';
-import { getUnpaidItems, getUserReceipts, getWonAuctions } from '@/requests/getRequests';
+import { getActiveBids, getUnpaidItems, getUserReceipts, getWonAuctions } from '@/requests/getRequests';
 
 export default function ProfilePage() {
   const { currentUser } = useAuth();
@@ -33,10 +33,9 @@ export default function ProfilePage() {
         const unpaidResponse = await getUnpaidItems();
         setUnpaidItems(unpaidResponse);
 
-        // // Fetch current bids
-        // const bidsResponse = await fetch(`/api/auctions/bids/${currentUser?.userID}`);
-        // const bidsData = await bidsResponse.json();
-        // setCurrentBids(bidsData);
+        // Fetch current bids
+        const bidsResponse = await getActiveBids();
+        setCurrentBids(bidsResponse);
       } catch (error) {
         console.error('Error fetching user data:', error);
       }
