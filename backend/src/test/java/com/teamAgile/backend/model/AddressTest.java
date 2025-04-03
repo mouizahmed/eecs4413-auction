@@ -14,7 +14,6 @@ class AddressTest {
 
     @Test
     void testConstructor() {
-        // Test valid constructor
         Address validAddress = new Address("Elm Street", 456, "X9Y8Z7", "Vancouver", "BC", "Canada");
         assertNotNull(validAddress);
         assertEquals("Elm Street", validAddress.getStreetName());
@@ -24,7 +23,6 @@ class AddressTest {
         assertEquals("BC", validAddress.getProvince());
         assertEquals("Canada", validAddress.getCountry());
 
-        // Test default/empty constructor
         Address emptyAddress = new Address();
         assertNotNull(emptyAddress);
         assertNull(emptyAddress.getStreetName());
@@ -37,31 +35,27 @@ class AddressTest {
 
     @Test
     void testGettersAndSetters() {
-        // Test street name
         address.setStreetName("New Street");
         assertEquals("New Street", address.getStreetName());
         address.setStreetName(null);
         assertNull(address.getStreetName());
 
-        // Test street number
         address.setStreetNum(456);
         assertEquals(456, address.getStreetNum());
         address.setStreetNum(null);
         assertNull(address.getStreetNum());
         address.setStreetNum(0);
         assertEquals(0, address.getStreetNum());
-        address.setStreetNum(-1); // While we may want to validate this, the model doesn't right now
+        address.setStreetNum(-1);
         assertEquals(-1, address.getStreetNum());
 
-        // Test postal code
         address.setPostalCode("X1Y2Z3");
         assertEquals("X1Y2Z3", address.getPostalCode());
         address.setPostalCode(null);
         assertNull(address.getPostalCode());
-        address.setPostalCode(""); // Empty string allowed by implementation
+        address.setPostalCode("");
         assertEquals("", address.getPostalCode());
 
-        // Test city
         address.setCity("Vancouver");
         assertEquals("Vancouver", address.getCity());
         address.setCity(null);
@@ -69,7 +63,6 @@ class AddressTest {
         address.setCity("");
         assertEquals("", address.getCity());
 
-        // Test province
         address.setProvince("British Columbia");
         assertEquals("British Columbia", address.getProvince());
         address.setProvince(null);
@@ -77,7 +70,6 @@ class AddressTest {
         address.setProvince("");
         assertEquals("", address.getProvince());
 
-        // Test country
         address.setCountry("USA");
         assertEquals("USA", address.getCountry());
         address.setCountry(null);
@@ -88,10 +80,8 @@ class AddressTest {
 
     @Test
     void testAddressCompleteValidation() {
-        // Create a complete valid address
         Address complete = new Address("Maple Ave", 789, "M5V2L7", "Montreal", "Quebec", "Canada");
 
-        // Test that all fields have values
         assertNotNull(complete.getStreetName());
         assertNotNull(complete.getStreetNum());
         assertNotNull(complete.getPostalCode());
@@ -99,7 +89,6 @@ class AddressTest {
         assertNotNull(complete.getProvince());
         assertNotNull(complete.getCountry());
 
-        // Verify each field has the expected value
         assertEquals("Maple Ave", complete.getStreetName());
         assertEquals(789, complete.getStreetNum());
         assertEquals("M5V2L7", complete.getPostalCode());
@@ -110,8 +99,7 @@ class AddressTest {
 
     @Test
     void testEdgeCases() {
-        // Test with very long strings
-        String longText = "a".repeat(255); // Max typical VARCHAR length
+        String longText = "a".repeat(255);
 
         address.setStreetName(longText);
         assertEquals(longText, address.getStreetName());
@@ -128,7 +116,6 @@ class AddressTest {
         address.setCountry(longText);
         assertEquals(longText, address.getCountry());
 
-        // Test with Integer max and min values
         address.setStreetNum(Integer.MAX_VALUE);
         assertEquals(Integer.MAX_VALUE, address.getStreetNum());
 

@@ -55,14 +55,11 @@ public class AuctionServiceTest {
 
     @Test
     void createDutchItem_Success() {
-        // Arrange
         when(auctionRepository.findByItemName(any())).thenReturn(Optional.empty());
         when(auctionRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
-        // Act
         AuctionItem result = auctionService.createDutchItem(testDutchItemDTO, testUser);
 
-        // Assert
         assertNotNull(result);
         assertTrue(result instanceof DutchAuctionItem);
         assertEquals(testDutchItemDTO.getItemName(), result.getItemName());
@@ -76,43 +73,34 @@ public class AuctionServiceTest {
 
     @Test
     void createDutchItem_DuplicateItemName() {
-        // Arrange
         when(auctionRepository.findByItemName(any())).thenReturn(Optional.of(new DutchAuctionItem()));
 
-        // Act & Assert
         assertThrows(IllegalArgumentException.class, () -> auctionService.createDutchItem(testDutchItemDTO, testUser));
     }
 
     @Test
     void createDutchItem_InvalidAuctionType() {
-        // Arrange
         testDutchItemDTO.setAuctionType(AuctionType.FORWARD);
 
-        // Act & Assert
         assertThrows(IllegalArgumentException.class, () -> auctionService.createDutchItem(testDutchItemDTO, testUser));
     }
 
     @Test
     void createDutchItem_NullReservePrice() {
-        // Arrange
         testDutchItemDTO.setReservePrice(null);
 
-        // Act & Assert
         assertThrows(IllegalArgumentException.class, () -> auctionService.createDutchItem(testDutchItemDTO, testUser));
     }
 
     @Test
     void decreaseDutchPrice_Success() {
-        // Arrange
         DutchAuctionItem dutchItem = new DutchAuctionItem(
                 "Test Item", testUser, AuctionStatus.AVAILABLE, 100.0, 5, 50.0);
         when(auctionRepository.findByItemID(any())).thenReturn(Optional.of(dutchItem));
         when(auctionRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
-        // Act
         AuctionItem result = auctionService.decreaseDutchPrice(dutchItem.getItemID(), testUser.getUserID(), 20.0);
 
-        // Assert
         assertNotNull(result);
         assertTrue(result instanceof DutchAuctionItem);
         assertEquals(80.0, result.getCurrentPrice());
@@ -122,43 +110,36 @@ public class AuctionServiceTest {
 
     @Test
     void decreaseDutchPrice_ItemNotFound() {
-        // Arrange
         when(auctionRepository.findByItemID(any())).thenReturn(Optional.empty());
 
-        // Act & Assert
         assertThrows(IllegalArgumentException.class,
                 () -> auctionService.decreaseDutchPrice(UUID.randomUUID(), testUser.getUserID(), 20.0));
     }
 
     @Test
     void decreaseDutchPrice_NotSeller() {
-        // Arrange
         User differentUser = new User();
         differentUser.setUserID(UUID.randomUUID());
         DutchAuctionItem dutchItem = new DutchAuctionItem(
                 "Test Item", differentUser, AuctionStatus.AVAILABLE, 100.0, 5, 50.0);
         when(auctionRepository.findByItemID(any())).thenReturn(Optional.of(dutchItem));
 
-        // Act & Assert
         assertThrows(IllegalArgumentException.class,
                 () -> auctionService.decreaseDutchPrice(dutchItem.getItemID(), testUser.getUserID(), 20.0));
     }
 
     @Test
     void decreaseDutchPrice_ItemNotAvailable() {
-        // Arrange
         DutchAuctionItem dutchItem = new DutchAuctionItem(
                 "Test Item", testUser, AuctionStatus.SOLD, 100.0, 5, 50.0);
         when(auctionRepository.findByItemID(any())).thenReturn(Optional.of(dutchItem));
 
-        // Act & Assert
         assertThrows(IllegalArgumentException.class,
                 () -> auctionService.decreaseDutchPrice(dutchItem.getItemID(), testUser.getUserID(), 20.0));
     }
 
     @Test
     void decreaseDutchPrice_NotDutchAuction() {
-        // Arrange
         AuctionItem nonDutchItem = new AuctionItem() {
             @Override
             public void placeBid(Double bidAmount, User user) {
@@ -167,23 +148,19 @@ public class AuctionServiceTest {
         nonDutchItem.setSeller(testUser);
         when(auctionRepository.findByItemID(any())).thenReturn(Optional.of(nonDutchItem));
 
-        // Act & Assert
         assertThrows(IllegalArgumentException.class,
                 () -> auctionService.decreaseDutchPrice(nonDutchItem.getItemID(), testUser.getUserID(), 20.0));
     }
 
     @Test
     void decreaseDutchPrice_ReachesReservePrice() {
-        // Arrange
         DutchAuctionItem dutchItem = new DutchAuctionItem(
                 "Test Item", testUser, AuctionStatus.AVAILABLE, 100.0, 5, 50.0);
         when(auctionRepository.findByItemID(any())).thenReturn(Optional.of(dutchItem));
         when(auctionRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
-        // Act
         AuctionItem result = auctionService.decreaseDutchPrice(dutchItem.getItemID(), testUser.getUserID(), 60.0);
 
-        // Assert
         assertNotNull(result);
         assertTrue(result instanceof DutchAuctionItem);
         assertEquals(50.0, result.getCurrentPrice());

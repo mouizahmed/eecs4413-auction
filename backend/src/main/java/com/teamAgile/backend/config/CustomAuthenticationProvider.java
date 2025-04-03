@@ -28,7 +28,7 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
         User user = userService.signIn(username, password);
         if (user != null) {
             return new UsernamePasswordAuthenticationToken(
-                    user.getUsername(), // Use username as principal
+                    user.getUsername(),
                     null,
                     Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER")));
         }

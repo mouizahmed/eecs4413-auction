@@ -146,7 +146,6 @@ public class AuctionService {
 	}
 
 	public AuctionItem saveAuctionItem(AuctionItem item) {
-		// Just save the item as is - this is an update operation
 		return auctionRepository.save(item);
 	}
 

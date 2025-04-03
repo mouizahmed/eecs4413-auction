@@ -136,14 +136,12 @@ public class UserController extends BaseController {
 			// Generate JWT token
 			String jwt = jwtUtils.generateToken(user);
 
-			// Add the JWT to cookies with proper settings
 			Cookie jwtCookie = new Cookie("jwt", jwt);
 			jwtCookie.setHttpOnly(true);
 			jwtCookie.setPath("/");
 			jwtCookie.setMaxAge(24 * 60 * 60); // 24 hours
 			response.addCookie(jwtCookie);
 
-			// Also set the SameSite attribute (which can't be set via Cookie API)
 			response.addHeader("Set-Cookie", String.format("jwt=%s; Max-Age=%d; Path=/; HttpOnly", jwt, 24 * 60 * 60));
 
 			UserResponseDTO userResponseDTO = new UserResponseDTO(user);

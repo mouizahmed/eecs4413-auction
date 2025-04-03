@@ -29,7 +29,6 @@ public class BidService {
 	}
 
 	public Bid createBid(UUID itemId, User user, Double bidAmount) {
-		// Check for unpaid items first
 		List<AuctionItem> unpaidItems = auctionRepository.findByHighestBidderAndAuctionStatus(user, AuctionStatus.SOLD);
 		if (!unpaidItems.isEmpty()) {
 			throw new IllegalArgumentException(

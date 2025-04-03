@@ -12,7 +12,7 @@ class ReceiptTest {
     private User user;
     private CreditCard creditCard;
     private Address address;
-    private static final double DELTA = 0.001; // for double comparisons
+    private static final double DELTA = 0.001;
 
     @BeforeEach
     void setUp() {
@@ -38,51 +38,41 @@ class ReceiptTest {
 
     @Test
     void testReceiptCalculations() {
-        // Test total cost calculation with different shipping times
         Receipt fastShipping = new Receipt(UUID.randomUUID(), user, 100.0, creditCard, address, 1);
         Receipt normalShipping = new Receipt(UUID.randomUUID(), user, 100.0, creditCard, address, 5);
         Receipt slowShipping = new Receipt(UUID.randomUUID(), user, 100.0, creditCard, address, 10);
 
-        // Test that total cost is preserved
         assertEquals(100.0, fastShipping.getTotalCost(), DELTA);
         assertEquals(100.0, normalShipping.getTotalCost(), DELTA);
         assertEquals(100.0, slowShipping.getTotalCost(), DELTA);
 
-        // Test handling of decimal precision
         Receipt precisionTest = new Receipt(UUID.randomUUID(), user, 10.99, creditCard, address, 5);
         assertEquals(10.99, precisionTest.getTotalCost(), DELTA);
-        assertEquals(2, String.valueOf(precisionTest.getTotalCost()).split("\\.")[1].length()); // Should have 2 decimal
-                                                                                                // places
+        assertEquals(2, String.valueOf(precisionTest.getTotalCost()).split("\\.")[1].length());
     }
 
     @Test
     void testTimestampBehavior() {
-        // Test that timestamp is set on creation
         assertNotNull(receipt.getTimestamp());
 
-        // Get current time and create a window of 1 second before and after
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime oneSecondBefore = now.minusSeconds(1);
         LocalDateTime oneSecondAfter = now.plusSeconds(1);
 
-        // Receipt timestamp should be within 1 second of current time
         LocalDateTime receiptTime = receipt.getTimestamp();
         assertTrue(
                 (receiptTime.isEqual(oneSecondBefore) || receiptTime.isAfter(oneSecondBefore)) &&
                         (receiptTime.isEqual(oneSecondAfter) || receiptTime.isBefore(oneSecondAfter)),
                 "Receipt timestamp should be within 1 second of current time");
 
-        // Store initial timestamp
         LocalDateTime initialTimestamp = receipt.getTimestamp();
 
-        // Try to modify receipt and verify timestamp hasn't changed
         receipt.setTotalCost(200.0);
         assertEquals(initialTimestamp, receipt.getTimestamp());
     }
 
     @Test
     void testCreditCardValidation() {
-        // Test invalid credit card number
         CreditCard invalidCard = new CreditCard();
         invalidCard.setCardNum("1234");
         invalidCard.setCardName("Test User");
@@ -93,7 +83,6 @@ class ReceiptTest {
             new Receipt(UUID.randomUUID(), user, 100.0, invalidCard, address, 5);
         });
 
-        // Test expired credit card
         CreditCard expiredCard = new CreditCard();
         expiredCard.setCardNum("4111111111111111");
         expiredCard.setCardName("Test User");
@@ -104,7 +93,6 @@ class ReceiptTest {
             new Receipt(UUID.randomUUID(), user, 100.0, expiredCard, address, 5);
         });
 
-        // Test null credit card
         assertThrows(IllegalArgumentException.class, () -> {
             new Receipt(UUID.randomUUID(), user, 100.0, null, address, 5);
         });
@@ -112,27 +100,16 @@ class ReceiptTest {
 
     @Test
     void testAddressValidation() {
-        // Test null address - this is the only address validation in the Receipt
-        // constructor
         assertThrows(IllegalArgumentException.class, () -> {
             new Receipt(UUID.randomUUID(), user, 100.0, creditCard, null, 5);
         });
 
-        // Receipt doesn't validate address field requirements, just that address is not
-        // null
-        // The following should not throw exceptions
-
-        // Create incomplete address
         Address incompleteAddress = new Address();
         incompleteAddress.setStreetName("Test Street");
-        // Missing other fields
-
-        // This should work since Receipt doesn't validate address content
         Receipt receiptWithIncompleteAddress = new Receipt(UUID.randomUUID(), user, 100.0, creditCard,
                 incompleteAddress, 5);
         assertNotNull(receiptWithIncompleteAddress);
 
-        // Test address with invalid postal code format - should also work
         Address addressWithInvalidPostal = new Address();
         addressWithInvalidPostal.setStreetName("Test Street");
         addressWithInvalidPostal.setStreetNum(123);
@@ -141,7 +118,6 @@ class ReceiptTest {
         addressWithInvalidPostal.setProvince("Test Province");
         addressWithInvalidPostal.setCountry("Test Country");
 
-        // This should work since Receipt doesn't validate postal code format
         Receipt receiptWithInvalidPostal = new Receipt(UUID.randomUUID(), user, 100.0, creditCard,
                 addressWithInvalidPostal, 5);
         assertNotNull(receiptWithInvalidPostal);
@@ -149,22 +125,18 @@ class ReceiptTest {
 
     @Test
     void testNullValidations() {
-        // Test null user
         assertThrows(IllegalArgumentException.class, () -> {
             new Receipt(UUID.randomUUID(), null, 100.0, creditCard, address, 5);
         });
 
-        // Test null itemID
         assertThrows(IllegalArgumentException.class, () -> {
             new Receipt(null, user, 100.0, creditCard, address, 5);
         });
 
-        // Test invalid total cost
         assertThrows(IllegalArgumentException.class, () -> {
             new Receipt(UUID.randomUUID(), user, -100.0, creditCard, address, 5);
         });
 
-        // Test invalid shipping time
         assertThrows(IllegalArgumentException.class, () -> {
             new Receipt(UUID.randomUUID(), user, 100.0, creditCard, address, -1);
         });
@@ -172,27 +144,22 @@ class ReceiptTest {
 
     @Test
     void testPaymentAmountValidation() {
-        // Test setting negative payment amount
         assertThrows(IllegalArgumentException.class, () -> {
             receipt.setTotalCost(-100.0);
         });
 
-        // Test setting zero payment amount
         assertThrows(IllegalArgumentException.class, () -> {
             receipt.setTotalCost(0.0);
         });
 
-        // Test setting null payment amount
         assertThrows(IllegalArgumentException.class, () -> {
             receipt.setTotalCost(null);
         });
 
-        // Test setting valid payment amount
         Double validAmount = 200.0;
         receipt.setTotalCost(validAmount);
         assertEquals(validAmount, receipt.getTotalCost(), DELTA);
 
-        // Test creating receipt with invalid payment amount
         assertThrows(IllegalArgumentException.class, () -> {
             new Receipt(UUID.randomUUID(), user, -100.0, creditCard, address, 5);
         });
@@ -208,11 +175,9 @@ class ReceiptTest {
 
     @Test
     void testUserRelationship() {
-        // Test bidirectional relationship
         assertTrue(user.getReceipts().contains(receipt));
         assertEquals(user, receipt.getUser());
 
-        // Test removing receipt from user
         user.removeReceipt(receipt);
         assertFalse(user.getReceipts().contains(receipt));
         assertNull(receipt.getUser());

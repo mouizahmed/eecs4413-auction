@@ -1,0 +1,13 @@
+# Ignore build artifacts, logs, secrets, etc.
+Dockerfile
+.dockerignore
+.git
+.github
+.next
+node_modules
+npm-debug.log
+README.md
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local 

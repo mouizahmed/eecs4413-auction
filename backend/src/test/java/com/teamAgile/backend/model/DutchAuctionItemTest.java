@@ -37,27 +37,22 @@ class DutchAuctionItemTest {
 
     @Test
     void testGettersAndSetters() {
-        // Test itemName
         String newItemName = "New Item Name";
         auctionItem.setItemName(newItemName);
         assertEquals(newItemName, auctionItem.getItemName());
 
-        // Test currentPrice
         Double newPrice = 200.0;
         auctionItem.setCurrentPrice(newPrice);
         assertEquals(newPrice, auctionItem.getCurrentPrice());
 
-        // Test shippingTime
         Integer newShippingTime = 10;
         auctionItem.setShippingTime(newShippingTime);
         assertEquals(newShippingTime, auctionItem.getShippingTime());
 
-        // Test reservePrice
         Double newReservePrice = 100.0;
         auctionItem.setReservePrice(newReservePrice);
         assertEquals(newReservePrice, auctionItem.getReservePrice());
 
-        // Test seller
         User newSeller = new User(
                 UUID.randomUUID(),
                 "New",
@@ -72,7 +67,6 @@ class DutchAuctionItemTest {
         auctionItem.setSeller(newSeller);
         assertEquals(newSeller, auctionItem.getSeller());
 
-        // Test highestBidder
         User newHighestBidder = new User(
                 UUID.randomUUID(),
                 "New",
@@ -87,24 +81,20 @@ class DutchAuctionItemTest {
         auctionItem.setHighestBidder(newHighestBidder);
         assertEquals(newHighestBidder, auctionItem.getHighestBidder());
 
-        // Test auctionStatus
         auctionItem.setAuctionStatus(AuctionItem.AuctionStatus.SOLD);
         assertEquals(AuctionItem.AuctionStatus.SOLD, auctionItem.getAuctionStatus());
     }
 
     @Test
     void testReservePriceValidation() {
-        // Test setting reserve price equal to current price
         assertThrows(IllegalArgumentException.class, () -> {
             auctionItem.setReservePrice(testCurrentPrice);
         });
 
-        // Test setting reserve price higher than current price
         assertThrows(IllegalArgumentException.class, () -> {
             auctionItem.setReservePrice(testCurrentPrice + 10.0);
         });
 
-        // Test creating with invalid reserve price
         assertThrows(IllegalArgumentException.class, () -> {
             new DutchAuctionItem(testItemName, testSeller, AuctionItem.AuctionStatus.AVAILABLE,
                     testCurrentPrice, testShippingTime, testCurrentPrice);
@@ -113,17 +103,14 @@ class DutchAuctionItemTest {
 
     @Test
     void testDecreasePrice() {
-        // Test normal price decrease
         auctionItem.decreasePrice(10.0);
         assertEquals(90.0, auctionItem.getCurrentPrice());
         assertEquals(AuctionItem.AuctionStatus.AVAILABLE, auctionItem.getAuctionStatus());
 
-        // Test price decrease to reserve price
         auctionItem.decreasePrice(40.0);
         assertEquals(50.0, auctionItem.getCurrentPrice());
         assertEquals(AuctionItem.AuctionStatus.EXPIRED, auctionItem.getAuctionStatus());
 
-        // Test price decrease below reserve price
         auctionItem.setCurrentPrice(100.0);
         auctionItem.setAuctionStatus(AuctionItem.AuctionStatus.AVAILABLE);
         auctionItem.decreasePrice(60.0);
@@ -144,9 +131,8 @@ class DutchAuctionItemTest {
                 "Bidder City",
                 "Bidder Province",
                 "Bidder Country");
-        Double bidAmount = 100.0; // Must equal current price for Dutch auction
+        Double bidAmount = 100.0; 
 
-        // Test placing a bid
         auctionItem.placeBid(bidAmount, bidder);
         assertEquals(bidAmount, auctionItem.getCurrentPrice());
         assertEquals(bidder, auctionItem.getHighestBidder());
@@ -155,22 +141,18 @@ class DutchAuctionItemTest {
 
     @Test
     void testShippingTimeValidation() {
-        // Test setting negative shipping time
         assertThrows(IllegalArgumentException.class, () -> {
             auctionItem.setShippingTime(-1);
         });
 
-        // Test setting zero shipping time
         assertThrows(IllegalArgumentException.class, () -> {
             auctionItem.setShippingTime(0);
         });
 
-        // Test setting null shipping time
         assertThrows(IllegalArgumentException.class, () -> {
             auctionItem.setShippingTime(null);
         });
 
-        // Test valid shipping time
         Integer validShippingTime = 5;
         auctionItem.setShippingTime(validShippingTime);
         assertEquals(validShippingTime, auctionItem.getShippingTime());
@@ -178,7 +160,6 @@ class DutchAuctionItemTest {
 
     @Test
     void testPaymentManagement() {
-        // Test successful payment
         User winningBidder = new User(
                 UUID.randomUUID(),
                 "Winning",
@@ -196,7 +177,6 @@ class DutchAuctionItemTest {
         soldItem.makePayment(winningBidder);
         assertEquals(AuctionItem.AuctionStatus.PAID, soldItem.getAuctionStatus());
 
-        // Test payment by non-winning bidder
         User otherUser = new User(
                 UUID.randomUUID(),
                 "Other",
@@ -215,7 +195,6 @@ class DutchAuctionItemTest {
             anotherSoldItem.makePayment(otherUser);
         });
 
-        // Test payment on non-sold item
         DutchAuctionItem availableItem = new DutchAuctionItem(testItemName + "3", testSeller,
                 AuctionItem.AuctionStatus.AVAILABLE, testCurrentPrice, testShippingTime, testReservePrice);
         availableItem.setHighestBidder(winningBidder);
@@ -226,11 +205,9 @@ class DutchAuctionItemTest {
 
     @Test
     void testSellerRelationship() {
-        // Test bidirectional relationship
         assertTrue(testSeller.getAuctionItems().contains(auctionItem));
         assertEquals(testSeller, auctionItem.getSeller());
 
-        // Test removing item from seller
         testSeller.removeAuctionItem(auctionItem);
         assertFalse(testSeller.getAuctionItems().contains(auctionItem));
         assertNull(auctionItem.getSeller());

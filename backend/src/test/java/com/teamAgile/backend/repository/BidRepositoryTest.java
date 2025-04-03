@@ -41,14 +41,11 @@ public class BidRepositoryTest {
         Bid bid1 = createTestBid(item1.getItemID(), bidder, 120.0);
         Bid bid2 = createTestBid(item2.getItemID(), bidder, 220.0);
 
-        // Create a bid by a different user
         User otherBidder = createTestUser("otherBidder");
         createTestBid(item1.getItemID(), otherBidder, 130.0);
 
-        // Act
         List<Bid> foundBids = bidRepository.findByUser_UserID(bidderId);
 
-        // Assert
         assertEquals(2, foundBids.size());
         assertTrue(foundBids.stream().anyMatch(b -> b.getBidID().equals(bid1.getBidID())));
         assertTrue(foundBids.stream().anyMatch(b -> b.getBidID().equals(bid2.getBidID())));
@@ -56,7 +53,6 @@ public class BidRepositoryTest {
 
     @Test
     void findByItemIDOrderByBidAmountDesc_ReturnsBidsInDescendingOrder() {
-        // Arrange
         User bidder1 = createTestUser("bidder1");
         User bidder2 = createTestUser("bidder2");
         User bidder3 = createTestUser("bidder3");
@@ -70,10 +66,8 @@ public class BidRepositoryTest {
         Bid mediumBid = createTestBid(itemId, bidder2, 120.0);
         Bid highBid = createTestBid(itemId, bidder3, 130.0);
 
-        // Act
         List<Bid> bids = bidRepository.findByItemIDOrderByBidAmountDesc(itemId);
 
-        // Assert
         assertEquals(3, bids.size());
         assertEquals(highBid.getBidID(), bids.get(0).getBidID());
         assertEquals(mediumBid.getBidID(), bids.get(1).getBidID());
@@ -82,7 +76,6 @@ public class BidRepositoryTest {
 
     @Test
     void findByBidID_ReturnsBid() {
-        // Arrange
         User bidder = createTestUser("bidder");
         User seller = createTestUser("seller");
 
@@ -91,10 +84,8 @@ public class BidRepositoryTest {
         Bid bid = createTestBid(item.getItemID(), bidder, 120.0);
         UUID bidId = bid.getBidID();
 
-        // Act
         Optional<Bid> foundBid = bidRepository.findByBidID(bidId);
 
-        // Assert
         assertTrue(foundBid.isPresent());
         assertEquals(bidId, foundBid.get().getBidID());
         assertEquals(bidder.getUserID(), foundBid.get().getUser().getUserID());
@@ -103,7 +94,6 @@ public class BidRepositoryTest {
 
     @Test
     void findByItemID_ReturnsBid() {
-        // Arrange
         User bidder = createTestUser("bidder");
         User seller = createTestUser("seller");
 
@@ -112,10 +102,8 @@ public class BidRepositoryTest {
 
         Bid bid = createTestBid(itemId, bidder, 120.0);
 
-        // Act
         Optional<Bid> foundBid = bidRepository.findByItemID(itemId);
 
-        // Assert
         assertTrue(foundBid.isPresent());
         assertEquals(bid.getBidID(), foundBid.get().getBidID());
         assertEquals(itemId, foundBid.get().getItemID());
@@ -123,7 +111,6 @@ public class BidRepositoryTest {
 
     @Test
     void findAll_ReturnsAllBids() {
-        // Arrange
         User bidder = createTestUser("bidder");
         User seller = createTestUser("seller");
 
@@ -133,14 +120,10 @@ public class BidRepositoryTest {
         createTestBid(item1.getItemID(), bidder, 120.0);
         createTestBid(item2.getItemID(), bidder, 220.0);
 
-        // Act
         List<Bid> allBids = bidRepository.findAll();
 
-        // Assert
         assertEquals(2, allBids.size());
     }
-
-    // Helper methods to create test entities
 
     private User createTestUser(String username) {
         User user = new User();
@@ -151,7 +134,6 @@ public class BidRepositoryTest {
         user.setSecurityQuestion("What is your favorite color?");
         user.setSecurityAnswer("blue");
 
-        // Create and set address
         Address address = new Address("Main St", 123, "A1B2C3", "City", "Province", "Country");
         user.setAddress(address);
 

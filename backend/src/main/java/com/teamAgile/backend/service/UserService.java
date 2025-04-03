@@ -136,7 +136,6 @@ public class UserService {
 		}
 		User user = userRepository.findByUsernameIgnoreCase(username)
 				.orElseThrow(() -> new UserNotFoundException("User not found with username: " + username));
-		// ... rest of the method
 		return userRepository.save(updatedUser);
 	}
 

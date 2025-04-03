@@ -29,50 +29,41 @@ class ForwardAuctionItemTest {
 
     @Test
     void testGettersAndSetters() {
-        // Test itemName
         String newItemName = "New Item Name";
         auctionItem.setItemName(newItemName);
         assertEquals(newItemName, auctionItem.getItemName());
 
-        // Test currentPrice
         Double newPrice = 200.0;
         auctionItem.setCurrentPrice(newPrice);
         assertEquals(newPrice, auctionItem.getCurrentPrice());
 
-        // Test shippingTime
         Integer newShippingTime = 10;
         auctionItem.setShippingTime(newShippingTime);
         assertEquals(newShippingTime, auctionItem.getShippingTime());
 
-        // Test endTime
         LocalDateTime newEndTime = LocalDateTime.now().plusDays(14);
         auctionItem.setEndTime(newEndTime);
         assertEquals(newEndTime, auctionItem.getEndTime());
 
-        // Test seller
         User newSeller = new User();
         auctionItem.setSeller(newSeller);
         assertEquals(newSeller, auctionItem.getSeller());
 
-        // Test highestBidder
         User newHighestBidder = new User();
         auctionItem.setHighestBidder(newHighestBidder);
         assertEquals(newHighestBidder, auctionItem.getHighestBidder());
 
-        // Test auctionStatus
         auctionItem.setAuctionStatus(AuctionItem.AuctionStatus.SOLD);
         assertEquals(AuctionItem.AuctionStatus.SOLD, auctionItem.getAuctionStatus());
     }
 
     @Test
     void testEndTimeValidation() {
-        // Test setting end time in the past
         LocalDateTime pastTime = LocalDateTime.now().minusDays(1);
         assertThrows(IllegalArgumentException.class, () -> {
             auctionItem.setEndTime(pastTime);
         });
 
-        // Test creating with end time in the past
         assertThrows(IllegalArgumentException.class, () -> {
             new ForwardAuctionItem(testItemName, testSeller, AuctionItem.AuctionStatus.AVAILABLE,
                     testCurrentPrice, testShippingTime, pastTime);
@@ -94,7 +85,6 @@ class ForwardAuctionItemTest {
 
     @Test
     void testPaymentManagement() {
-        // Test successful payment
         User winningBidder = new User();
         winningBidder.setUserID(UUID.randomUUID());
         ForwardAuctionItem soldItem = new ForwardAuctionItem(testItemName, testSeller,
@@ -103,7 +93,6 @@ class ForwardAuctionItemTest {
         soldItem.makePayment(winningBidder);
         assertEquals(AuctionItem.AuctionStatus.PAID, soldItem.getAuctionStatus());
 
-        // Test payment by non-winning bidder
         User otherUser = new User();
         otherUser.setUserID(UUID.randomUUID());
         ForwardAuctionItem anotherSoldItem = new ForwardAuctionItem(testItemName + "2", testSeller,
@@ -113,7 +102,6 @@ class ForwardAuctionItemTest {
             anotherSoldItem.makePayment(otherUser);
         });
 
-        // Test payment on non-sold item
         ForwardAuctionItem availableItem = new ForwardAuctionItem(testItemName + "3", testSeller,
                 AuctionItem.AuctionStatus.AVAILABLE, testCurrentPrice, testShippingTime, testEndTime);
         availableItem.setHighestBidder(winningBidder);
@@ -124,11 +112,9 @@ class ForwardAuctionItemTest {
 
     @Test
     void testSellerRelationship() {
-        // Test bidirectional relationship
         assertTrue(testSeller.getAuctionItems().contains(auctionItem));
         assertEquals(testSeller, auctionItem.getSeller());
 
-        // Test removing item from seller
         testSeller.removeAuctionItem(auctionItem);
         assertFalse(testSeller.getAuctionItems().contains(auctionItem));
         assertNull(auctionItem.getSeller());
